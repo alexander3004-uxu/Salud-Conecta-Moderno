@@ -1,0 +1,8 @@
+{
+  "name": "Salud Conecta IA",
+  "description": "Public health ecosystem for cognitive clarity, accessible health services, and medical assistance.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}

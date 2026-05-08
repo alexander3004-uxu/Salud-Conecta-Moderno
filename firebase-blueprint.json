@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and basic settings.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "emailVerified": { "type": "boolean" },
+        "role": { "type": "string", "enum": ["patient", "admin", "provider"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "role", "createdAt"]
+    },
+    "Clinic": {
+      "title": "Clinic",
+      "description": "Medical facility or pharmacy.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["clinic", "pharmacy", "emergency"] },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "address": { "type": "string" },
+        "inStock": { "type": "boolean" },
+        "open24h": { "type": "boolean" }
+      },
+      "required": ["id", "name", "type", "location", "address"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Medical appointment reservation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "clinicId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "completed"] },
+        "serviceType": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "clinicId", "date", "status"]
+    },
+    "TriageRecord": {
+      "title": "Triage Record",
+      "description": "Record of a symptom checker interaction.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "symptoms": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["low", "medium", "high", "emergency"] },
+        "recommendation": { "type": "string" },
+        "medication": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "urgency", "recommendation", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "/clinics/{clinicId}": {
+      "schema": "Clinic",
+      "description": "Medical clinics and pharmacies."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Global appointment records (accessible by user/admin)."
+    },
+    "/triages/{triageId}": {
+      "schema": "TriageRecord",
+      "description": "Symptom checker history."
+    }
+  }
+}

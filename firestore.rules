@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Shared Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.userId == userId &&
+               data.email is string && data.email.size() <= 100 &&
+               data.displayName is string && data.displayName.size() <= 100 &&
+               data.role in ['patient', 'admin', 'provider'] &&
+               data.createdAt is string;
+      }
+
+      allow get: if isSignedIn();
+      allow create: if isVerified() && isValidUser(request.resource.data) && 
+                      request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']);
+    }
+
+    // Clinic Rules (Read-only for users, Admin write)
+    match /clinics/{clinicId} {
+      allow read: if true;
+      allow write: if false; // Only manageable via Firebase Console for now
+    }
+
+    // Appointment Rules
+    match /appointments/{appointmentId} {
+      function isValidAppointment(data) {
+        return data.userId is string && data.userId.size() <= 128 &&
+               data.clinicId is string && data.clinicId.size() <= 128 &&
+               data.date is string &&
+               data.status in ['pending', 'confirmed', 'cancelled', 'completed'] &&
+               data.serviceType is string && data.serviceType.size() <= 100;
+      }
+
+      allow get: if isSignedIn() && (isOwner(resource.data.userId) || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidAppointment(request.resource.data) && 
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.status == 'pending';
+      allow update: if isVerified() && isOwner(resource.data.userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+                      (request.resource.data.status == 'cancelled' && resource.data.status == 'pending');
+    }
+
+    // Triage Rules
+    match /triages/{triageId} {
+      function isValidTriage(data) {
+        return data.userId is string && data.userId.size() <= 128 &&
+               data.symptoms is string && data.symptoms.size() <= 2000 &&
+               data.urgency in ['low', 'medium', 'high', 'emergency'] &&
+               data.recommendation is string && data.recommendation.size() <= 500 &&
+               data.createdAt is string;
+      }
+
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidTriage(request.resource.data) && 
+                      request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
