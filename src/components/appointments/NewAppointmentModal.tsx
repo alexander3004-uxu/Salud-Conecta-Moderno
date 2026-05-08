@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { TriageRecord } from '../../types';
 import { createAppointment } from '../../services/appointmentService';
+import AppointmentSuccess from './AppointmentSuccess';
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -35,12 +36,20 @@ export default function NewAppointmentModal({
   userId,
   latestTriage 
 }: NewAppointmentModalProps) {
+  const [step, setStep] = useState<'form' | 'success'>('form');
   const [serviceType, setServiceType] = useState<ServiceType>('Consulta Médica');
   const [search, setSearch] = useState('');
   const [selectedDate, setSelectedDate] = useState<number>(new Date().getDate() + 1);
   const [selectedTime, setSelectedTime] = useState('09:30 AM');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [finalDetails, setFinalDetails] = useState({
+    specialist: '',
+    date: '',
+    time: '',
+    location: ''
+  });
 
   const handleImportTriage = () => {
     if (latestTriage) {
@@ -51,8 +60,7 @@ export default function NewAppointmentModal({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const date = new Date();
-      date.setDate(selectedDate);
+      const date = new Date(2024, 10, selectedDate); // Consistency with mock November 2024
       // Simple time parsing for the mockup
       const [time, period] = selectedTime.split(' ');
       const [hours, minutes] = time.split(':').map(Number);
@@ -61,23 +69,39 @@ export default function NewAppointmentModal({
       if (period === 'AM' && hours === 12) finalHours = 0;
       date.setHours(finalHours, minutes, 0, 0);
 
+      const specialist = search || (serviceType === 'Consulta Médica' ? 'Dra. S. Ramírez' : 'Laboratorio Central');
+      const location = 'Hospital Central, Ala Norte';
+
       await createAppointment({
         userId,
         clinicId: 'hospital-central', // Mock clinic ID
         date: date.toISOString(),
         status: 'pending',
         serviceType,
-        doctorName: search || (serviceType === 'Consulta Médica' ? 'Dra. S. Ramírez' : 'Laboratorio Central'),
-        location: 'Hospital Central, Ala Norte',
+        doctorName: specialist,
+        location: location,
         notes
       });
+
+      setFinalDetails({
+        specialist,
+        date: date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        time: selectedTime,
+        location
+      });
+
+      setStep('success');
       onSuccess();
-      onClose();
     } catch (error) {
       console.error('Error creating appointment:', error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleClose = () => {
+    setStep('form');
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -89,21 +113,23 @@ export default function NewAppointmentModal({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-2xl bg-[#0F172A] border border-[#1E293B] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-2xl bg-[#0F172A] border border-[#1E293B] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh]"
         >
-          {/* Header */}
-          <div className="px-8 py-6 border-b border-[#1E293B] flex justify-between items-center sticky top-0 bg-[#0F172A] z-10">
-            <div>
-              <h1 className="text-2xl font-display font-bold text-[#D5E3FF]">Nueva Cita</h1>
-              <p className="text-sm text-[#C0C7D5] mt-1">Complete los detalles para agendar su consulta.</p>
-            </div>
-            <button 
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-[#222A3D] text-[#C0C7D5] transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+          {step === 'form' ? (
+            <>
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-[#1E293B] flex justify-between items-center sticky top-0 bg-[#0F172A] z-10">
+                <div>
+                  <h1 className="text-2xl font-display font-bold text-[#D5E3FF]">Nueva Cita</h1>
+                  <p className="text-sm text-[#C0C7D5] mt-1">Complete los detalles para agendar su consulta.</p>
+                </div>
+                <button 
+                  onClick={handleClose}
+                  className="p-2 rounded-full hover:bg-[#222A3D] text-[#C0C7D5] transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
 
           {/* Scrollable Content */}
           <div className="p-8 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
@@ -259,7 +285,7 @@ export default function NewAppointmentModal({
           {/* Footer Actions */}
           <div className="p-8 border-t border-[#1E293B] bg-[#0F172A] flex justify-end gap-4 sticky bottom-0">
             <button 
-              onClick={onClose}
+              onClick={handleClose}
               className="px-6 py-3 font-display font-bold text-[#A6C8FF] hover:bg-[#3192FC]/10 rounded-xl transition-all"
             >
               Cancelar
@@ -273,6 +299,18 @@ export default function NewAppointmentModal({
               <ArrowRight className="ml-2 w-5 h-5" />
             </button>
           </div>
+          </>
+          ) : (
+            <div className="p-8 md:p-12 overflow-y-auto custom-scrollbar">
+              <AppointmentSuccess 
+                specialist={finalDetails.specialist}
+                date={finalDetails.date}
+                time={finalDetails.time}
+                location={finalDetails.location}
+                onFinish={handleClose}
+              />
+            </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

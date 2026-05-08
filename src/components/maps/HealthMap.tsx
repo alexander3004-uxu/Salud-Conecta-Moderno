@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, useMap, useMapsLibrary, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   MapPin, 
@@ -24,24 +24,59 @@ import {
   User,
   Mic,
   RotateCcw,
-  Send
+  Send,
+  Hospital,
+  Store,
+  Clock4,
+  AlertTriangle
 } from 'lucide-react';
+
 import { Clinic } from '../../types';
 import { getClinics } from '../../services/clinicService';
 
 const API_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
-function ClinicMarker({ clinic, onClick }: { clinic: Clinic, onClick: (c: Clinic) => void, key?: any }) {
+function ClinicMarker({ clinic, onClick }: { clinic: Clinic & { isOpen?: boolean }, onClick: (c: Clinic) => void, key?: any }) {
   const [markerRef] = useAdvancedMarkerRef();
   
-  const getColor = () => {
+  const isOpen = clinic.isOpen !== undefined ? clinic.isOpen : clinic.open24h;
+
+  const getColors = () => {
+    if (!isOpen) {
+      return { 
+        bg: 'bg-surface-container-highest', 
+        text: 'text-outline', 
+        glow: 'opacity-20 shadow-none',
+        color: '#404753'
+      };
+    }
+
     switch (clinic.type) {
-      case 'pharmacy': return '#12B76A'; // Green
-      case 'emergency': return '#F04438'; // Red
-      default: return '#2E90FA'; // Blue
+      case 'pharmacy': return { 
+        bg: 'bg-secondary', 
+        text: 'text-on-secondary', 
+        glow: 'shadow-[0_0_15px_rgba(81,223,142,0.4)]',
+        color: '#51df8e'
+      };
+      case 'emergency': return { 
+        bg: 'bg-error', 
+        text: 'text-on-error', 
+        glow: 'shadow-[0_0_20px_rgba(240,68,56,0.6)] animate-pulse',
+        color: '#F04438'
+      };
+      default: return { 
+        bg: 'bg-primary', 
+        text: 'text-on-primary', 
+        glow: 'shadow-[0_0_15px_rgba(166,200,255,0.4)]',
+        color: '#a6c8ff'
+      };
     }
   };
+
+  const colors = getColors();
+  const Icon = clinic.type === 'pharmacy' ? Store : (clinic.type === 'emergency' ? ShieldAlert : Hospital);
+  const isVerified = clinic.id === '3' || clinic.id === '5'; // Mock global verification for certain IDs
 
   return (
     <AdvancedMarker
@@ -50,17 +85,124 @@ function ClinicMarker({ clinic, onClick }: { clinic: Clinic, onClick: (c: Clinic
       onClick={() => onClick(clinic)}
       title={clinic.name}
     >
-      <Pin background={getColor()} borderColor="#ffffff33" glyphColor="#fff">
-        {clinic.type === 'pharmacy' ? <Pill className="w-3 h-3" /> : clinic.type === 'emergency' ? <Activity className="w-3 h-3" /> : <Navigation className="w-3 h-3" />}
-      </Pin>
+      <div className="relative group cursor-pointer">
+        {/* Glow Effect */}
+        <div className={`absolute -inset-3 rounded-full blur-2xl transition-all duration-500 ${colors.bg} ${colors.glow} ${clinic.type === 'emergency' && isOpen ? 'opacity-60 scale-125' : 'opacity-40'}`} />
+        
+        {/* Main Icon Container */}
+        <div className={`relative flex items-center justify-center w-12 h-12 rounded-[18px] ${colors.bg} ${colors.text} border-2 border-white/20 shadow-2xl overflow-hidden transition-all duration-500 group-hover:scale-110 active:scale-95 z-10`}>
+          <Icon className={`w-6 h-6 ${!isOpen ? 'opacity-40' : 'drop-shadow-lg'}`} />
+          
+          {/* Verified Badge */}
+          {isVerified && isOpen && (
+            <div className="absolute top-1 right-1">
+              <CheckCircle2 className="w-3 h-3 text-white fill-primary-container" />
+            </div>
+          )}
+
+          {/* Closed Overlay */}
+          {!isOpen && (
+            <div className="absolute inset-0 bg-surface/40 flex items-center justify-center backdrop-blur-[1px]">
+              <div className="w-full h-[2.5px] bg-outline-variant/60 rotate-45 shadow-sm" />
+            </div>
+          )}
+
+          {/* Status Indicator */}
+          <div className={`absolute bottom-0 right-0 w-4.5 h-4.5 rounded-full border-[2.5px] border-surface flex items-center justify-center translate-x-1.5 translate-y-1.5 z-20 ${isOpen ? 'bg-secondary shadow-[0_0_10px_rgba(81,223,142,0.8)]' : 'bg-outline-variant shadow-inner'}`}>
+            {isOpen ? (
+              <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            ) : (
+              <X className="w-2.5 h-2.5 text-surface font-black" />
+            )}
+          </div>
+        </div>
+
+        {/* Stem/Pointer */}
+        <div className="relative z-0 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[12px] mx-auto transition-all duration-300 -mt-1 drop-shadow-xl"
+             style={{ borderTopColor: colors.color }} />
+             
+        {/* Tooltip Label */}
+        <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-surface/95 backdrop-blur-xl border border-outline-variant/40 rounded-2xl px-4 py-2 shadow-[0_15px_30px_rgba(0,0,0,0.6)] opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap pointer-events-none z-50 transform translate-y-2 group-hover:translate-y-0 scale-90 group-hover:scale-100">
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-black uppercase tracking-[0.15em] text-on-surface">{clinic.name}</span>
+              {clinic.open24h && <Clock4 className="w-3 h-3 text-primary opacity-70" />}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] font-black uppercase tracking-widest ${isOpen ? 'text-secondary' : 'text-outline-variant'}`}>
+                {isOpen ? 'Abierto • Servicio Activo' : 'Cerrado Temporalmente'}
+              </span>
+            </div>
+          </div>
+          {/* Arrow */}
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-surface/95 border-b border-r border-outline-variant/40 rotate-45" />
+        </div>
+      </div>
     </AdvancedMarker>
   );
 }
 
+function Directions({
+  origin,
+  destination,
+  onRouteUpdate
+}: {
+  origin: google.maps.LatLngLiteral;
+  destination: google.maps.LatLngLiteral;
+  onRouteUpdate: (route: google.maps.DirectionsRoute) => void;
+}) {
+  const map = useMap();
+  const routesLibrary = useMapsLibrary('routes');
+  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService>();
+  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer>();
+
+  useEffect(() => {
+    if (!routesLibrary || !map) return;
+    setDirectionsService(new routesLibrary.DirectionsService());
+    setDirectionsRenderer(new routesLibrary.DirectionsRenderer({
+      map,
+      suppressMarkers: true,
+      polylineOptions: {
+        strokeColor: '#2E90FA',
+        strokeWeight: 6,
+        strokeOpacity: 0.8
+      }
+    }));
+  }, [routesLibrary, map]);
+
+  useEffect(() => {
+    if (!directionsService || !directionsRenderer) return;
+
+    directionsService.route({
+      origin,
+      destination,
+      travelMode: google.maps.TravelMode.DRIVING
+    }).then(response => {
+      directionsRenderer.setDirections(response);
+      onRouteUpdate(response.routes[0]);
+    }).catch(e => {
+      console.error('Directions request failed', e);
+    });
+
+    return () => {
+      directionsRenderer.setMap(null);
+    };
+  }, [directionsService, directionsRenderer, origin, destination]);
+
+  return null;
+}
+
 export default function HealthMap() {
-  const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [clinics, setClinics] = useState<(Clinic & { isOpen?: boolean })[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [center] = useState({ lat: -33.4489, lng: -70.6693 });
+  const [userLocation] = useState({ lat: -33.455, lng: -70.675 }); // Mock user location
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [routeInfo, setRouteInfo] = useState<{
+    distance: string;
+    duration: string;
+    steps?: google.maps.DirectionsStep[];
+  } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'pharmacy' | 'emergency'>('all');
   const [isEmergencyMode, setIsEmergencyMode] = useState(false);
@@ -101,7 +243,7 @@ export default function HealthMap() {
   }, []);
 
   useEffect(() => {
-    const mockClinics: Clinic[] = [
+    const mockClinics: (Clinic & { isOpen?: boolean })[] = [
       {
         id: '1',
         name: 'Farmacia Central MSP',
@@ -111,6 +253,7 @@ export default function HealthMap() {
         phone: '+56 9 1234 5678',
         inStock: true,
         open24h: true,
+        isOpen: true,
       },
       {
         id: '2',
@@ -121,6 +264,7 @@ export default function HealthMap() {
         phone: '+56 9 8765 4321',
         inStock: true,
         open24h: false,
+        isOpen: false,
       },
       {
         id: '3',
@@ -130,6 +274,7 @@ export default function HealthMap() {
         address: 'Av. Gran Hospital 10',
         phone: '911',
         open24h: true,
+        isOpen: true,
       },
       {
         id: '4',
@@ -139,6 +284,17 @@ export default function HealthMap() {
         address: 'Calle Medicina 77',
         phone: '911',
         open24h: true,
+        isOpen: true,
+      },
+      {
+        id: '5',
+        name: 'Clínica Las Condes',
+        type: 'clinic',
+        location: { lat: -33.42, lng: -70.62 },
+        address: 'Calle Providencia 123',
+        phone: '+56 2 2345 6789',
+        open24h: true,
+        isOpen: true,
       }
     ];
 
@@ -199,8 +355,112 @@ export default function HealthMap() {
         {/* Sidebar: Logistical Clarity */}
         <aside className="w-full md:w-[420px] lg:w-[480px] bg-surface-container-low border-r border-outline-variant/20 flex flex-col z-20 shadow-xl overflow-hidden relative">
           
-          {/* Context Header */}
-          <div className="p-6 bg-surface-container border-b border-outline-variant/30 shrink-0">
+          {/* Navigation Active Sidebar */}
+          <AnimatePresence mode="wait">
+            {isNavigating && routeInfo ? (
+              <motion.div 
+                key="navigation"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -20, opacity: 0 }}
+                className="flex flex-col h-full"
+              >
+                <div className="p-6 bg-surface-container border-b border-outline-variant/30 shrink-0">
+                  <div className="flex items-center justify-between mb-6">
+                    <button 
+                      onClick={() => {
+                        setIsNavigating(false);
+                        setRouteInfo(null);
+                      }}
+                      className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest hover:opacity-80 active:scale-95 transition-transform"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Cancelar Ruta
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                      <span className="text-[10px] font-mono font-black text-secondary tracking-widest uppercase">En Camino</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-current shadow-xl ${
+                      selectedClinic?.type === 'emergency' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
+                    }`}>
+                      {selectedClinic?.type === 'emergency' ? <Activity className="w-8 h-8" /> : <Hospital className="w-8 h-8" />}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-display font-black text-on-surface leading-tight tracking-tight">
+                        {selectedClinic?.name || 'Centro Médico'}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-1">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-outline-variant uppercase">Distancia</span>
+                          <span className="text-sm font-display font-bold text-on-surface">{routeInfo.distance}</span>
+                        </div>
+                        <div className="w-px h-6 bg-outline-variant/30" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-outline-variant uppercase">Tiempo</span>
+                          <span className={`text-sm font-display font-bold ${selectedClinic?.type === 'emergency' ? 'text-error' : 'text-primary'}`}>{routeInfo.duration}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/20 flex items-center justify-between shadow-inner">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20">
+                          <CheckCircle2 className="w-4 h-4" />
+                       </div>
+                       <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Centro Notificado</span>
+                    </div>
+                    <button className="text-[10px] font-bold text-outline-variant hover:text-primary transition-colors">
+                      DETALLES
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                  <h4 className="text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] font-mono mb-6">Instrucciones de Ruta</h4>
+                  <div className="space-y-6">
+                    {routeInfo.steps?.map((step, idx) => (
+                      <div key={idx} className="flex gap-4 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-6 h-6 rounded-lg bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                            <span className="text-[10px] font-bold">{idx + 1}</span>
+                          </div>
+                          {idx !== (routeInfo.steps?.length || 0) - 1 && (
+                            <div className="w-0.5 flex-1 bg-outline-variant/20 my-1 group-hover:bg-primary/30 transition-colors" />
+                          )}
+                        </div>
+                        <div className="flex-1 pb-4">
+                          <div className="text-sm text-on-surface font-medium mb-1" dangerouslySetInnerHTML={{ __html: step.instructions }} />
+                          <div className="flex items-center gap-3 text-[10px] font-bold text-outline-variant font-mono">
+                            <span className="flex items-center gap-1"><Navigation className="w-3 h-3" /> {step.distance?.text}</span>
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {step.duration?.text}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 bg-surface-container border-t border-outline-variant/20">
+                  <button className="w-full h-14 bg-error text-on-error font-display font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                    <AlertCircle className="w-5 h-5 fill-current" />
+                    SOS: Alerta Médica
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="list"
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 20, opacity: 0 }}
+                className="flex flex-col h-full"
+              >
+                <div className="p-6 bg-surface-container border-b border-outline-variant/30 shrink-0">
             {isEmergencyMode ? (
               <>
                 <div className="mb-4 bg-error-container/10 rounded-2xl p-4 border border-error/20 flex gap-4">
@@ -380,7 +640,12 @@ export default function HealthMap() {
                   )}
                 </div>
 
-                <button className={`w-full py-3.5 px-4 rounded-[18px] font-display font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                <button 
+                  onClick={() => {
+                    setSelectedClinic(clinic);
+                    setIsNavigating(true);
+                  }}
+                  className={`w-full py-3.5 px-4 rounded-[18px] font-display font-bold text-xs flex items-center justify-center gap-2 transition-all ${
                   selectedClinic?.id === clinic.id
                     ? clinic.type === 'emergency' ? 'bg-error text-on-error shadow-lg shadow-error/20' : 'bg-primary text-on-primary shadow-lg shadow-primary/20'
                     : 'bg-surface-container-highest text-on-surface border border-outline-variant/30 hover:bg-surface-container transition-all active:scale-[0.98]'
@@ -427,6 +692,9 @@ export default function HealthMap() {
                 </button>
              </div>
           )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </aside>
 
         {/* Map Section */}
@@ -477,23 +745,82 @@ export default function HealthMap() {
                   <ClinicMarker 
                     key={clinic.id} 
                     clinic={clinic} 
-                    onClick={setSelectedClinic} 
+                    onClick={(c) => {
+                      setSelectedClinic(c);
+                      if (isNavigating) setIsNavigating(false);
+                    }} 
                   />
                 ))}
 
+                {isNavigating && selectedClinic && (
+                  <Directions
+                    origin={userLocation}
+                    destination={selectedClinic.location}
+                    onRouteUpdate={(route) => {
+                      setRouteInfo({
+                        distance: route.legs[0].distance?.text || '',
+                        duration: route.legs[0].duration?.text || '',
+                        steps: route.legs[0].steps
+                      });
+                    }}
+                  />
+                )}
+
+                {/* InfoWindow custom logic */}
                 {selectedClinic && (
                   <InfoWindow
                     position={selectedClinic.location}
-                    onCloseClick={() => setSelectedClinic(null)}
+                    onCloseClick={() => {
+                      setSelectedClinic(null);
+                      if (isNavigating) setIsNavigating(false);
+                    }}
                   >
-                    <div className="p-1 min-w-[200px]">
-                      <h4 className={`font-display font-bold ${selectedClinic.type === 'emergency' ? 'text-error' : 'text-primary'}`}>{selectedClinic.name}</h4>
-                      <p className="text-xs text-on-surface-variant mt-1">{selectedClinic.address}</p>
-                      <div className="mt-3 pt-3 border-t border-outline-variant/30 flex gap-2">
-                         <button className={`flex-1 py-1.5 rounded-lg text-xs font-bold shadow-md ${selectedClinic.type === 'emergency' ? 'bg-error text-on-error' : 'bg-primary text-on-primary'}`}>Llegar</button>
-                         <a href={`tel:${selectedClinic.phone}`} className="w-10 h-8 flex items-center justify-center bg-surface-container rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-primary">
-                            <Phone className="w-4 h-4" />
-                         </a>
+                    <div className="p-3 min-w-[240px] bg-surface flex flex-col gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 border-current shrink-0 ${
+                          selectedClinic.type === 'emergency' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
+                        }`}>
+                          {selectedClinic.type === 'emergency' ? <Activity className="w-6 h-6" /> : <Hospital className="w-6 h-6" />}
+                        </div>
+                        <div>
+                          <h4 className="font-display font-bold text-base text-on-surface leading-tight">{selectedClinic.name}</h4>
+                          <p className="text-[10px] text-on-surface-variant font-medium mt-1 leading-relaxed opacity-70">
+                            {selectedClinic.address}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-outline-variant/20 pt-3">
+                         <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-outline-variant uppercase">Estatus</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                               <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                               <span className="text-[10px] font-bold text-secondary uppercase">Abierto</span>
+                            </div>
+                         </div>
+                         <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-bold text-outline-variant uppercase">Distancia</span>
+                            <span className="text-sm font-display font-bold text-on-surface">~ {selectedClinic.id === '3' ? '2.4' : '1.2'} km</span>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <button 
+                          onClick={() => setIsNavigating(true)}
+                          className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                            selectedClinic.type === 'emergency' ? 'bg-error text-on-error' : 'bg-primary text-on-primary'
+                          }`}
+                        >
+                          <Navigation className="w-3 h-3 fill-current" />
+                          Ruta
+                        </button>
+                        <a 
+                          href={`tel:${selectedClinic.phone}`} 
+                          className="py-2.5 bg-surface-container border border-outline-variant/30 rounded-xl flex items-center justify-center gap-2 text-on-surface-variant hover:text-primary transition-all hover:bg-surface-container-high"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Llamar</span>
+                        </a>
                       </div>
                     </div>
                   </InfoWindow>

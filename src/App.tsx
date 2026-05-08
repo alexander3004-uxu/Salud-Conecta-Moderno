@@ -16,8 +16,11 @@ import HealthMap from './components/maps/HealthMap';
 import Appointments from './components/appointments/Appointments';
 import History from './components/history/History';
 import TriageChecker from './components/triage/TriageChecker';
+import MessagingSimulation from './components/chat/MessagingSimulation';
 import { Profile } from './components/profile/Profile';
 import { Settings } from './components/profile/Settings';
+
+import Search from './components/search/Search';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -43,10 +46,14 @@ export default function App() {
         return <TriageChecker />;
       case 'assistant':
         return <Assistant />;
+      case 'search':
+        return <Search />;
       case 'map':
         return <HealthMap />;
       case 'appointments':
         return <Appointments />;
+      case 'messages':
+        return <MessagingSimulation />;
       case 'history':
         return <History />;
       case 'profile':

@@ -116,7 +116,7 @@ export default function TriageChecker() {
           ? 'No hemos podido procesar tu informe de síntomas automáticamente. Por favor, intenta describirlos con más detalle o consulta con un médico profesional para una evaluación segura.'
           : (triageResult.urgency === 'emergency' 
             ? 'He analizado sus síntomas y mi evaluación indica una posible EMERGENCIA MÉDICA.' 
-            : triageResult.reasoning),
+            : 'He completado su evaluación de salud. A continuación le presento mi análisis y las recomendaciones sugeridas.'),
         timestamp: new Date(),
         type: triageResult.error ? 'text' : 'result'
       };
@@ -137,6 +137,20 @@ export default function TriageChecker() {
 
   const handleGoBack = () => {
     setResult(null);
+    setIsDetailsExpanded(false);
+  };
+
+  const handleReset = () => {
+    setMessages([
+      {
+        id: '1',
+        role: 'assistant',
+        content: 'Hola. Soy su asistente de triaje inteligente. Puedo analizar sus síntomas para darle una recomendación de salud, sugerir medicación básica y localizar el centro médico más cercano según su urgencia. ¿Qué síntoma principal lo trae hoy aquí?',
+        timestamp: new Date(),
+      }
+    ]);
+    setResult(null);
+    setInput('');
     setIsDetailsExpanded(false);
   };
 
@@ -194,6 +208,15 @@ export default function TriageChecker() {
                  result.urgency === 'medium' ? 'Atención Clínica Sugerida' : 
                  result.urgency === 'high' ? 'Prioridad Alta Detectada' : 'Emergencia Crítica'}
               </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleReset}
+                className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold text-on-surface-variant hover:text-error uppercase tracking-widest transition-colors font-mono hover:bg-error/5 rounded-lg"
+                title="Reiniciar Triaje"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reiniciar
+              </button>
               <button 
                 onClick={handleGoBack}
                 className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest transition-colors font-mono hover:bg-primary/5 rounded-lg"
@@ -201,6 +224,7 @@ export default function TriageChecker() {
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Ir atrás
               </button>
+            </div>
             </div>
             <h2 className="text-3xl font-display font-bold text-on-surface">Diagnóstico IA</h2>
             <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
@@ -220,6 +244,13 @@ export default function TriageChecker() {
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span className="font-mono text-[10px] font-bold text-on-surface-variant">IA CONECTADA</span>
             </div>
+            <button 
+              onClick={handleReset}
+              className="p-2 text-on-surface-variant hover:text-error transition-colors rounded-lg hover:bg-error/5"
+              title="Reiniciar conversación"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
           </div>
         )}
       </motion.div>
@@ -330,81 +361,92 @@ export default function TriageChecker() {
                           </div>
                        </div>
 
-                       {/* Optional Details Block - Collapsible */}
-                       {(result.medication || result.instructions) && (
-                         <div className="p-6 pt-0 space-y-4">
-                            <button
-                              onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
-                              className="w-full flex items-center justify-between p-4 bg-surface-container-high/30 rounded-2xl border border-primary/10 hover:bg-surface-container-high/50 transition-all text-[10px] font-bold text-on-surface uppercase tracking-widest font-mono group"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="p-1.5 bg-primary/10 rounded-lg group-hover:scale-110 transition-transform">
-                                  <FileText className="w-4 h-4 text-primary" />
-                                </div>
-                                <span>Detalles Adicionales del Plan</span>
+                       {/* Detailed Analysis & Instructions - Collapsible */}
+                       <div className="p-6 pt-0 space-y-4">
+                          <button
+                            onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+                            className="w-full flex items-center justify-between p-4 bg-surface-container-high/30 rounded-2xl border border-primary/10 hover:bg-surface-container-high/50 transition-all text-[10px] font-bold text-on-surface uppercase tracking-widest font-mono group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-1.5 bg-primary/10 rounded-lg group-hover:scale-110 transition-transform">
+                                <FileText className="w-4 h-4 text-primary" />
                               </div>
+                              <span>{isDetailsExpanded ? 'Ocultar Detalles' : 'Ver Análisis y Cuidados'}</span>
+                            </div>
+                            <motion.div
+                              animate={{ rotate: isDetailsExpanded ? 180 : 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <ChevronDown className="w-4 h-4 text-on-surface-variant" />
+                            </motion.div>
+                          </button>
+
+                          <AnimatePresence>
+                            {isDetailsExpanded && (
                               <motion.div
-                                animate={{ rotate: isDetailsExpanded ? 180 : 0 }}
-                                transition={{ duration: 0.3 }}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.4, ease: [0.215, 0.61, 0.355, 1] }}
+                                className="overflow-hidden"
                               >
-                                <ChevronDown className="w-4 h-4 text-on-surface-variant" />
-                              </motion.div>
-                            </button>
-
-                            <AnimatePresence>
-                              {isDetailsExpanded && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.4, ease: [0.215, 0.61, 0.355, 1] }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="space-y-6 pt-2">
-                                    {/* Dosage & Timing Grid */}
-                                    {result.medication && (
-                                      <div className="grid grid-cols-2 gap-4">
-                                         <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 flex flex-col gap-1 shadow-sm">
-                                            <div className="flex items-center gap-2 text-primary opacity-60 mb-1">
-                                              <Droplets className="w-4 h-4" />
-                                              <span className="text-[9px] font-bold uppercase tracking-wider font-mono">Dosis</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-on-surface">{result.dosage || 'Sujeto a peso/edad'}</span>
-                                         </div>
-                                         <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 flex flex-col gap-1 shadow-sm">
-                                            <div className="flex items-center gap-2 text-primary opacity-60 mb-1">
-                                              <Clock className="w-4 h-4" />
-                                              <span className="text-[9px] font-bold uppercase tracking-wider font-mono">Frecuencia</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-on-surface">{result.frequency || 'Cada 8 horas'}</span>
-                                         </div>
+                                <div className="space-y-6 pt-2">
+                                  {/* AI Reasoning Section */}
+                                  <div className="bg-surface-container-low/50 rounded-2xl p-5 border border-outline-variant/10">
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className="p-1 bg-secondary/10 rounded-md">
+                                        <Bot className="w-3.5 h-3.5 text-secondary" />
                                       </div>
-                                    )}
-
-                                    {/* Detailed Instructions */}
-                                    {result.instructions && (
-                                      <div className="bg-surface-container-high/20 rounded-2xl p-5 border border-primary/5 relative">
-                                        <div className="flex items-center gap-3 mb-3">
-                                          <div className="p-1 bg-primary/20 rounded-md">
-                                            <Stethoscope className="w-3.5 h-3.5 text-primary" />
-                                          </div>
-                                          <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">Instrucciones Específicas</span>
-                                        </div>
-                                        <p className="text-xs text-on-surface-variant font-medium leading-relaxed pl-3 border-l-2 border-primary/30">
-                                          {result.instructions}
-                                        </p>
-                                        <div className="mt-4 flex items-center gap-2 p-2.5 bg-on-surface/5 rounded-xl border border-on-surface/5">
-                                          <Calendar className="w-4 h-4 text-primary opacity-60" />
-                                          <span className="text-[10px] font-bold text-on-surface-variant">Duración Sugerida: <span className="text-on-surface">{result.duration || 'Hasta remisión de síntomas'}</span></span>
-                                        </div>
-                                      </div>
-                                    )}
+                                      <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">Análisis Detallado</span>
+                                    </div>
+                                    <p className="text-xs text-on-surface font-medium leading-relaxed">
+                                      {result.reasoning}
+                                    </p>
                                   </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                         </div>
-                       )}
+
+                                  {/* Dosage & Timing Grid */}
+                                  {result.medication && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                       <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 flex flex-col gap-1 shadow-sm">
+                                          <div className="flex items-center gap-2 text-primary opacity-60 mb-1">
+                                            <Droplets className="w-4 h-4" />
+                                            <span className="text-[9px] font-bold uppercase tracking-wider font-mono">Dosis</span>
+                                          </div>
+                                          <span className="text-sm font-bold text-on-surface">{result.dosage || 'Sujeto a peso/edad'}</span>
+                                       </div>
+                                       <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 flex flex-col gap-1 shadow-sm">
+                                          <div className="flex items-center gap-2 text-primary opacity-60 mb-1">
+                                            <Clock className="w-4 h-4" />
+                                            <span className="text-[9px] font-bold uppercase tracking-wider font-mono">Frecuencia</span>
+                                          </div>
+                                          <span className="text-sm font-bold text-on-surface">{result.frequency || 'Cada 8 horas'}</span>
+                                       </div>
+                                    </div>
+                                  )}
+
+                                  {/* Detailed Instructions */}
+                                  {result.instructions && (
+                                    <div className="bg-surface-container-high/20 rounded-2xl p-5 border border-primary/5 relative">
+                                      <div className="flex items-center gap-3 mb-3">
+                                        <div className="p-1 bg-primary/20 rounded-md">
+                                          <Stethoscope className="w-3.5 h-3.5 text-primary" />
+                                        </div>
+                                        <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">Guía de Cuidados</span>
+                                      </div>
+                                      <p className="text-xs text-on-surface-variant font-medium leading-relaxed pl-3 border-l-2 border-primary/30">
+                                        {result.instructions}
+                                      </p>
+                                      <div className="mt-4 flex items-center gap-2 p-2.5 bg-on-surface/5 rounded-xl border border-on-surface/5">
+                                        <Calendar className="w-4 h-4 text-primary opacity-60" />
+                                        <span className="text-[10px] font-bold text-on-surface-variant">Duración Sugerida: <span className="text-on-surface">{result.duration || 'Hasta remisión de síntomas'}</span></span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                       </div>
 
                        <div className="p-6 bg-surface-container-highest/20 border-t border-outline-variant/20 flex flex-col gap-4">
                           <div className="flex flex-col sm:flex-row gap-3">
@@ -431,14 +473,20 @@ export default function TriageChecker() {
                     </div>
 
                     <div className="flex flex-col gap-3">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: isSaving || !result ? 1 : 1.02 }}
+                        whileTap={{ scale: isSaving || !result ? 1 : 0.98 }}
                         onClick={handleSaveToHistory}
                         disabled={isSaving || !result}
-                        className="w-full h-12 bg-secondary text-on-secondary rounded-2xl flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+                        className="w-full h-12 bg-secondary text-on-secondary rounded-2xl flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-widest shadow-lg hover:shadow-secondary/20 transition-all disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group"
                       >
-                        {isSaving ? <Activity className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                        {isSaving ? (
+                          <Activity className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        )}
                         {isSaving ? 'Guardando...' : 'Guardar en Historial'}
-                      </button>
+                      </motion.button>
 
                       <button
                         onClick={handleGoBack}
@@ -583,7 +631,7 @@ export default function TriageChecker() {
             initial={{ opacity: 0, y: 50, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: 20, x: '-50%', transition: { duration: 0.2 } }}
-            className="fixed bottom-6 left-1/2 z-[100] min-w-[280px]"
+            className="fixed bottom-[240px] left-1/2 z-[100] min-w-[280px]"
           >
             <div className={`backdrop-blur-md border rounded-2xl p-4 shadow-2xl flex items-center gap-3 ${
               toastType === 'success' 

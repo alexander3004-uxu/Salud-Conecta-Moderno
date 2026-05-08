@@ -49,9 +49,10 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
 
   const navItems = [
     { id: 'triage', label: 'Triaje', icon: Stethoscope },
-    { id: 'map', label: 'Medicamentos', icon: Pill },
-    { id: 'appointments', label: 'Citas', icon: Calendar },
+    { id: 'messages', label: 'IA Chat', icon: MessageSquare },
+    { id: 'search', label: 'Buscar', icon: Globe },
     { id: 'history', label: 'Historial', icon: History },
+    { id: 'appointments', label: 'Citas', icon: Calendar },
   ];
 
   return (
@@ -141,19 +142,21 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id === 'map_view' ? 'map' : item.id)}
-            className={`flex flex-col items-center justify-center min-w-[72px] h-full transition-all duration-300 ${
-              (activeTab === item.id || (activeTab === 'map' && (item.id === 'map' || item.id === 'map_view')))
-                ? 'text-primary' 
+            onClick={() => setActiveTab(item.id)}
+            className={`flex flex-col items-center justify-center min-w-[64px] h-full transition-all duration-300 ${
+              activeTab === item.id 
+                ? item.id === 'search' ? 'text-on-secondary-container' : 'text-primary' 
                 : 'text-on-surface-variant'
             }`}
           >
             <div className={`w-12 h-8 flex items-center justify-center rounded-2xl mb-1 transition-all ${
-              (activeTab === item.id || (activeTab === 'map' && (item.id === 'map' || item.id === 'map_view'))) ? 'bg-primary/20 scale-110' : ''
+              activeTab === item.id 
+                ? item.id === 'search' ? 'bg-secondary shadow-lg shadow-secondary/30 scale-110' : 'bg-primary/20 scale-110' 
+                : ''
             }`}>
-              <item.icon className={`w-6 h-6 transition-all ${(activeTab === item.id || (activeTab === 'map' && (item.id === 'map' || item.id === 'map_view'))) ? 'stroke-2' : 'stroke-[1.5]'}`} />
+              <item.icon className={`w-6 h-6 transition-all ${activeTab === item.id ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+            <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${activeTab === item.id ? 'opacity-100' : 'opacity-60'}`}>{item.label}</span>
           </button>
         ))}
       </nav>

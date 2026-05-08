@@ -31,10 +31,14 @@ import {
   Folder,
   UploadCloud,
   Settings as SettingsIcon,
-  FileDigit
+  FileDigit,
+  CheckCircle2,
+  AlertTriangle,
+  Scan
 } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { BiometricModal } from './BiometricModal';
+import DocumentScanner from '../history/DocumentScanner';
 
 export function Profile() {
   const [user] = useState(auth.currentUser);
@@ -42,6 +46,10 @@ export function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isValidated, setIsValidated] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const navigateToSettings = () => {
     window.dispatchEvent(new CustomEvent('changeTab', { detail: 'settings' }));
@@ -115,12 +123,37 @@ export function Profile() {
     }, 1500);
   };
 
+  const handleDocumentCapture = (data: any) => {
+    const newFile = {
+      id: data.id,
+      name: data.title + '.pdf',
+      date: data.date,
+      type: 'pdf'
+    };
+    setFiles([newFile, ...files]);
+    setToastMessage('Orden digitalizada y guardada');
+    setToastType('success');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const handleSave = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
       setIsPreviewMode(false);
+      setToastMessage('Perfil actualizado correctamente');
+      setToastType('success');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     }, 1000);
+  };
+
+  const handleAddContact = () => {
+    setToastMessage('Contacto de emergencia añadido');
+    setToastType('success');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (
@@ -341,12 +374,21 @@ export function Profile() {
 
       {/* Medical Documentation Section */}
       <section className="flex flex-col gap-6">
-        <h2 className="text-xl font-display font-bold text-on-surface flex items-center gap-3">
-          <div className="bg-primary/20 p-2 rounded-lg">
-            <Folder className="w-5 h-5 text-primary" />
-          </div>
-          Documentación Médica
-        </h2>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h2 className="text-xl font-display font-bold text-on-surface flex items-center gap-3">
+            <div className="bg-primary/20 p-2 rounded-lg">
+              <Folder className="w-5 h-5 text-primary" />
+            </div>
+            Documentación Médica
+          </h2>
+          <button 
+            onClick={() => setIsScannerOpen(true)}
+            className="bg-secondary-container text-on-secondary-container px-5 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-secondary transition-all shadow-md active:scale-95 shadow-lg shadow-secondary/15"
+          >
+            <Scan className="w-4 h-4" />
+            Digitalizar Orden
+          </button>
+        </div>
         
         <div className="bg-surface-container rounded-3xl p-6 md:p-8 border border-outline-variant/30 flex flex-col gap-8 shadow-sm">
           {/* Status Banners */}
@@ -595,6 +637,7 @@ export function Profile() {
 
           <div className="flex justify-end">
             <button 
+              onClick={handleAddContact}
               disabled={!isValidated}
               className="bg-secondary-container hover:bg-secondary text-on-secondary-container font-label-md text-label-md rounded-xl px-8 py-3 transition-all flex items-center gap-2 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -716,6 +759,15 @@ export function Profile() {
       </section>
 
       {/* Security Section */}
+      <AnimatePresence>
+        {isScannerOpen && (
+          <DocumentScanner 
+            onClose={() => setIsScannerOpen(false)}
+            onCapture={handleDocumentCapture}
+          />
+        )}
+      </AnimatePresence>
+
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
         {/* Pasaporte Card */}
         <div className="bg-surface-container rounded-3xl p-6 border border-outline-variant/30 flex flex-col items-start gap-6 relative overflow-hidden group shadow-lg">
@@ -800,6 +852,39 @@ export function Profile() {
           Cerrar Sesión de Salud
         </button>
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%', transition: { duration: 0.2 } }}
+            className="fixed bottom-10 left-1/2 z-[100] min-w-[300px]"
+          >
+            <div className={`backdrop-blur-md border rounded-2xl p-4 shadow-2xl flex items-center gap-3 ${
+              toastType === 'success' 
+                ? 'bg-surface-bright/95 border-secondary/30' 
+                : 'bg-error-container/20 border-error/30'
+            }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${
+                toastType === 'success' 
+                  ? 'bg-secondary/10 border-secondary/30' 
+                  : 'bg-error/10 border-error/30'
+              }`}>
+                {toastType === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5 text-secondary" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-error" />
+                )}
+              </div>
+              <p className={`text-xs font-bold ${
+                toastType === 'success' ? 'text-on-surface' : 'text-error'
+              }`}>{toastMessage}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <BiometricModal 
         isOpen={isModalOpen} 
