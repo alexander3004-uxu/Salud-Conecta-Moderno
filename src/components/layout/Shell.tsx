@@ -14,7 +14,11 @@ import {
   History,
   Globe,
   Radio,
-  Store
+  Store,
+  Search as SearchIcon,
+  Zap,
+  Trophy,
+  Flame
 } from 'lucide-react';
 import { auth, signInWithGoogle } from '../../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
@@ -50,11 +54,13 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
 
   const navItems = [
     { id: 'triage', label: 'Triaje', icon: Stethoscope },
-    { id: 'messages', label: 'IA Chat', icon: MessageSquare },
-    { id: 'search', label: 'Buscar', icon: Globe },
+    { id: 'pharmacy', label: 'Medicamentos', icon: Pill },
+    { id: 'search', label: 'Buscar', icon: SearchIcon },
     { id: 'history', label: 'Historial', icon: History },
+    { id: 'rewards', label: 'Premios', icon: Trophy },
+    { id: 'activity', label: 'Actividad', icon: Activity },
     { id: 'appointments', label: 'Citas', icon: Calendar },
-    { id: 'registration', label: 'Registro', icon: Store },
+    { id: 'membership', label: 'Membresía', icon: Zap },
   ];
 
   return (
@@ -72,10 +78,20 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+          <button 
+            onClick={() => setActiveTab('map')}
+            className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+              activeTab === 'map' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:bg-surface-container'
+            }`}
+          >
             <Globe className="w-5 h-5" />
           </button>
-          <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+          <button 
+            onClick={() => setActiveTab('activity')}
+            className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+              activeTab === 'activity' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:bg-surface-container'
+            }`}
+          >
             <Radio className="w-5 h-5" />
           </button>
           

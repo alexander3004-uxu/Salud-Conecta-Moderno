@@ -22,6 +22,15 @@ import { Settings } from './components/profile/Settings';
 
 import Search from './components/search/Search';
 import EntityRegistration from './components/registration/EntityRegistration';
+import DoctorDashboard from './components/dashboard/DoctorDashboard';
+import PharmacyDashboard from './components/dashboard/PharmacyDashboard';
+import CenterDashboard from './components/dashboard/CenterDashboard';
+import Membership from './components/membership/Membership';
+import HealthWallet from './components/membership/HealthWallet';
+import HealthChallenges from './components/membership/HealthChallenges';
+import PharmacyDiscounts from './components/membership/PharmacyDiscounts';
+import ActivityLogs from './components/membership/ActivityLogs';
+import PointsConfig from './components/membership/PointsConfig';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -60,6 +69,8 @@ export default function App() {
         return <HealthMap />;
       case 'appointments':
         return <Appointments />;
+      case 'pharmacy':
+        return <PharmacyDiscounts />;
       case 'messages':
         return <MessagingSimulation />;
       case 'history':
@@ -68,8 +79,20 @@ export default function App() {
         return <Profile />;
       case 'settings':
         return <Settings />;
+      case 'points-config':
+        return <PointsConfig />;
+      case 'membership':
+        return <Membership />;
+      case 'rewards':
+        return <HealthWallet />;
+      case 'activity':
+        return <ActivityLogs />;
       case 'registration':
-        return <EntityRegistration initialType={regType} onBack={() => setActiveTab('home')} />;
+        return <EntityRegistration initialType={regType} onBack={() => setActiveTab('home')} onFinish={() => setActiveTab('dashboard')} />;
+      case 'dashboard':
+        if (regType === 'doctor') return <DoctorDashboard />;
+        if (regType === 'lab_pharmacy') return <PharmacyDashboard />;
+        return <CenterDashboard />;
       default:
         return (
           <Hero 

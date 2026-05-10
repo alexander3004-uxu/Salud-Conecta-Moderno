@@ -135,13 +135,29 @@ export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }
                 Únete a la red interoperable <span className="text-primary font-bold">Salud Conecta™</span>. Registra tu laboratorio, clínica o farmacia para aparecer en el mapa de stock y disponibilidad en tiempo real.
               </p>
             </div>
-            <button 
-              onClick={() => onOpenRegistration('lab_pharmacy')}
-              className="group whitespace-nowrap bg-primary text-on-primary px-12 py-6 rounded-2xl font-display font-black text-lg uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 transition-all flex items-center gap-4"
-            >
-              Registrar Establecimiento
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button 
+                onClick={() => onOpenRegistration('doctor')}
+                className="group bg-surface border-2 border-primary/20 text-on-surface px-8 py-5 rounded-2xl font-display font-black text-sm uppercase tracking-widest hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-4"
+              >
+                Soy Profesional
+                <Stethoscope className="w-5 h-5 text-primary" />
+              </button>
+              <button 
+                onClick={() => onOpenRegistration('clinic')}
+                className="group bg-primary text-on-primary px-8 py-5 rounded-2xl font-display font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all flex items-center gap-4 text-center"
+              >
+                Centro de Salud
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button 
+                onClick={() => onOpenRegistration('lab_pharmacy')}
+                className="group bg-surface border-2 border-secondary/20 text-on-surface px-8 py-5 rounded-2xl font-display font-black text-sm uppercase tracking-widest hover:border-secondary hover:bg-secondary/5 transition-all flex items-center gap-4"
+              >
+                Laboratorio/Farmacia
+                <ArrowRight className="w-5 h-5 text-secondary" />
+              </button>
+            </div>
           </motion.div>
         </div>
       </section>
