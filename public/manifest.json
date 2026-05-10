@@ -2,20 +2,23 @@
   "name": "Salud Conecta IA",
   "short_name": "SaludIA",
   "description": "Ecosistema inteligente de salud pública.",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#00478d",
+  "orientation": "portrait",
+  "background_color": "#001c3b",
+  "theme_color": "#001c3b",
   "icons": [
     {
-      "src": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=60&w=192",
+      "src": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=192&h=192",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=60&w=512",
+      "src": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=512&h=512",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

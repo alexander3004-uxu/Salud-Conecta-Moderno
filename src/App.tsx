@@ -31,6 +31,7 @@ import HealthChallenges from './components/membership/HealthChallenges';
 import PharmacyDiscounts from './components/membership/PharmacyDiscounts';
 import ActivityLogs from './components/membership/ActivityLogs';
 import PointsConfig from './components/membership/PointsConfig';
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -118,6 +119,7 @@ export default function App() {
   return (
     <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
       {renderContent()}
+      <PWAInstallPrompt />
     </Shell>
   );
 }

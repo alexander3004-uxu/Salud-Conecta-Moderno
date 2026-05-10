@@ -9,7 +9,6 @@ import {
   MoreVertical, 
   Flag,
   Droplets,
-  Water,
   Search,
   Bell,
   User,
@@ -21,7 +20,7 @@ import {
   History,
   TrendingDown,
   Activity,
-  SelfImprovement
+  Heart
 } from 'lucide-react';
 
 export default function ActivityLogs() {

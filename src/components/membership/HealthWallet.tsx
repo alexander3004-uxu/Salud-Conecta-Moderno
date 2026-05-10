@@ -19,7 +19,7 @@ import {
   CheckCircle2,
   Stethoscope,
   Search,
-  Redeem,
+  Gift as Redeem,
   Settings as SettingsIcon
 } from 'lucide-react';
 
