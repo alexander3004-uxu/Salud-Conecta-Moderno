@@ -318,7 +318,11 @@ function HealthMapInner() {
         });
 
         if (mappedClinics.length > 0) {
-          setClinics(mappedClinics);
+          setClinics(prev => {
+            const existingIds = new Set(prev.map(c => c.id));
+            const uniqueNew = mappedClinics.filter(c => !existingIds.has(c.id));
+            return [...prev, ...uniqueNew];
+          });
         }
       } catch (error) {
         console.error("Error fetching Nicaragua health places:", error);
@@ -434,10 +438,21 @@ function HealthMapInner() {
       try {
         const data = await getClinics();
         // If Firestore data is available, prioritize it, otherwise use Nicaragua-specific mocks
-        if (data.length > 5) setClinics(data); // Assume if we have many it's real data
-        else setClinics(prev => [...prev, ...mockClinics]); 
+        if (data.length > 5) {
+          setClinics(data);
+        } else {
+          setClinics(prev => {
+             const existingIds = new Set(prev.map(c => c.id));
+             const uniqueMocks = mockClinics.filter(c => !existingIds.has(c.id));
+             return [...prev, ...uniqueMocks];
+          });
+        }
       } catch (e) {
-        setClinics(mockClinics);
+        setClinics(prev => {
+          const existingIds = new Set(prev.map(c => c.id));
+          const uniqueMocks = mockClinics.filter(c => !existingIds.has(c.id));
+          return [...prev, ...uniqueMocks];
+        });
       }
     };
     fetchClinics();
