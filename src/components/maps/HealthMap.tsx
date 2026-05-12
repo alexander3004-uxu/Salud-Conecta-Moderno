@@ -1100,38 +1100,6 @@ function HealthMapInner() {
                 className="w-full h-full"
                 gestureHandling="greedy"
                 disableDefaultUI
-                styles={[
-                   {
-                     "featureType": "all",
-                     "elementType": "labels.text.fill",
-                     "stylers": [{"color": "#8a919e"}]
-                   },
-                   {
-                     "featureType": "all",
-                     "elementType": "labels.icon",
-                     "stylers": [{"visibility": "off"}]
-                   },
-                   {
-                     "featureType": "landscape",
-                     "elementType": "all",
-                     "stylers": [{"color": "#0b1326"}]
-                   },
-                   {
-                     "featureType": "poi",
-                     "elementType": "all",
-                     "stylers": [{"visibility": "off"}]
-                   },
-                   {
-                      "featureType": "road",
-                      "elementType": "all",
-                      "stylers": [{"color": "#171f33"}]
-                   },
-                   {
-                      "featureType": "water",
-                      "elementType": "all",
-                      "stylers": [{"color": "#060e20"}]
-                   }
-                ]}
               >
                 {clinics.map(clinic => (
                   <ClinicMarker 
