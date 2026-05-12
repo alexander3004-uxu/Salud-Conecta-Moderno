@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Bot, User, Loader2, Info } from 'lucide-react';
 import { getHealthAssistant } from '../../lib/gemini';
+import { useUser } from '../../contexts/UserContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -9,8 +10,9 @@ interface Message {
 }
 
 export default function Assistant() {
+  const { membership } = useUser();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hola, soy tu asistente de Salud Conecta IA. ¿En qué puedo ayudarte hoy? Puedo ayudarte a encontrar clínicas, verificar stock en farmacias o agendar una cita.' }
+    { role: 'assistant', content: 'Hola, soy tu asistente de Salud Conecta IA. ¿En qué puedo ayudarte hoy? Mi misión es facilitarte el acceso a la salud, especialmente a través de la Red Pública (MINSA) si lo necesitas.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +37,7 @@ export default function Assistant() {
       parts: [{ text: m.content }]
     }));
 
-    const response = await getHealthAssistant(userMessage, history);
+    const response = await getHealthAssistant(userMessage, membership, history);
     setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     setIsLoading(false);
   };

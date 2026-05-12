@@ -23,6 +23,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   role: 'patient' | 'admin' | 'provider';
+  membership: 'free' | 'premium';
   createdAt: string;
 }
 
@@ -30,6 +31,7 @@ export interface Clinic {
   id: string;
   name: string;
   type: 'clinic' | 'pharmacy' | 'emergency';
+  sector: 'public' | 'private';
   location: {
     lat: number;
     lng: number;

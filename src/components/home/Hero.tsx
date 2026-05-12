@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { MapPin, Phone, Clock, ArrowRight, ShieldCheck, HeartPulse, Activity, Stethoscope } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { AIServiceStatus } from '../common/AIServiceStatus';
 
 interface HeroProps {
   onStartAssistant: () => void;
@@ -70,6 +71,8 @@ export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }
           </motion.div>
         </div>
       </section>
+
+      <AIServiceStatus />
 
       {/* Features Grid */}
       <section className="py-24 bg-surface">

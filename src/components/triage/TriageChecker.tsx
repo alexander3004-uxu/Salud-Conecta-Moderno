@@ -23,6 +23,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { getSmartTriage } from '../../lib/gemini';
+import { useUser } from '../../contexts/UserContext';
 import { auth } from '../../lib/firebase';
 import { saveTriageRecord } from '../../services/triageService';
 
@@ -48,11 +49,12 @@ interface Message {
 }
 
 export default function TriageChecker() {
+  const { membership } = useUser();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: 'Hola. Soy su asistente de triaje inteligente. Puedo analizar sus síntomas para darle una recomendación de salud, sugerir medicación básica y localizar el centro médico más cercano según su urgencia. ¿Qué síntoma principal lo trae hoy aquí?',
+      content: 'Hola. Soy su asistente de triaje inteligente. Mi misión es ayudarle a encontrar la mejor atención disponible, priorizando la Red Pública (MINSA) si tiene recursos limitados. ¿Qué síntoma principal lo trae hoy aquí?',
       timestamp: new Date(),
     }
   ]);
@@ -97,7 +99,7 @@ export default function TriageChecker() {
     setIsTyping(true);
 
     try {
-      const triageResult = await getSmartTriage(text);
+      const triageResult = await getSmartTriage(text, membership);
       
       if (!triageResult.error) {
         setResult(triageResult);

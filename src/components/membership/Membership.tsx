@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import PremiumBenefits from './PremiumBenefits';
 import Checkout from './Checkout';
+import { useUser } from '../../contexts/UserContext';
 
 interface Plan {
   name: string;
@@ -25,11 +26,11 @@ interface Plan {
 }
 
 export default function Membership() {
-  const [isPremium, setIsPremium] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const { isPremium, setMembership } = useUser();
+  const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
 
   if (isPremium) {
-    return <PremiumBenefits />;
+    return <PremiumBenefits onDowngrade={() => setMembership('free')} />;
   }
 
   if (selectedPlan) {
@@ -39,7 +40,7 @@ export default function Membership() {
         onBack={() => setSelectedPlan(null)} 
         onComplete={() => {
           setSelectedPlan(null);
-          setIsPremium(true);
+          setMembership('premium');
         }} 
       />
     );

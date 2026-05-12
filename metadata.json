@@ -1,6 +1,6 @@
 {
   "name": "Salud Conecta IA",
-  "description": "Public health ecosystem for cognitive clarity, accessible health services, and medical assistance.",
+  "description": "Public health ecosystem powered by Gemini AI for cognitive clarity, accessible health services, and smart medical assistance.",
   "requestFramePermissions": [
     "geolocation"
   ],

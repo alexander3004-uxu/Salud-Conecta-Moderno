@@ -32,6 +32,8 @@ import PharmacyDiscounts from './components/membership/PharmacyDiscounts';
 import ActivityLogs from './components/membership/ActivityLogs';
 import PointsConfig from './components/membership/PointsConfig';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { UserProvider } from './contexts/UserContext';
 import Login from './components/auth/Login';
 
 export default function App() {
@@ -126,14 +128,24 @@ export default function App() {
   };
 
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <LanguageProvider>
+        <UserProvider>
+          <Login onLogin={handleLogin} />
+        </UserProvider>
+      </LanguageProvider>
+    );
   }
 
   return (
-    <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
-      {renderContent()}
-      <PWAInstallPrompt />
-    </Shell>
+    <LanguageProvider>
+      <UserProvider>
+        <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
+          {renderContent()}
+          <PWAInstallPrompt />
+        </Shell>
+      </UserProvider>
+    </LanguageProvider>
   );
 }
 
