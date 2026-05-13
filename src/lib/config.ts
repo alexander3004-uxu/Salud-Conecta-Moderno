@@ -12,24 +12,27 @@ const FALLBACK_MAPS_KEY = "AIzaSyCFpqnhjJpiniUqyVoKCTL39nPaPJmHTRg";
  * Robust API key retriever that handles various build-time injection styles
  */
 const getApiKey = (envVal: any, fallback: string, name: string) => {
-  // Check if it's literally the string "undefined", "null", or empty/placeholder
+  // Trim and check for common placeholder or invalid values
+  const val = typeof envVal === 'string' ? envVal.trim() : envVal;
+  
   const isInvalid = 
-    envVal === undefined || 
-    envVal === null || 
-    envVal === "" || 
-    envVal === "undefined" || 
-    envVal === "null" || 
-    envVal === "MISSING" || 
-    envVal === "YOUR_API_KEY";
+    val === undefined || 
+    val === null || 
+    val === "" || 
+    val === "undefined" || 
+    val === "null" || 
+    val === "MISSING" || 
+    val === "YOUR_API_KEY" ||
+    (typeof val === 'string' && val.length < 10); // Standard keys are much longer
 
   if (isInvalid) {
     if (process.env.NODE_ENV !== "production") {
-      console.log(`[Config] Using fallback for ${name}`);
+      console.log(`[Config] Using fallback for ${name} due to invalid value: "${val}"`);
     }
     return fallback;
   }
   
-  return String(envVal);
+  return String(val);
 };
 
 export const GOOGLE_MAPS_KEY = getApiKey(process.env.GOOGLE_MAPS_PLATFORM_KEY, FALLBACK_MAPS_KEY, "Google Maps");

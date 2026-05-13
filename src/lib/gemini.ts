@@ -36,12 +36,17 @@ Responde siempre en español.`,
       },
     });
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    if (error instanceof Error) {
-      if (error.message.includes('429')) {
-        if (error.message.includes('prepayment credits are depleted')) {
-           return "El sistema de IA requiere atención: Los créditos de prepago se han agotado en Google AI Studio. ¡Recuerda seguir las recomendaciones médicas generales!";
+    
+    const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
+                          errorMessage.toLowerCase().includes('resource_exhausted');
+
+    if (error instanceof Error || typeof error === 'object') {
+      if (errorMessage.includes('429')) {
+        if (isOutOfCredits) {
+           return "El sistema de IA requiere atención: Los créditos de prepago se han agotado en Google AI Studio. Visita ai.studio para gestionar tu facturación. ¡Recuerda seguir las recomendaciones médicas generales!";
         }
         return "Nuestra IA está descansando debido a alta demanda. ¡Recuerda seguir cuidando tu salud!";
       }
@@ -98,18 +103,21 @@ Responde siempre en español.`,
     return parsed;
   } catch (error: any) {
     console.error("Gemini Triage Error:", error);
-    const isQuotaError = error?.message?.includes('429') || error?.status === 429;
-    const isOutOfCredits = error?.message?.includes('prepayment credits are depleted');
+    
+    const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    const isQuotaError = errorMessage.includes('429') || error?.status === 429;
+    const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
+                          errorMessage.toLowerCase().includes('resource_exhausted');
     
     return {
       urgency: 'medium',
       recommendation: isOutOfCredits
-        ? 'El motor de IA no tiene créditos suficientes para procesar triajes avanzados. Por favor, acude a tu centro de salud local.'
+        ? 'El motor de IA ha agotado sus créditos en AI Studio. Por favor, verifica la facturación en ai.studio o acude a tu centro de salud local.'
         : (isQuotaError 
           ? 'El servicio de triaje automático está temporalmente limitado por alta demanda. Por favor, acércate a tu centro de salud más cercano.'
           : 'No pudimos procesar tu evaluación de triaje automáticamente. Por favor, intenta describir tus síntomas con más detalle o consulta directamente con un profesional de la salud.'),
       reasoning: isOutOfCredits 
-        ? 'Agotamiento de créditos en la plataforma de IA.'
+        ? 'Agotamiento de créditos en la plataforma de IA (AI Studio).'
         : (isQuotaError
           ? 'Límite de capacidad alcanzado en el motor de IA.'
           : 'Lo sentimos, tuvimos un problema al analizar tus síntomas. Te recomendamos intentar de nuevo o acudir a tu centro médico más cercano para una evaluación profesional.'),
@@ -136,20 +144,24 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
   } catch (error: any) {
     console.error("Gemini Health Tip Error:", error);
     
-    // Check for quota exhaustion
-    const isQuotaError = error?.message?.includes('429') || error?.status === 429;
-    const isOutOfCredits = error?.message?.includes('prepayment credits are depleted');
+    // Stringify error to search for patterns
+    const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    
+    // Check for quota or credit exhaustion
+    const isQuotaError = errorMessage.includes('429') || error?.status === 429;
+    const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
+                          errorMessage.toLowerCase().includes('resource_exhausted');
     
     if (isOutOfCredits) {
       return language === 'es'
-        ? "Nota del sistema: Los créditos de IA han finalizado. Procura beber 2 litros de agua diarios para una salud óptima."
-        : "System note: AI credits exhausted. Aim to drink 2 liters of water daily for optimal health.";
+        ? "Nota del sistema: Los créditos de IA han finalizado en el proyecto de AI Studio. Por favor, revisa la facturación en ai.studio. Recomendación general: Mantén una dieta rica en fibras."
+        : "System note: AI credits exhausted in AI Studio project. Please check billing at ai.studio. General advice: Maintain a high-fiber diet.";
     }
 
     if (isQuotaError) {
       return language === 'es'
-        ? "Recuerda: Caminar 30 minutos al día fortalece tu corazón y es gratuito. ¡Empieza hoy!"
-        : "Remember: Walking 30 minutes a day strengthens your heart and is free. Start today!";
+        ? "Recuerda: El servicio de IA está bajo alta demanda. Caminar 30 minutos al día fortalece tu corazón y es gratuito."
+        : "Remember: IA service is under high demand. Walking 30 minutes a day strengthens your heart and is free.";
     }
 
     return language === 'es' 
