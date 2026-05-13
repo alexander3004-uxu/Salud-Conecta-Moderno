@@ -1,6 +1,6 @@
 {
-  "name": "Salud Conecta Nicaragua",
-  "description": "Ecosistema de salud pública para Nicaragua, integrado con la red de hospitales del MINSA y potenciado por IA para asistencia médica inteligente.",
+  "name": "Salud Conecta",
+  "description": "Ecosistema de salud inteligente para servicios asistenciales, red de hospitales y triaje digital.",
   "requestFramePermissions": [
     "geolocation"
   ],

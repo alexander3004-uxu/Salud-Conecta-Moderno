@@ -256,6 +256,7 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
   const [hasPlacesError, setHasPlacesError] = useState(false);
   const [center, setCenter] = useState({ lat: 12.1328, lng: -86.2504 }); // Managua, Nicaragua
   const [userLocation, setUserLocation] = useState({ lat: 12.1328, lng: -86.2504 });
+  const [useGranadaDefault, setUseGranadaDefault] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{
     distance: string;
@@ -309,6 +310,22 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, [map]);
+
+  const setGranadaManual = () => {
+    const granadaPos = { lat: 11.921, lng: -85.952 };
+    setUserLocation(granadaPos);
+    setCenter(granadaPos);
+    if (map) map.setCenter(granadaPos);
+    setUseGranadaDefault(true);
+  };
+
+  const setManaguaManual = () => {
+    const managuaPos = { lat: 12.1328, lng: -86.2504 };
+    setUserLocation(managuaPos);
+    setCenter(managuaPos);
+    if (map) map.setCenter(managuaPos);
+    setUseGranadaDefault(false);
+  };
 
   useEffect(() => {
     if (!placesLib || !map) return;
@@ -717,9 +734,12 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                   <p className="text-[11px] text-on-surface-variant font-medium leading-relaxed opacity-80 mb-4">
                     {t('maps.social_mission.desc')}
                   </p>
-                  <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest">
-                    <span>Activar Red Premium Total (Hospitales Privados)</span>
-                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest">
+                      <span>Ver Red Privada Premium</span>
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                    <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[8px] font-black">SOLO PREMIUM</span>
                   </div>
                 </div>
               </motion.div>
@@ -750,8 +770,28 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
             </div>
           </div>
 
-          <div className="p-4 px-6 bg-surface-container-low border-b border-outline-variant/10">
-            <h3 className="text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] font-mono">Centros Cercanos Prioritarios</h3>
+          <div className="p-4 px-6 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-between">
+            <h3 className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em] font-mono">
+              {isPremium ? 'Red Total Prioritaria' : 'Red Pública MINSA Prioritaria'}
+            </h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={setManaguaManual}
+                className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border transition-all ${
+                  !useGranadaDefault ? 'bg-primary/20 border-primary text-primary' : 'bg-surface border-outline-variant text-outline-variant'
+                }`}
+              >
+                Managua
+              </button>
+              <button 
+                onClick={setGranadaManual}
+                className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border transition-all ${
+                  useGranadaDefault ? 'bg-primary/20 border-primary text-primary' : 'bg-surface border-outline-variant text-outline-variant'
+                }`}
+              >
+                Granada
+              </button>
+            </div>
           </div>
 
           {/* Scrollable Pharmacy List */}
