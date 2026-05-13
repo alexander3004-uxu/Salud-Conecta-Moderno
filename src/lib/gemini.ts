@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
+import { GEMINI_API_KEY } from "./config";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export const getHealthAssistant = async (prompt: string, membership: 'free' | 'premium' = 'free', history: { role: string, parts: { text: string }[] }[] = []) => {
   try {
@@ -26,6 +27,14 @@ Responde siempre en español.`,
     return response.text;
   } catch (error) {
     console.error("Gemini API Error:", error);
+    if (error instanceof Error) {
+      if (error.message.includes('429')) {
+        if (error.message.includes('prepayment credits are depleted')) {
+           return "El sistema de IA requiere atención: Los créditos de prepago se han agotado en Google AI Studio. ¡Recuerda seguir las recomendaciones médicas generales!";
+        }
+        return "Nuestra IA está descansando debido a alta demanda. ¡Recuerda seguir cuidando tu salud!";
+      }
+    }
     return "Lo siento, tuve un problema al procesar tu solicitud. Por favor, intenta de nuevo más tarde.";
   }
 };
@@ -75,12 +84,23 @@ Responde siempre en español.`,
     }
     
     return parsed;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Triage Error:", error);
+    const isQuotaError = error?.message?.includes('429') || error?.status === 429;
+    const isOutOfCredits = error?.message?.includes('prepayment credits are depleted');
+    
     return {
       urgency: 'medium',
-      recommendation: 'No pudimos procesar tu evaluación de triaje automáticamente. Por favor, intenta describir tus síntomas con más detalle o consulta directamente con un profesional de la salud.',
-      reasoning: 'Lo sentimos, tuvimos un problema al analizar tus síntomas. Te recomendamos intentar de nuevo o acudir a tu centro médico más cercano para una evaluación profesional.',
+      recommendation: isOutOfCredits
+        ? 'El motor de IA no tiene créditos suficientes para procesar triajes avanzados. Por favor, acude a tu centro de salud local.'
+        : (isQuotaError 
+          ? 'El servicio de triaje automático está temporalmente limitado por alta demanda. Por favor, acércate a tu centro de salud más cercano.'
+          : 'No pudimos procesar tu evaluación de triaje automáticamente. Por favor, intenta describir tus síntomas con más detalle o consulta directamente con un profesional de la salud.'),
+      reasoning: isOutOfCredits 
+        ? 'Agotamiento de créditos en la plataforma de IA.'
+        : (isQuotaError
+          ? 'Límite de capacidad alcanzado en el motor de IA.'
+          : 'Lo sentimos, tuvimos un problema al analizar tus síntomas. Te recomendamos intentar de nuevo o acudir a tu centro médico más cercano para una evaluación profesional.'),
       error: true
     };
   }
@@ -100,8 +120,25 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
       },
     });
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Health Tip Error:", error);
+    
+    // Check for quota exhaustion
+    const isQuotaError = error?.message?.includes('429') || error?.status === 429;
+    const isOutOfCredits = error?.message?.includes('prepayment credits are depleted');
+    
+    if (isOutOfCredits) {
+      return language === 'es'
+        ? "Nota del sistema: Los créditos de IA han finalizado. Procura beber 2 litros de agua diarios para una salud óptima."
+        : "System note: AI credits exhausted. Aim to drink 2 liters of water daily for optimal health.";
+    }
+
+    if (isQuotaError) {
+      return language === 'es'
+        ? "Recuerda: Caminar 30 minutos al día fortalece tu corazón y es gratuito. ¡Empieza hoy!"
+        : "Remember: Walking 30 minutes a day strengthens your heart and is free. Start today!";
+    }
+
     return language === 'es' 
       ? (membership === 'free' ? "Recuerda: Tu Centro de Salud local ofrece vacunación gratuita. ¡Protege a tu familia!" : "¡Hidrátate hoy! Beber suficiente agua es la clave para mantener tu energía.") 
       : "Stay hydrated! Drinking enough water is key to maintaining your energy and focus.";

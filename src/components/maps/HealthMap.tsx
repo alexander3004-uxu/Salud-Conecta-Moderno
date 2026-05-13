@@ -36,6 +36,7 @@ import { Clinic } from '../../types';
 import { getClinics } from '../../services/clinicService';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUser } from '../../contexts/UserContext';
+import { GOOGLE_MAPS_KEY } from "../../lib/config";
 
 const calculateDistance = (pos1: google.maps.LatLngLiteral, pos2: google.maps.LatLngLiteral): string => {
   const R = 6371; // Radius of the earth in km
@@ -50,7 +51,7 @@ const calculateDistance = (pos1: google.maps.LatLngLiteral, pos2: google.maps.La
   return d < 1 ? `${(d * 1000).toFixed(0)} m` : `${d.toFixed(1)} km`;
 };
 
-const API_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
+const API_KEY = GOOGLE_MAPS_KEY;
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 function ClinicMarker({ clinic, onClick }: { clinic: Clinic & { isOpen?: boolean }, onClick: (c: Clinic) => void, key?: any }) {
@@ -234,7 +235,7 @@ function UserLocationMarker({ position }: { position: google.maps.LatLngLiteral 
   );
 }
 
-function HealthMapInner() {
+function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
   const { t } = useLanguage();
   const { isPremium } = useUser();
   const [clinics, setClinics] = useState<(Clinic & { isOpen?: boolean })[]>([]);
@@ -286,6 +287,7 @@ function HealthMapInner() {
     if (!placesLib || !map) return;
 
     const fetchHealthPlaces = async () => {
+      if (!placesLib) return;
       try {
         console.log("Searching for health centers in Nicaragua...");
         // Use a try-catch for the specific searchByText call which might be blocked
@@ -300,11 +302,12 @@ function HealthMapInner() {
           places = result.places || [];
           setHasPlacesError(false);
         } catch (searchError: any) {
-          if (searchError.message?.includes('PERMISSION_DENIED') || searchError.message?.includes('blocked')) {
-            console.warn("Places API (New) is blocked or not enabled. Falling back to local data.");
+          if (searchError.message?.includes('PERMISSION_DENIED') || searchError.message?.includes('blocked') || searchError.message?.includes('not enabled')) {
+            console.warn("Places API (New) is blocked, not enabled, or unauthorized. Falling back to local/mock data.");
             setHasPlacesError(true);
           } else {
-            throw searchError;
+            console.error("Places API Search Error:", searchError);
+            setHasPlacesError(true);
           }
         }
 
@@ -316,27 +319,33 @@ function HealthMapInner() {
                           name.toLowerCase().includes('puesto de salud') ||
                           name.toLowerCase().includes('minsa');
 
+          const safeId = p.id || `gplace-${Math.random().toString(36).substr(2, 9)}`;
+
           return {
-            id: p.id,
+            id: safeId,
             name: name,
             type: (p.types?.includes('hospital') || p.types?.includes('medical_center')) ? 'emergency' : (p.types?.includes('pharmacy') ? 'pharmacy' : 'clinic'),
             sector: isPublic ? 'public' : 'private',
             location: {
-              lat: p.location.lat(),
-              lng: p.location.lng()
+              lat: typeof p.location?.lat === 'function' ? p.location.lat() : (p.location?.lat || 0),
+              lng: typeof p.location?.lng === 'function' ? p.location.lng() : (p.location?.lng || 0)
             },
             address: p.formattedAddress || 'Nicaragua',
             phone: p.nationalPhoneNumber || '',
             open24h: p.types?.includes('hospital') || p.regularOpeningHours?.periods?.length === 1 && p.regularOpeningHours?.periods[0].open?.day === 0 && !p.regularOpeningHours?.periods[0].close,
-            isOpen: p.regularOpeningHours?.isOpen() ?? true,
+            isOpen: p.regularOpeningHours?.isOpen ? p.regularOpeningHours.isOpen() : true,
           };
         });
 
         if (mappedClinics.length > 0) {
           setClinics(prev => {
-            const existingIds = new Set(prev.map(c => c.id));
-            const uniqueNew = mappedClinics.filter(c => c.id && !existingIds.has(c.id));
-            return [...prev, ...uniqueNew];
+            const seen = new Set(prev.map(c => String(c.id)));
+            const uniqueResults = mappedClinics.filter(c => {
+               if (seen.has(String(c.id))) return false;
+               seen.add(String(c.id));
+               return true;
+            });
+            return [...prev, ...uniqueResults];
           });
         }
       } catch (error) {
@@ -452,9 +461,16 @@ function HealthMapInner() {
     const fetchClinics = async () => {
       try {
         const data = await getClinics();
-        // If Firestore data is available, prioritize it, otherwise use Nicaragua-specific mocks
-        if (data.length > 5) {
-          setClinics(data);
+        // Defensive deduplication
+        const seen = new Set();
+        const deduplicated = data.filter(c => {
+          if (seen.has(String(c.id))) return false;
+          seen.add(String(c.id));
+          return true;
+        });
+
+        if (deduplicated.length > 5) {
+          setClinics(deduplicated);
         } else {
           setClinics(prev => {
              const existingIds = new Set(prev.map(c => String(c.id)));
@@ -912,7 +928,7 @@ function HealthMapInner() {
 
         {/* Map Section */}
         <section className="flex-1 relative bg-background overflow-hidden">
-          {hasValidKey ? (
+          {hasValidKey && !hideMap ? (
               <Map
                 defaultCenter={center}
                 defaultZoom={13}
@@ -1184,29 +1200,53 @@ export default function HealthMap() {
           <div>
             <h2 className="text-2xl font-black text-on-surface mb-2">
               {authError === "RefererNotAllowedMapError" 
-                ? "Error de Autorización (Referer)" 
+                ? "Error de Configuración de API" 
                 : t('maps.key_required.title')}
             </h2>
             <p className="text-on-surface-variant text-sm leading-relaxed">
               {authError === "RefererNotAllowedMapError"
-                ? "Tu API Key de Google Maps tiene restricciones de HTTP Referer que bloquean este dominio. Debes autorizar la URL actual en tu Google Cloud Console."
+                ? "Hay problemas con las restricciones de seguridad (Referer) de tu Google Maps API Key."
                 : t('maps.key_required.desc')}
             </p>
           </div>
           
           <div className="space-y-4 text-left">
             {authError === "RefererNotAllowedMapError" ? (
-              <>
+              <div className="space-y-6">
+                <div className="p-4 bg-error/5 rounded-2xl border border-error/20">
+                   <h4 className="text-[10px] font-black text-error uppercase tracking-widest mb-3 flex items-center gap-2">
+                     <AlertCircle className="w-3.5 h-3.5" /> Pasos Obligatorios para Google Cloud
+                   </h4>
+                   <div className="space-y-3">
+                      <div className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full bg-error/20 flex items-center justify-center shrink-0">
+                           <CheckCircle2 className="w-3 h-3 text-error" />
+                        </div>
+                        <p className="text-[10px] font-medium text-on-surface-variant">
+                          <b>Paso 1:</b> En tu API Key, ve a <b>Restricciones de API</b> y asegúrate que NO este restringida o que incluya <b>Maps JavaScript API</b> y <b>Places API</b>.
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full bg-error/20 flex items-center justify-center shrink-0">
+                           <CheckCircle2 className="w-3 h-3 text-error" />
+                        </div>
+                        <p className="text-[10px] font-medium text-on-surface-variant">
+                          <b>Paso 2:</b> En <b>Restricciones de sitios web</b>, borra cualquier restricción antigua o añade la URL actual (ver abajo).
+                        </p>
+                      </div>
+                   </div>
+                </div>
+
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center font-black text-xs shrink-0">1</div>
+                  <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center font-black text-xs shrink-0">A</div>
                   <div className="text-xs text-on-surface-variant font-medium">
-                    Ve a la <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary font-bold underline inline-flex items-center gap-1 text-[10px]">Google Cloud Console <ExternalLink className="w-3 h-3" /></a>.
+                    Ve a <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary font-bold underline inline-flex items-center gap-1 text-[10px]">Credenciales en Cloud Console <ExternalLink className="w-3 h-3" /></a>.
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center font-black text-xs shrink-0">2</div>
+                  <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center font-black text-xs shrink-0">B</div>
                   <div className="text-xs text-on-surface-variant font-medium flex-1">
-                    Edita tu API Key y en <b>Restricciones de sitios web</b> añade esta URL exactamente: <br/>
+                    Autoriza esta URL exacta en las restricciones de sitio web: <br/>
                     <div className="mt-2 flex items-center gap-2">
                        <code className="bg-surface-container-highest px-3 py-2 rounded-xl text-[10px] break-all border border-outline-variant/30 flex-1 font-mono">
                          {window.location.origin}/*
@@ -1220,7 +1260,7 @@ export default function HealthMap() {
                     </div>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <>
                 <div className="flex gap-4">
@@ -1256,7 +1296,7 @@ export default function HealthMap() {
 
   return (
     <APIProvider apiKey={API_KEY}>
-      <HealthMapInner />
+      <HealthMapInner hideMap={Boolean(authError)} />
     </APIProvider>
   );
 }
