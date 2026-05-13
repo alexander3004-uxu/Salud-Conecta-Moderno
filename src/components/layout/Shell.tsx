@@ -35,8 +35,12 @@ interface ShellProps {
 export default function Shell({ children, activeTab, setActiveTab }: ShellProps) {
   const { t } = useLanguage();
   const [user, setUser] = React.useState<any>(null);
+  const [unauthorizedDomain, setUnauthorizedDomain] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    const handleUnauth = (e: any) => setUnauthorizedDomain(e.detail.domain);
+    window.addEventListener('firebase-unauthorized-domain', handleUnauth);
+    
     // Check for redirect result on mount
     handleRedirectResult().then(u => {
       if (u) {
@@ -74,6 +78,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
     return () => {
       unsubscribe();
       window.removeEventListener('changeTab', handleTabChange);
+      window.removeEventListener('firebase-unauthorized-domain', handleUnauth);
     };
   }, [setActiveTab]);
 
@@ -88,7 +93,18 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       {/* TopAppBar */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface-container-low border-b border-outline-variant/30 shadow-sm transition-colors duration-200">
+      {unauthorizedDomain && (
+        <div className="fixed top-0 left-0 w-full z-[100] bg-alert-red text-white p-2 text-center text-xs font-bold animate-pulse shadow-lg">
+          DOMINIO NO AUTORIZADO: Añade "{unauthorizedDomain}" en Firebase Console &gt; Auth &gt; Settings &gt; Authorized Domains.
+          <button 
+            onClick={() => setUnauthorizedDomain(null)}
+            className="ml-4 underline uppercase"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
+      <header className={`fixed ${unauthorizedDomain ? 'top-8' : 'top-0'} left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface-container-low border-b border-outline-variant/30 shadow-sm transition-all duration-200`}>
         <div 
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => setActiveTab('home')}

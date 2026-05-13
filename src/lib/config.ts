@@ -19,6 +19,7 @@ const getApiKey = (envVal: any, fallback: string, name: string) => {
     envVal === "" || 
     envVal === "undefined" || 
     envVal === "null" || 
+    envVal === "MISSING" || 
     envVal === "YOUR_API_KEY";
 
   if (isInvalid) {

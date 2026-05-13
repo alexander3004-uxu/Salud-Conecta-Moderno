@@ -5,8 +5,8 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "undefined") {
-      throw new Error("API key is missing. Please provide a valid API key in src/lib/config.ts");
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "undefined" || GEMINI_API_KEY === "MISSING") {
+      throw new Error("CRITICAL_ERROR: Gemini Key is missing in current build context (v3.2)");
     }
     aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   }

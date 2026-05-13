@@ -36,6 +36,11 @@ export const signInWithGoogle = async () => {
 
     if (authError.code === 'auth/unauthorized-domain') {
        const domain = typeof window !== 'undefined' ? window.location.hostname : 'este dominio';
+       
+       if (typeof window !== 'undefined') {
+         window.dispatchEvent(new CustomEvent('firebase-unauthorized-domain', { detail: { domain } }));
+       }
+
        alert(`Error de Autorización: Dominio No Autorizado.
        
 El dominio "${domain}" no está en la lista de permitidos de Firebase.
