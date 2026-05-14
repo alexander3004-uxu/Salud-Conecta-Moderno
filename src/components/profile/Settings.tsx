@@ -18,9 +18,16 @@ import {
   MessageCircle,
   Mail,
   Clock3,
-  Check
+  Check,
+  Database,
+  RefreshCcw,
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { seedPublicClinics } from '../../services/clinicService';
+import { auth } from '../../lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface SettingItemProps {
   title: string;
@@ -85,6 +92,19 @@ export function Settings() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedSuccess, setSeedSuccess] = useState(false);
+  const [seedError, setSeedError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const isAdmin = currentUser?.email === 'mcalebr04@gmail.com';
 
   const toggleTheme = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
@@ -103,6 +123,20 @@ export function Settings() {
     setTimeout(() => {
       setSaving(false);
     }, 1500);
+  };
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    setSeedError(null);
+    try {
+      await seedPublicClinics();
+      setSeedSuccess(true);
+      setTimeout(() => setSeedSuccess(false), 3000);
+    } catch (err: any) {
+      setSeedError(err.message || 'Error al sembrar datos');
+    } finally {
+      setSeeding(false);
+    }
   };
 
   const goBack = () => {
@@ -207,41 +241,78 @@ export function Settings() {
             </div>
           </section>
 
-          {/* Notifications Section */}
-          <section className="flex flex-col gap-4">
+          {/* Developer Tools Section */}
+          <section className="flex flex-col gap-4 mt-4">
             <div className="flex items-center gap-3 px-2">
-              <Bell className="w-5 h-5 text-primary" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-on-surface">{t('settings.notifications')}</h3>
+              <Database className="w-5 h-5 text-secondary" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-on-surface">Herramientas de Desarrollador</h3>
             </div>
-            <div className="bg-surface-container-low rounded-[32px] border border-outline-variant/30 overflow-hidden shadow-xl">
-              <div className="divide-y divide-on-surface/5">
-                <SettingItem 
-                  title={t('settings.notif.critical')}
-                  description={t('settings.notif.critical.desc')}
-                  icon={Stethoscope}
-                  iconColor="text-error"
-                  checked={notifs.critical}
-                  disabled={true}
-                  critical={true}
-                  onChange={() => {}}
-                />
-                <SettingItem 
-                  title={t('settings.notif.challenges')}
-                  description={t('settings.notif.challenges.desc')}
-                  icon={Activity}
-                  iconColor="text-primary"
-                  checked={notifs.challenges}
-                  onChange={(v) => setNotifs({...notifs, challenges: v})}
-                />
-                <SettingItem 
-                  title={t('settings.notif.benefits')}
-                  description={t('settings.notif.benefits.desc')}
-                  icon={Ticket}
-                  iconColor="text-secondary"
-                  checked={notifs.benefits}
-                  onChange={(v) => setNotifs({...notifs, benefits: v})}
-                />
-              </div>
+            <div className="bg-surface-container-low rounded-[32px] border border-outline-variant/30 p-8 shadow-xl">
+              {!currentUser ? (
+                <div className="flex flex-col items-center gap-4 text-center py-4">
+                   <div className="w-12 h-12 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-center text-on-surface-variant">
+                      <Lock className="w-6 h-6" />
+                   </div>
+                   <div>
+                      <p className="text-sm font-bold text-on-surface">Acceso Restringido</p>
+                      <p className="text-xs text-on-surface-variant mt-1">Debes iniciar sesión con Google para usar estas herramientas.</p>
+                   </div>
+                </div>
+              ) : !isAdmin ? (
+                <div className="flex flex-col items-center gap-4 text-center py-4">
+                   <div className="w-12 h-12 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center text-error">
+                      <ShieldCheck className="w-6 h-6" />
+                   </div>
+                   <div>
+                      <p className="text-sm font-bold text-on-surface">Permisos Insuficientes</p>
+                      <p className="text-xs text-on-surface-variant mt-1">Tu cuenta ({currentUser.email}) no tiene permisos de administrador.</p>
+                   </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <p className="text-sm text-on-surface-variant font-medium">
+                    Hola {currentUser.displayName || 'Admin'}. Utiliza estas herramientas para inicializar los datos maestros.
+                  </p>
+                  
+                  <button 
+                    onClick={handleSeed}
+                    disabled={seeding}
+                    className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all font-bold ${
+                      seedSuccess ? 'bg-secondary/10 border-secondary text-secondary' : 
+                      seedError ? 'bg-error/10 border-error text-error' :
+                      'bg-surface-container border-outline-variant/30 text-on-surface hover:border-secondary/50'
+                    }`}
+                  >
+                    {seeding ? (
+                      <>
+                        <RefreshCcw className="w-5 h-5 animate-spin" />
+                        Sembrando Datos...
+                      </>
+                    ) : seedSuccess ? (
+                      <>
+                        <Check className="w-5 h-5" />
+                        Red de Salud Sincronizada
+                      </>
+                    ) : (
+                      <>
+                        <Database className="w-5 h-5" />
+                        Sincronizar Red de Salud Pública (MINSA)
+                      </>
+                    )}
+                  </button>
+                  
+                  {seedError && (
+                    <div className="flex items-center gap-2 p-3 bg-error/10 text-error rounded-xl text-xs font-bold">
+                      <AlertCircle className="w-4 h-4" />
+                      {seedError}
+                    </div>
+                  )}
+                  
+                  <p className="text-[10px] text-on-surface-variant italic opacity-60">
+                    * Esta acción actualizará la colección 'clinics' en Firestore con la información de MINSA.
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         </div>

@@ -23,6 +23,14 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'mcalebr04@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
     // User Profile Rules
     match /users/{userId} {
       function isValidUser(data) {
@@ -37,13 +45,24 @@ service cloud.firestore {
       allow create: if isVerified() && isValidUser(request.resource.data) && 
                       request.resource.data.userId == request.auth.uid;
       allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']);
+                      (
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']) ||
+                        request.auth.token.email == 'mcalebr04@gmail.com'
+                      );
     }
 
     // Clinic Rules (Read-only for users, Admin write)
     match /clinics/{clinicId} {
+      function isValidClinic(data) {
+        return data.name is string && data.name.size() <= 200 &&
+               data.type in ['clinic', 'pharmacy', 'emergency', 'hospital', 'health-center', 'laboratory'] &&
+               data.sector in ['public', 'private'] &&
+               data.location.lat is number && data.location.lng is number &&
+               data.address is string && data.address.size() <= 600;
+      }
+
       allow read: if true;
-      allow write: if false; // Only manageable via Firebase Console for now
+      allow write: if isAdmin();
     }
 
     // Appointment Rules

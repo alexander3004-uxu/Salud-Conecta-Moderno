@@ -189,7 +189,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
       </div>
 
       {/* Main Content Area */}
-      <main className={`flex-grow pt-16 pb-20 md:pt-[104px] md:pb-0 flex flex-col items-center w-full max-w-7xl mx-auto`}>
+      <main className={`flex-grow ${activeTab === 'map' ? 'pt-16 pb-20 md:pt-16 md:pb-0' : 'pt-16 pb-20 md:pt-[104px] md:pb-0'} flex flex-col items-center w-full ${activeTab === 'map' ? 'max-w-none' : 'max-w-7xl mx-auto'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -197,7 +197,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className="w-full flex-grow flex flex-col"
+            className={`w-full flex-grow flex flex-col ${activeTab === 'map' ? 'h-[calc(100vh-64px)]' : ''}`}
           >
             {children}
           </motion.div>
@@ -229,46 +229,48 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
       </nav>
 
       {/* Global Footer (Desktop Only) */}
-      <footer className="hidden md:block w-full border-t border-outline-variant/10 py-16 mt-12 bg-surface-container-lowest">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-primary" />
-              <span className="text-xl font-bold text-primary">Salud Conecta IA</span>
-            </div>
-            <p className="text-on-surface-variant text-sm leading-relaxed max-w-sm">
-              {t('footer.desc')}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-8">
+      {!['map', 'dashboard', 'settings', 'profile'].includes(activeTab) && (
+        <footer className="hidden md:block w-full border-t border-outline-variant/10 py-16 mt-12 bg-surface-container-lowest">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
             <div>
-              <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.system')}</h4>
-              <ul className="text-sm text-on-surface-variant space-y-2">
-                <li>{t('footer.system.triage')}</li>
-                <li>{t('footer.system.pharmacy')}</li>
-                <li>{t('footer.system.pwa')}</li>
-              </ul>
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="w-5 h-5 text-primary" />
+                <span className="text-xl font-bold text-primary">Salud Conecta IA</span>
+              </div>
+              <p className="text-on-surface-variant text-sm leading-relaxed max-w-sm">
+                {t('footer.desc')}
+              </p>
             </div>
-            <div>
-              <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.legal')}</h4>
-              <ul className="text-sm text-on-surface-variant space-y-2">
-                <li>{t('footer.legal.privacy')}</li>
-                <li>{t('footer.legal.terms')}</li>
-                <li>{t('footer.legal.acc')}</li>
-              </ul>
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.system')}</h4>
+                <ul className="text-sm text-on-surface-variant space-y-2">
+                  <li>{t('footer.system.triage')}</li>
+                  <li>{t('footer.system.pharmacy')}</li>
+                  <li>{t('footer.system.pwa')}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.legal')}</h4>
+                <ul className="text-sm text-on-surface-variant space-y-2">
+                  <li>{t('footer.legal.privacy')}</li>
+                  <li>{t('footer.legal.terms')}</li>
+                  <li>{t('footer.legal.acc')}</li>
+                </ul>
+              </div>
+            </div>
+            <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant">
+               <div className="flex items-center gap-2 text-alert-red font-black mb-2 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-alert-red" />
+                  {t('status.emergency')}: 911
+               </div>
+               <p className="text-xs text-on-surface-variant leading-relaxed">
+                 {t('footer.emergency.desc')}
+               </p>
             </div>
           </div>
-          <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-             <div className="flex items-center gap-2 text-alert-red font-black mb-2 animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-alert-red" />
-                {t('status.emergency')}: 911
-             </div>
-             <p className="text-xs text-on-surface-variant leading-relaxed">
-               {t('footer.emergency.desc')}
-             </p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
 
   );

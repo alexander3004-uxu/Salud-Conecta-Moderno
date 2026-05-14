@@ -11,9 +11,12 @@ export const syncUserProfile = async (user: User) => {
       userId: user.uid,
       email: user.email,
       displayName: user.displayName,
-      role: 'patient',
+      role: user.email === 'mcalebr04@gmail.com' ? 'admin' : 'patient',
       createdAt: new Date().toISOString(),
       updatedAt: serverTimestamp(),
     });
+  } else if (user.email === 'mcalebr04@gmail.com' && userSnap.data()?.role !== 'admin') {
+    // Ensure this specific user is always admin even if profile exists
+    await setDoc(userRef, { role: 'admin' }, { merge: true });
   }
 };

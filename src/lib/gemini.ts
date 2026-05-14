@@ -5,8 +5,8 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "undefined" || GEMINI_API_KEY === "MISSING") {
-      throw new Error("CRITICAL_ERROR: Gemini Key is missing in current build context (v3.2)");
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "undefined" || GEMINI_API_KEY === "MISSING" || GEMINI_API_KEY === "") {
+      return null;
     }
     aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   }
@@ -16,6 +16,10 @@ const getAI = () => {
 export const getHealthAssistant = async (prompt: string, membership: 'free' | 'premium' = 'free', history: { role: string, parts: { text: string }[] }[] = []) => {
   try {
     const ai = getAI();
+    if (!ai) {
+      return "El asistente de IA no está configurado. Por favor, asegúrate de añadir tu GEMINI_API_KEY en los secretos de la aplicación (Menú Settings).";
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
@@ -58,6 +62,15 @@ Responde siempre en español.`,
 export const getSmartTriage = async (symptoms: string, membership: 'free' | 'premium' = 'free') => {
   try {
     const ai = getAI();
+    if (!ai) {
+      return {
+        urgency: 'medium',
+        recommendation: 'El asistente de IA no está configurado (Falta GEMINI_API_KEY). Por favor, ve a la configuración de la aplicación para activarlo.',
+        reasoning: 'Configuración de API pendiente.',
+        error: true
+      };
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ role: 'user', parts: [{ text: symptoms }] }],
@@ -129,6 +142,12 @@ Responde siempre en español.`,
 export const getDailyHealthTip = async (language: string = 'es', membership: 'free' | 'premium' = 'free') => {
   try {
     const ai = getAI();
+    if (!ai) {
+      return language === 'es' 
+        ? "Nota: Configura tu GEMINI_API_KEY en Settings para recibir consejos personalizados. Tip: Camina 30m diario."
+        : "Note: Configure your GEMINI_API_KEY in Settings for personalized tips. Tip: Walk 30m daily.";
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ role: 'user', parts: [{ text: "Genera un consejo de salud breve, motivador y práctico para hoy." }] }],

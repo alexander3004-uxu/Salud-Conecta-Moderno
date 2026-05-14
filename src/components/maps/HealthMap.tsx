@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { APIProvider, Map, AdvancedMarker, useMap, useMapsLibrary, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
@@ -57,7 +57,17 @@ const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 function ClinicMarker({ clinic, onClick }: { clinic: Clinic & { isOpen?: boolean }, onClick: (c: Clinic) => void, key?: any }) {
   const [markerRef] = useAdvancedMarkerRef();
   
-  const isOpen = clinic.isOpen !== undefined ? clinic.isOpen : clinic.open24h;
+  const isBusinessHour = () => {
+    // Current time in Nicaragua (UTC-6)
+    const now = new Date();
+    const utcHour = now.getUTCHours();
+    const nicHour = (utcHour - 6 + 24) % 24;
+    return nicHour >= 7 && nicHour < 17; // 7 AM to 5 PM
+  };
+
+  const isOpen = clinic.isOpen !== undefined 
+    ? clinic.isOpen 
+    : (clinic.open24h || isBusinessHour());
 
   const getColors = () => {
     if (!isOpen) {
@@ -179,45 +189,62 @@ function Directions({
 }: {
   origin: google.maps.LatLngLiteral;
   destination: google.maps.LatLngLiteral;
-  onRouteUpdate: (route: google.maps.DirectionsRoute) => void;
+  onRouteUpdate: (leg: google.maps.DirectionsLeg) => void;
 }) {
   const map = useMap();
-  const routesLibrary = useMapsLibrary('routes');
-  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService>();
-  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer>();
+  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   useEffect(() => {
-    if (!routesLibrary || !map) return;
-    setDirectionsService(new routesLibrary.DirectionsService());
-    setDirectionsRenderer(new routesLibrary.DirectionsRenderer({
-      map,
-      suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: '#2E90FA',
-        strokeWeight: 6,
-        strokeOpacity: 0.8
+    if (!map) return;
+    setDirectionsService(new google.maps.DirectionsService());
+
+    return () => {
+      if (polylineRef.current) {
+        polylineRef.current.setMap(null);
       }
-    }));
-  }, [routesLibrary, map]);
+    };
+  }, [map]);
 
   useEffect(() => {
-    if (!directionsService || !directionsRenderer) return;
+    if (!directionsService || !map || !origin || !destination) return;
 
     directionsService.route({
       origin,
       destination,
       travelMode: google.maps.TravelMode.DRIVING
-    }).then(response => {
-      directionsRenderer.setDirections(response);
-      onRouteUpdate(response.routes[0]);
-    }).catch(e => {
-      console.error('Directions request failed', e);
-    });
+    }, (result, status) => {
+      if (status === google.maps.DirectionsStatus.OK && result) {
+        const route = result.routes[0];
+        const leg = route.legs[0];
+        
+        // Remove previous polyline
+        if (polylineRef.current) {
+          polylineRef.current.setMap(null);
+        }
 
-    return () => {
-      directionsRenderer.setMap(null);
-    };
-  }, [directionsService, directionsRenderer, origin, destination]);
+        // Render the route manually using a Polyline
+        const path = route.overview_path;
+        const polyline = new google.maps.Polyline({
+          path,
+          strokeColor: '#2E90FA',
+          strokeWeight: 6,
+          strokeOpacity: 0.8,
+          map: map
+        });
+        polylineRef.current = polyline;
+
+        // Fit map to show the entire route
+        if (route.bounds) {
+          map.fitBounds(route.bounds);
+        }
+
+        onRouteUpdate(leg);
+      } else {
+        console.error('Directions request failed', status);
+      }
+    });
+  }, [directionsService, map, origin, destination, onRouteUpdate]);
 
   return null;
 }
@@ -251,20 +278,19 @@ function UserLocationMarker({ position }: { position: google.maps.LatLngLiteral 
 function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
   const { t } = useLanguage();
   const { isPremium, setMembership } = useUser();
+  const [isSearching, setIsSearching] = useState(false);
   const [clinics, setClinics] = useState<(Clinic & { isOpen?: boolean })[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<(Clinic & { isOpen?: boolean }) | null>(null);
   const [hasPlacesError, setHasPlacesError] = useState(false);
   const [center, setCenter] = useState({ lat: 12.1328, lng: -86.2504 }); // Managua, Nicaragua
   const [userLocation, setUserLocation] = useState({ lat: 12.1328, lng: -86.2504 });
-  const [useGranadaDefault, setUseGranadaDefault] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{
     distance: string;
     duration: string;
     steps?: google.maps.DirectionsStep[];
   } | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<'all' | 'pharmacy' | 'emergency' | 'hospital' | 'health-center' | 'laboratory'>('all');
+  const [filter, setFilter] = useState<'all' | 'pharmacy' | 'emergency' | 'hospital' | 'health-center' | 'laboratory' | 'clinic'>('all');
   const [isEmergencyMode, setIsEmergencyMode] = useState(false);
   const [triageSummary, setTriageSummary] = useState<{
     urgency: string;
@@ -275,7 +301,104 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
   const placesLib = useMapsLibrary('places');
   const map = useMap();
 
+  // Function to search for places in the current map view
+  const searchInView = async () => {
+    if (!placesLib || !map) return;
+    
+    const bounds = map.getBounds();
+    if (!bounds) return;
+
+    setIsSearching(true);
+    try {
+      const searchTerms = [
+        'hospital', 
+        'clínica', 
+        'centro de salud', 
+        'farmacia', 
+        'laboratorio clínico',
+        'MINSA Nicaragua'
+      ];
+
+      // Use the new Places API (SearchByText) with locationBias from bounds
+      // We'll execute a few broad searches to get more results
+      for (const term of searchTerms) {
+        try {
+          const result = await placesLib.Place.searchByText({
+            textQuery: `${term} en Nicaragua`,
+            fields: ['id', 'displayName', 'location', 'formattedAddress', 'types', 'nationalPhoneNumber', 'regularOpeningHours', 'rating', 'userRatingCount'],
+            locationBias: bounds,
+            maxResultCount: 20,
+          });
+
+          if (result.places && result.places.length > 0) {
+            const mappedClinics: (Clinic & { isOpen?: boolean })[] = result.places.map((p: any) => {
+              const name = p.displayName || 'Centro de Salud';
+              const isPublic = name.toLowerCase().includes('ministerio') || 
+                              name.toLowerCase().includes('centro de salud') || 
+                              name.toLowerCase().includes('puesto de salud') ||
+                              name.toLowerCase().includes('minsa') ||
+                              name.toLowerCase().includes('hospital escuela');
+
+              const types = p.types || [];
+              let clinicType: Clinic['type'] = 'clinic';
+              
+              if (types.includes('hospital')) {
+                clinicType = 'hospital';
+              } else if (types.includes('pharmacy') || types.includes('drugstore')) {
+                clinicType = 'pharmacy';
+              } else if (types.includes('health') || types.includes('medical_center')) {
+                // Heuristic to distinguish between emergency and simple health center
+                if (name.toLowerCase().includes('emergencia') || name.toLowerCase().includes('urgencia')) {
+                  clinicType = 'emergency';
+                } else if (name.toLowerCase().includes('laboratorio')) {
+                  clinicType = 'laboratory';
+                } else {
+                  clinicType = 'health-center';
+                }
+              }
+
+              return {
+                id: p.id || `gplace-${Math.random().toString(36).substr(2, 9)}`,
+                name: name,
+                type: clinicType,
+                sector: isPublic ? 'public' : 'private',
+                location: {
+                  lat: typeof p.location?.lat === 'function' ? p.location.lat() : (p.location?.lat || 0),
+                  lng: typeof p.location?.lng === 'function' ? p.location.lng() : (p.location?.lng || 0)
+                },
+                address: p.formattedAddress || 'Nicaragua',
+                phone: p.nationalPhoneNumber || '',
+                open24h: types.includes('hospital') || (p.regularOpeningHours?.periods?.length === 1 && p.regularOpeningHours?.periods[0].open?.day === 0 && !p.regularOpeningHours?.periods[0].close),
+                isOpen: p.regularOpeningHours?.isOpen ? p.regularOpeningHours.isOpen() : true,
+                rating: p.rating,
+                reviews: p.userRatingCount
+              };
+            });
+
+            setClinics(prev => {
+              const seenIds = new Set(prev.map(c => String(c.id)));
+              const newUnique = mappedClinics.filter(c => !seenIds.has(String(c.id)));
+              return [...prev, ...newUnique];
+            });
+          }
+        } catch (err) {
+          console.warn(`Search failed for term: ${term}`, err);
+        }
+      }
+    } catch (error) {
+      console.error("Global search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   // Real Geolocation - Priority Initialization
+  useEffect(() => {
+    if (map && placesLib) {
+      searchInView();
+    }
+  }, [map, placesLib]);
+
   useEffect(() => {
     const handleLocation = (position: GeolocationPosition) => {
       const pos = {
@@ -311,100 +434,10 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
     }
   }, [map]);
 
-  const setGranadaManual = () => {
-    const granadaPos = { lat: 11.921, lng: -85.952 };
-    setUserLocation(granadaPos);
-    setCenter(granadaPos);
-    if (map) map.setCenter(granadaPos);
-    setUseGranadaDefault(true);
-  };
-
-  const setManaguaManual = () => {
-    const managuaPos = { lat: 12.1328, lng: -86.2504 };
-    setUserLocation(managuaPos);
-    setCenter(managuaPos);
-    if (map) map.setCenter(managuaPos);
-    setUseGranadaDefault(false);
-  };
-
-  useEffect(() => {
-    if (!placesLib || !map) return;
-
-    const fetchHealthPlaces = async () => {
-      if (!placesLib) return;
-      try {
-        console.log("Searching for health centers in Nicaragua...");
-        // Use a try-catch for the specific searchByText call which might be blocked
-        let places: any[] = [];
-        try {
-          const result = await placesLib.Place.searchByText({
-            textQuery: 'hospitales y farmacias abiertas en Nicaragua',
-            fields: ['id', 'displayName', 'location', 'formattedAddress', 'types', 'nationalPhoneNumber', 'regularOpeningHours'],
-            locationBias: userLocation,
-            maxResultCount: 20,
-          });
-          places = result.places || [];
-          setHasPlacesError(false);
-        } catch (searchError: any) {
-          if (searchError.message?.includes('PERMISSION_DENIED') || searchError.message?.includes('blocked') || searchError.message?.includes('not enabled')) {
-            console.warn("Places API (New) is blocked, not enabled, or unauthorized. Falling back to local/mock data.");
-            setHasPlacesError(true);
-          } else {
-            console.error("Places API Search Error:", searchError);
-            setHasPlacesError(true);
-          }
-        }
-
-        const mappedClinics: (Clinic & { isOpen?: boolean })[] = places.map((p: any) => {
-          const name = p.displayName || 'Centro de Salud';
-          // Simple heuristic for public institutions in Nicaragua
-          const isPublic = name.toLowerCase().includes('ministerio') || 
-                          name.toLowerCase().includes('centro de salud') || 
-                          name.toLowerCase().includes('puesto de salud') ||
-                          name.toLowerCase().includes('minsa');
-
-          const safeId = p.id || `gplace-${Math.random().toString(36).substr(2, 9)}`;
-
-          return {
-            id: safeId,
-            name: name,
-            type: (p.types?.includes('hospital') || p.types?.includes('medical_center')) ? 'emergency' : (p.types?.includes('pharmacy') ? 'pharmacy' : 'clinic'),
-            sector: isPublic ? 'public' : 'private',
-            location: {
-              lat: typeof p.location?.lat === 'function' ? p.location.lat() : (p.location?.lat || 0),
-              lng: typeof p.location?.lng === 'function' ? p.location.lng() : (p.location?.lng || 0)
-            },
-            address: p.formattedAddress || 'Nicaragua',
-            phone: p.nationalPhoneNumber || '',
-            open24h: p.types?.includes('hospital') || p.regularOpeningHours?.periods?.length === 1 && p.regularOpeningHours?.periods[0].open?.day === 0 && !p.regularOpeningHours?.periods[0].close,
-            isOpen: p.regularOpeningHours?.isOpen ? p.regularOpeningHours.isOpen() : true,
-          };
-        });
-
-        if (mappedClinics.length > 0) {
-          setClinics(prev => {
-            const seen = new Set(prev.map(c => String(c.id)));
-            const uniqueResults = mappedClinics.filter(c => {
-               if (seen.has(String(c.id))) return false;
-               seen.add(String(c.id));
-               return true;
-            });
-            return [...prev, ...uniqueResults];
-          });
-        }
-      } catch (error) {
-        console.error("Error in fetchHealthPlaces core logic:", error);
-      }
-    };
-
-    fetchHealthPlaces();
-  }, [placesLib, map, userLocation]);
-
   useEffect(() => {
     const handleMedicationSearch = (e: any) => {
       const medication = e.detail?.medication;
       if (medication) {
-        setSearchTerm(medication);
         setFilter('pharmacy');
       }
     };
@@ -457,11 +490,8 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
     .filter(c => {
       const matchesFilter = filter === 'all' || c.type === filter;
       
-      // Tiered Access Logic
-      // If not premium, only show public sector units
-      const matchesTier = isPremium || c.sector === 'public';
-
-      return matchesFilter && matchesTier;
+      // Removed tiered access logic that was hiding private centers
+      return matchesFilter;
     })
     .sort((a, b) => {
       const distA = Math.sqrt(Math.pow(a.location.lat - userLocation.lat, 2) + Math.pow(a.location.lng - userLocation.lng, 2));
@@ -469,34 +499,209 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
       return distA - distB;
     });
 
+  // Improved Emergency Mode: Auto-select nearest clinic
+  useEffect(() => {
+    if (isEmergencyMode && !selectedClinic && filteredClinics.length > 0) {
+      setSelectedClinic(filteredClinics[0]);
+    }
+  }, [isEmergencyMode, selectedClinic, filteredClinics]);
+
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
       
-      {/* Emergency Banner - Shown when in emergency mode */}
+      {/* Map Section - Full Background */}
+      <section className="absolute inset-0 z-0 overflow-hidden">
+        {hasValidKey && !hideMap ? (
+            <Map
+              defaultCenter={center}
+              defaultZoom={13}
+              mapId="DARK_MODE_MAP"
+              className="w-full h-full"
+              gestureHandling="greedy"
+              disableDefaultUI
+              onIdle={searchInView}
+            >
+              {filteredClinics.map(clinic => (
+                <ClinicMarker 
+                  key={clinic.id} 
+                  clinic={clinic} 
+                  onClick={(c) => {
+                    setSelectedClinic(c);
+                    if (isNavigating) setIsNavigating(false);
+                  }} 
+                />
+              ))}
+
+              {isNavigating && selectedClinic && (
+                <Directions
+                  origin={userLocation}
+                  destination={selectedClinic.location}
+                  onRouteUpdate={(leg) => {
+                    setRouteInfo({
+                      distance: leg.distance?.text || '',
+                      duration: leg.duration?.text || '',
+                      steps: leg.steps
+                    });
+                  }}
+                />
+              )}
+
+              {/* User Current Location */}
+              <UserLocationMarker position={userLocation} />
+
+              {/* InfoWindow custom logic */}
+              {selectedClinic && (
+                <InfoWindow
+                  position={selectedClinic.location}
+                  onCloseClick={() => {
+                    setSelectedClinic(null);
+                    if (isNavigating) setIsNavigating(false);
+                  }}
+                  headerDisabled
+                >
+                  {(() => {
+                    const isOpen = selectedClinic.isOpen !== undefined ? selectedClinic.isOpen : selectedClinic.open24h;
+                    return (
+                      <div className="p-0 -m-1 min-w-[300px] overflow-hidden bg-surface rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
+                        {/* Card Header with Type-specific background gradient */}
+                        <div className={`p-4 ${
+                          selectedClinic.type === 'emergency' 
+                            ? 'bg-gradient-to-br from-error/20 to-error/5' 
+                            : 'bg-gradient-to-br from-primary/20 to-primary/5'
+                        } border-b border-outline-variant/10`}>
+                          <div className="flex items-start gap-4">
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-current shrink-0 shadow-xl ${
+                              selectedClinic.type === 'emergency' ? 'bg-error/10 text-error shadow-error/10' : 'bg-primary/10 text-primary shadow-primary/10'
+                            }`}>
+                              {selectedClinic.type === 'emergency' ? <ShieldAlert className="w-8 h-8" /> : <Hospital className="w-8 h-8" />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-display font-black text-xl text-on-surface leading-tight tracking-tight">{selectedClinic.name}</h4>
+                              </div>
+                              <p className="text-xs text-on-surface-variant font-medium leading-relaxed opacity-70">
+                                {selectedClinic.address}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 flex flex-col gap-5">
+                          <div className="flex items-center justify-between">
+                             <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em]">Estado del Centro</span>
+                                <div className="flex items-center gap-2.5">
+                                   <div className={`w-2.5 h-2.5 rounded-full ${isOpen ? 'bg-secondary animate-pulse shadow-[0_0_10px_rgba(81,223,142,0.8)]' : 'bg-outline-variant'}`} />
+                                   <span className={`text-xs font-black uppercase tracking-[0.1em] ${isOpen ? 'text-secondary' : 'text-outline-variant'}`}>
+                                      {isOpen ? 'Disponible Ahora' : 'Cerrado Actualmente'}
+                                   </span>
+                                </div>
+                             </div>
+                             <div className="flex flex-col items-end gap-1">
+                                <span className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em]">Distancia</span>
+                                <div className="flex items-center gap-1.5">
+                                  <Route className="w-4 h-4 text-primary opacity-60" />
+                                  <span className="text-xl font-display font-black text-on-surface leading-none">
+                                    {calculateDistance(userLocation, selectedClinic.location)}
+                                  </span>
+                                </div>
+                             </div>
+                          </div>
+
+                            <div className="grid grid-cols-1 gap-3">
+                              <button 
+                                onClick={() => {
+                                  if (selectedClinic.sector === 'private' && !isPremium) {
+                                    setMembership('premium');
+                                    return;
+                                  }
+                                  setIsNavigating(true);
+                                  // Scroll to top of panel to see instructions
+                                  const panel = document.querySelector('aside');
+                                  if (panel) panel.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className={`h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 group/btn overflow-hidden relative ${
+                                  selectedClinic.sector === 'private' && !isPremium
+                                    ? 'bg-outline-variant/20 text-outline-variant cursor-not-allowed border border-outline-variant/30'
+                                    : selectedClinic.type === 'emergency' ? 'bg-error text-on-error shadow-error/30' : 'bg-primary text-on-primary shadow-primary-fixed/30'
+                                }`}
+                              >
+                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                                {selectedClinic.sector === 'private' && !isPremium ? (
+                                  <ShieldAlert className="w-5 h-5" />
+                                ) : (
+                                  <Navigation className="w-5 h-5 fill-current group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                )}
+                                {selectedClinic.sector === 'private' && !isPremium ? 'Suscripción Requerida' : 'Iniciar Navegación (Instrucciones)'}
+                              </button>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <a 
+                                  href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="h-14 bg-surface-container-high border border-outline-variant/40 rounded-2xl flex items-center justify-center gap-3 text-on-surface hover:text-primary transition-all hover:bg-surface-bright group/gmaps shadow-lg"
+                                >
+                                  <ExternalLink className="w-5 h-5 text-secondary" />
+                                  <span className="text-[11px] font-black uppercase tracking-[0.2em]">GPS Maps</span>
+                                </a>
+                                <a 
+                                  href={`tel:${selectedClinic.phone}`} 
+                                  className="h-14 bg-surface-container-high border border-outline-variant/40 rounded-2xl flex items-center justify-center gap-3 text-on-surface hover:text-primary transition-all hover:bg-surface-bright group/phone shadow-lg"
+                                >
+                                  <Phone className="w-5 h-5 group-hover/phone:rotate-[15deg] transition-transform text-secondary" />
+                                  <span className="text-[11px] font-black uppercase tracking-[0.2em]">Llamar</span>
+                                </a>
+                              </div>
+                            </div>
+                          
+                          {selectedClinic.type === 'emergency' && (
+                            <div className="flex items-center gap-3 p-3 bg-error/5 rounded-xl border border-error/10">
+                              <AlertTriangle className="w-4 h-4 text-error animate-pulse shrink-0" />
+                              <p className="text-[10px] font-bold text-error uppercase tracking-wider leading-tight">
+                                Prioridad de urgencia activada para este destino
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </InfoWindow>
+              )}
+            </Map>
+        ) : (
+          <div className="absolute inset-0 w-full h-full bg-cover bg-center grayscale opacity-60 mix-blend-screen" 
+               style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAr1biyQAoYA3-Hq4qI8fOnXgkDERfbtqJkhE-oG7uZ4-nBBThi8jcCdIv0NgUFbXo3y-ZgwB_s_1I-5wAnm4FvBemeWNmid3vACTSYEsbzGZBuGoR5bXL2UudJAMv0AWlhvwFnKwgmGd5DOvNAdY8rTU1fkU19OHPwJpJD9sffZaPnlLUf3ZKASDhmvchKGnkH0COXzxRyi9GhwHgSlHa9ab-IfkSp-uJRxlwfm70XGgys-UtZ2YPaMWxQInl8Pz-lQNgr3E_C5g')` }}
+          />
+        )}
+      </section>
+
+      {/* Emergency Banner - Floating Overlay */}
       <AnimatePresence>
         {isEmergencyMode && (
           <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-error-container text-on-error-container shrink-0 z-50 shadow-lg border-b border-error/50"
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-lg bg-error-container text-on-error-container shrink-0 z-50 shadow-2xl border border-error/50 rounded-2xl overflow-hidden"
           >
-            <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+            <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center border border-error/20">
                   <ShieldAlert className="w-6 h-6 text-error animate-pulse" />
                 </div>
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-widest text-error leading-tight">Modo Emergencia Activo</h3>
-                  <p className="text-[10px] font-bold opacity-80 uppercase font-mono">{triageSummary?.condition || 'Compromiso Cardiovascular Detectado'}</p>
+                  <p className="text-[10px] font-bold opacity-80 uppercase font-mono">{triageSummary?.condition || 'Compromiso Agudo'}</p>
                 </div>
               </div>
 
               <div className="flex flex-col items-end">
-                <span className="text-[10px] font-bold opacity-70 uppercase tracking-tighter">ETA Guardia Central</span>
+                <span className="text-[10px] font-bold opacity-70 uppercase tracking-tighter">ETA Guardia</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-display font-black text-error leading-none tracking-tighter">--:--</span>
-                  <span className="text-xs font-bold text-error uppercase">min</span>
+                  <span className="text-2xl font-display font-black text-error leading-none tracking-tighter">--:--</span>
+                  <span className="text-[10px] font-bold text-error uppercase">min</span>
                 </div>
               </div>
             </div>
@@ -504,13 +709,24 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* Sidebar: Logistical Clarity */}
-        <aside className="w-full md:w-[420px] lg:w-[480px] bg-surface-container-low border-r border-outline-variant/20 flex flex-col z-20 shadow-xl overflow-hidden relative">
-          
-          {/* Navigation Active Sidebar */}
-          <AnimatePresence mode="wait">
-            {isNavigating && routeInfo ? (
+      <div className="absolute inset-0 pointer-events-none z-10">
+        <div className="flex flex-col h-full w-full">
+          {/* Top Search bar wrapper for mobile */}
+          <div className="md:hidden p-4 pointer-events-auto">
+             {/* We can move search here if needed, but for now sidebar handles it */}
+          </div>
+
+          <div className="flex-1 flex flex-col md:flex-row p-4 md:p-6 overflow-hidden items-end md:items-start">
+            {/* Floating Sidebar/Panel */}
+            <aside className="pointer-events-auto w-full md:w-[420px] lg:w-[480px] bg-surface-container-low/95 backdrop-blur-xl md:rounded-[32px] rounded-t-[32px] border border-outline-variant/20 flex flex-col shadow-[0_24px_48px_rgba(0,0,0,0.5)] overflow-hidden relative max-h-[60vh] md:max-h-full h-auto md:h-full transition-all duration-500">
+              {/* Drag Handle for Mobile */}
+              <div className="md:hidden flex justify-center py-2 shrink-0">
+                <div className="w-12 h-1 bg-outline-variant/30 rounded-full" />
+              </div>
+              
+              {/* Navigation Active Sidebar */}
+              <AnimatePresence mode="wait">
+            {isNavigating ? (
               <motion.div 
                 key="navigation"
                 initial={{ x: -20, opacity: 0 }}
@@ -518,92 +734,116 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                 exit={{ x: -20, opacity: 0 }}
                 className="flex flex-col h-full"
               >
-                <div className="p-6 bg-surface-container border-b border-outline-variant/30 shrink-0">
-                  <div className="flex items-center justify-between mb-6">
+                {!routeInfo ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center border-2 border-primary/20 mb-6 relative">
+                       <Navigation className="w-10 h-10 text-primary animate-bounce" />
+                       <div className="absolute -inset-4 bg-primary/5 rounded-full animate-ping" />
+                    </div>
+                    <h3 className="text-xl font-display font-black text-on-surface mb-2">Calculando Ruta Óptima</h3>
+                    <p className="text-sm text-on-surface-variant font-medium opacity-70">
+                      Buscando el camino más rápido hacia {selectedClinic?.name || 'el centro médico'}...
+                    </p>
                     <button 
-                      onClick={() => {
-                        setIsNavigating(false);
-                        setRouteInfo(null);
-                      }}
-                      className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest hover:opacity-80 active:scale-95 transition-transform"
+                      onClick={() => setIsNavigating(false)}
+                      className="mt-8 px-6 py-2 rounded-xl bg-surface-container-high text-on-surface text-[10px] font-black tracking-widest uppercase border border-outline-variant/30"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Cancelar Ruta
+                      Cancelar
                     </button>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                      <span className="text-[10px] font-mono font-black text-secondary tracking-widest uppercase">En Camino</span>
-                    </div>
                   </div>
-
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-current shadow-xl ${
-                      selectedClinic?.type === 'emergency' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
-                    }`}>
-                      {selectedClinic?.type === 'emergency' ? <Activity className="w-8 h-8" /> : <Hospital className="w-8 h-8" />}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-display font-black text-on-surface leading-tight tracking-tight">
-                        {selectedClinic?.name || 'Centro Médico'}
-                      </h3>
-                      <div className="flex items-center gap-4 mt-1">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-outline-variant uppercase">Distancia</span>
-                          <span className="text-sm font-display font-bold text-on-surface">{routeInfo.distance}</span>
-                        </div>
-                        <div className="w-px h-6 bg-outline-variant/30" />
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-outline-variant uppercase">Tiempo</span>
-                          <span className={`text-sm font-display font-bold ${selectedClinic?.type === 'emergency' ? 'text-error' : 'text-primary'}`}>{routeInfo.duration}</span>
+                ) : (
+                  <>
+                    <div className="p-6 bg-surface-container border-b border-outline-variant/30 shrink-0">
+                      <div className="flex items-center justify-between mb-6">
+                        <button 
+                          onClick={() => {
+                            setIsNavigating(false);
+                            setRouteInfo(null);
+                          }}
+                          className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest hover:opacity-80 active:scale-95 transition-transform"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          Regresar
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                          <span className="text-[10px] font-mono font-black text-secondary tracking-widest uppercase">Ruta Activa</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/20 flex items-center justify-between shadow-inner">
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20">
-                          <CheckCircle2 className="w-4 h-4" />
-                       </div>
-                       <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Centro Notificado</span>
-                    </div>
-                    <button className="text-[10px] font-bold text-outline-variant hover:text-primary transition-colors">
-                      DETALLES
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                  <h4 className="text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] font-mono mb-6">Instrucciones de Ruta</h4>
-                  <div className="space-y-6">
-                    {routeInfo.steps?.map((step, idx) => (
-                      <div key={idx} className="flex gap-4 group">
-                        <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 rounded-lg bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary transition-colors">
-                            <span className="text-[10px] font-bold">{idx + 1}</span>
-                          </div>
-                          {idx !== (routeInfo.steps?.length || 0) - 1 && (
-                            <div className="w-0.5 flex-1 bg-outline-variant/20 my-1 group-hover:bg-primary/30 transition-colors" />
-                          )}
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-current shadow-xl ${
+                          selectedClinic?.type === 'emergency' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
+                        }`}>
+                          {selectedClinic?.type === 'emergency' ? <Activity className="w-8 h-8" /> : <Hospital className="w-8 h-8" />}
                         </div>
-                        <div className="flex-1 pb-4">
-                          <div className="text-sm text-on-surface font-medium mb-1" dangerouslySetInnerHTML={{ __html: step.instructions }} />
-                          <div className="flex items-center gap-3 text-[10px] font-bold text-outline-variant font-mono">
-                            <span className="flex items-center gap-1"><Navigation className="w-3 h-3" /> {step.distance?.text}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {step.duration?.text}</span>
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-display font-black text-on-surface leading-tight tracking-tight">
+                            {selectedClinic?.name || 'Centro Médico'}
+                          </h3>
+                          <div className="flex items-center gap-4 mt-1">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-outline-variant uppercase">Distancia</span>
+                              <span className="text-sm font-display font-bold text-on-surface">{routeInfo.distance}</span>
+                            </div>
+                            <div className="w-px h-6 bg-outline-variant/30" />
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-outline-variant uppercase">Tiempo</span>
+                              <span className={`text-sm font-display font-bold ${selectedClinic?.type === 'emergency' ? 'text-error' : 'text-primary'}`}>{routeInfo.duration}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                <div className="p-6 bg-surface-container border-t border-outline-variant/20">
-                  <button className="w-full h-14 bg-error text-on-error font-display font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-                    <AlertCircle className="w-5 h-5 fill-current" />
-                    SOS: Alerta Médica
-                  </button>
-                </div>
+                      <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/20 flex items-center justify-between shadow-inner">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20">
+                              <CheckCircle2 className="w-4 h-4" />
+                           </div>
+                           <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Protocolo de Red</span>
+                        </div>
+                        <span className="text-[9px] font-black text-outline-variant">EN TIEMPO REAL</span>
+                      </div>
+                    </div>
+
+                    <div id="navigation-steps" className="flex-1 overflow-y-auto scrollbar-hide p-6">
+                      <h4 className="text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] font-mono mb-6">Pasos de Navegación</h4>
+                      <div className="space-y-6">
+                        {routeInfo.steps?.map((step, idx) => (
+                          <div key={idx} className="flex gap-4 group">
+                            <div className="flex flex-col items-center">
+                              <div className="w-6 h-6 rounded-lg bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                                <span className="text-[10px] font-bold">{idx + 1}</span>
+                              </div>
+                              {idx !== (routeInfo.steps?.length || 0) - 1 && (
+                                <div className="w-0.5 flex-1 bg-outline-variant/20 my-1 group-hover:bg-primary/30 transition-colors" />
+                              )}
+                            </div>
+                            <div className="flex-1 pb-4">
+                              <div className="text-sm text-on-surface font-medium mb-1" dangerouslySetInnerHTML={{ __html: step.instructions || '' }} />
+                              <div className="flex items-center gap-3 text-[10px] font-bold text-outline-variant font-mono">
+                                <span className="flex items-center gap-1"><Navigation className="w-3 h-3" /> {step.distance?.text}</span>
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {step.duration?.text}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-6 bg-surface-container border-t border-outline-variant/20">
+                      <a 
+                        href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic?.location.lat},${selectedClinic?.location.lng}&travelmode=driving`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full h-14 bg-error text-on-error font-display font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                      >
+                        <ExternalLink className="w-5 h-5" />
+                        Abrir GPS Externo
+                      </a>
+                    </div>
+                  </>
+                )}
               </motion.div>
             ) : (
               <motion.div
@@ -686,32 +926,23 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                       <Search className="w-4 h-4" />
                     </div>
                     <h2 className="text-xl font-display font-bold text-on-surface">Red de Salud</h2>
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm ${
-                      isPremium 
-                        ? 'bg-primary/20 text-primary border-primary/30' 
-                        : 'bg-hospital-green/10 text-hospital-green border-hospital-green/20'
-                    }`}>
-                      {isPremium ? 'Red Total Premium' : 'Solo Red Pública'}
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm bg-primary/20 text-primary border-primary/30`}>
+                      Red Total Conectada
                     </span>
                   </div>
-                  {hasPlacesError && (
+                  {isSearching && (
+                    <div className="flex items-center gap-2 mt-1 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-md">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
+                      <span className="text-[8px] font-black uppercase tracking-wider text-primary">Actualizando Red Médica...</span>
+                    </div>
+                  )}
+                  {hasPlacesError && !isSearching && (
                     <div className="flex items-center gap-2 mt-1 px-2 py-0.5 bg-error/10 border border-error/20 rounded-md">
                       <AlertTriangle className="w-3 h-3 text-error" />
                       <span className="text-[8px] font-black uppercase tracking-wider text-error">Modo Offline API: Habilitar Places API (New)</span>
                     </div>
                   )}
                 </div>
-                {searchTerm && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    onClick={() => setSearchTerm('')}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary hover:bg-primary/20 transition-all font-mono"
-                  >
-                    <span>{searchTerm.toUpperCase()}</span>
-                    <X className="w-3 h-3" />
-                  </motion.button>
-                )}
               </div>
             )}
             
@@ -759,7 +990,7 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                    onClick={() => setFilter(f.id as any)}
                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border whitespace-nowrap shadow-sm font-mono ${
                      filter === f.id 
-                       ? 'bg-primary text-on-primary border-primary' 
+                       ? 'bg-primary text-on-primary border-primary scale-105' 
                        : 'bg-surface-container-high text-on-surface-variant border-outline-variant/30 hover:border-primary/40'
                    }`}
                  >
@@ -770,32 +1001,15 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
             </div>
           </div>
 
+          {/* List Section Wrapper */}
           <div className="p-4 px-6 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-between">
             <h3 className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em] font-mono">
-              {isPremium ? 'Red Total Prioritaria' : 'Red Pública MINSA Prioritaria'}
+              Resultados en tiempo real
             </h3>
-            <div className="flex gap-2">
-              <button 
-                onClick={setManaguaManual}
-                className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border transition-all ${
-                  !useGranadaDefault ? 'bg-primary/20 border-primary text-primary' : 'bg-surface border-outline-variant text-outline-variant'
-                }`}
-              >
-                Managua
-              </button>
-              <button 
-                onClick={setGranadaManual}
-                className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border transition-all ${
-                  useGranadaDefault ? 'bg-primary/20 border-primary text-primary' : 'bg-surface border-outline-variant text-outline-variant'
-                }`}
-              >
-                Granada
-              </button>
-            </div>
           </div>
 
           {/* Scrollable Pharmacy List */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
             {filteredClinics.map((clinic) => (
               <motion.div
                 layout
@@ -853,16 +1067,6 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {clinic.type === 'pharmacy' && (
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border transition-colors ${
-                      searchTerm 
-                        ? 'bg-secondary-container text-on-secondary-container border-secondary-container animate-pulse' 
-                        : 'bg-secondary-container/10 text-secondary-container border-secondary-container/20'
-                    }`}>
-                      <CheckCircle2 className="w-3 h-3" /> 
-                      {searchTerm ? `Stock de ${searchTerm} Confirmado` : 'Stock Confirmado'}
-                    </div>
-                  )}
                   {clinic.open24h && (
                     <div className="flex items-center gap-1.5 bg-surface-container-highest text-on-surface-variant px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border border-outline-variant/30">
                       <Clock className="w-3 h-3" /> 24 Horas
@@ -871,18 +1075,45 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                 </div>
 
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (clinic.sector === 'private' && !isPremium) {
+                      setMembership('premium');
+                      return;
+                    }
                     setSelectedClinic(clinic);
                     setIsNavigating(true);
+                    // Scroll to top of panel to see instructions
+                    const panel = document.querySelector('aside');
+                    if (panel) panel.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className={`w-full py-3.5 px-4 rounded-[18px] font-display font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                  selectedClinic?.id === clinic.id
-                    ? clinic.type === 'emergency' ? 'bg-error text-on-error shadow-lg shadow-error/20' : 'bg-primary text-on-primary shadow-lg shadow-primary/20'
-                    : 'bg-surface-container-highest text-on-surface border border-outline-variant/30 hover:bg-surface-container transition-all active:scale-[0.98]'
-                }`}>
-                  <Route className="w-4 h-4" />
-                  Iniciar Navegación
+                    clinic.sector === 'private' && !isPremium
+                      ? 'bg-outline-variant/10 text-outline-variant border border-outline-variant/20 grayscale'
+                      : selectedClinic?.id === clinic.id
+                        ? clinic.type === 'emergency' ? 'bg-error text-on-error shadow-lg shadow-error/20' : 'bg-primary text-on-primary shadow-lg shadow-primary/20'
+                        : 'bg-surface-container-highest text-on-surface border border-outline-variant/30 hover:bg-surface-container transition-all active:scale-[0.98]'
+                  }`}>
+                  {clinic.sector === 'private' && !isPremium ? (
+                    <ShieldAlert className="w-4 h-4" />
+                  ) : (
+                    <Route className="w-4 h-4" />
+                  )}
+                  {clinic.sector === 'private' && !isPremium ? 'Bloqueado (Suscripción)' : 'Navegar (Instrucciones)'}
                 </button>
+
+                {clinic.sector !== 'private' || isPremium ? (
+                  <a 
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${clinic.location.lat},${clinic.location.lng}&travelmode=driving`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full mt-2 py-2.5 px-4 rounded-[18px] font-display font-bold text-[10px] uppercase tracking-widest bg-surface-container-high border border-outline-variant/30 text-secondary hover:bg-surface-container-highest flex items-center justify-center gap-2 transition-all"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Abrir en Google Maps GPS
+                  </a>
+                ) : null}
               </motion.div>
             ))}
           </div>
@@ -908,11 +1139,45 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
 
           {isEmergencyMode && (
              <div className="px-6 pb-6 pt-2 space-y-4">
-                <button className="w-full h-14 bg-primary text-on-primary font-display font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-[0_8px_20px_rgba(46,144,250,0.3)] hover:shadow-[0_12px_28px_rgba(46,144,250,0.4)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                  <Navigation className="w-5 h-5 fill-current" />
-                  Iniciar Navegación
-                </button>
+                <div className="grid grid-cols-1 gap-3">
+                  <button 
+                    onClick={() => {
+                      if (selectedClinic?.sector === 'private' && !isPremium) {
+                        setMembership('premium');
+                        return;
+                      }
+                      if (selectedClinic) {
+                        setIsNavigating(true);
+                        const panel = document.querySelector('aside');
+                        if (panel) panel.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
+                    className={`w-full h-14 font-display font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-[0_8px_20px_rgba(46,144,250,0.3)] hover:shadow-[0_12px_28px_rgba(46,144,250,0.4)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 relative overflow-hidden group ${
+                      selectedClinic?.sector === 'private' && !isPremium
+                        ? 'bg-outline-variant/20 text-outline-variant cursor-not-allowed'
+                        : 'bg-primary text-on-primary'
+                    }`}>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                    {selectedClinic?.sector === 'private' && !isPremium ? (
+                      <ShieldAlert className="w-5 h-5" />
+                    ) : (
+                      <Navigation className="w-5 h-5 fill-current" />
+                    )}
+                    {selectedClinic?.sector === 'private' && !isPremium ? 'Suscripción Requerida' : 'Instrucciones de Ruta'}
+                  </button>
+
+                  {selectedClinic && (selectedClinic.sector !== 'private' || isPremium) && (
+                    <a 
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-12 bg-secondary text-on-secondary font-display font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow-lg flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Abrir GPS Google Maps
+                    </a>
+                  )}
+                </div>
 
                 <button 
                   onClick={() => setIsEmergencyMode(false)}
@@ -927,179 +1192,12 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
           </AnimatePresence>
         </aside>
 
-        {/* Map Section */}
-        <section className="flex-1 relative bg-background overflow-hidden">
-          {hasValidKey && !hideMap ? (
-              <Map
-                defaultCenter={center}
-                defaultZoom={13}
-                mapId="DARK_MODE_MAP"
-                className="w-full h-full"
-                gestureHandling="greedy"
-                disableDefaultUI
-                styles={[
-                   {
-                     "featureType": "all",
-                     "elementType": "labels.text.fill",
-                     "stylers": [{"color": "#8a919e"}]
-                   },
-                   {
-                     "featureType": "all",
-                     "elementType": "labels.icon",
-                     "stylers": [{"visibility": "off"}]
-                   },
-                   {
-                     "featureType": "landscape",
-                     "elementType": "all",
-                     "stylers": [{"color": "#0b1326"}]
-                   },
-                   {
-                     "featureType": "poi",
-                     "elementType": "all",
-                     "stylers": [{"visibility": "off"}]
-                   },
-                   {
-                      "featureType": "road",
-                      "elementType": "all",
-                      "stylers": [{"color": "#171f33"}]
-                   },
-                   {
-                      "featureType": "water",
-                      "elementType": "all",
-                      "stylers": [{"color": "#060e20"}]
-                   }
-                ]}
-              >
-                {clinics.map(clinic => (
-                  <ClinicMarker 
-                    key={clinic.id} 
-                    clinic={clinic} 
-                    onClick={(c) => {
-                      setSelectedClinic(c);
-                      if (isNavigating) setIsNavigating(false);
-                    }} 
-                  />
-                ))}
-
-                {isNavigating && selectedClinic && (
-                  <Directions
-                    origin={userLocation}
-                    destination={selectedClinic.location}
-                    onRouteUpdate={(route) => {
-                      setRouteInfo({
-                        distance: route.legs[0].distance?.text || '',
-                        duration: route.legs[0].duration?.text || '',
-                        steps: route.legs[0].steps
-                      });
-                    }}
-                  />
-                )}
-
-                {/* User Current Location */}
-                <UserLocationMarker position={userLocation} />
-
-                {/* InfoWindow custom logic */}
-                {selectedClinic && (
-                  <InfoWindow
-                    position={selectedClinic.location}
-                    onCloseClick={() => {
-                      setSelectedClinic(null);
-                      if (isNavigating) setIsNavigating(false);
-                    }}
-                    headerDisabled
-                  >
-                    {(() => {
-                      const isOpen = selectedClinic.isOpen !== undefined ? selectedClinic.isOpen : selectedClinic.open24h;
-                      return (
-                        <div className="p-0 -m-1 min-w-[300px] overflow-hidden bg-surface rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
-                          {/* Card Header with Type-specific background gradient */}
-                          <div className={`p-4 ${
-                            selectedClinic.type === 'emergency' 
-                              ? 'bg-gradient-to-br from-error/20 to-error/5' 
-                              : 'bg-gradient-to-br from-primary/20 to-primary/5'
-                          } border-b border-outline-variant/10`}>
-                            <div className="flex items-start gap-4">
-                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-current shrink-0 shadow-xl ${
-                                selectedClinic.type === 'emergency' ? 'bg-error/10 text-error shadow-error/10' : 'bg-primary/10 text-primary shadow-primary/10'
-                              }`}>
-                                {selectedClinic.type === 'emergency' ? <ShieldAlert className="w-8 h-8" /> : <Hospital className="w-8 h-8" />}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-display font-black text-xl text-on-surface leading-tight tracking-tight">{selectedClinic.name}</h4>
-                                </div>
-                                <p className="text-xs text-on-surface-variant font-medium leading-relaxed opacity-70">
-                                  {selectedClinic.address}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-4 flex flex-col gap-5">
-                            <div className="flex items-center justify-between">
-                               <div className="flex flex-col gap-1">
-                                  <span className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em]">Estado del Centro</span>
-                                  <div className="flex items-center gap-2.5">
-                                     <div className={`w-2.5 h-2.5 rounded-full ${isOpen ? 'bg-secondary animate-pulse shadow-[0_0_10px_rgba(81,223,142,0.8)]' : 'bg-outline-variant'}`} />
-                                     <span className={`text-xs font-black uppercase tracking-[0.1em] ${isOpen ? 'text-secondary' : 'text-outline-variant'}`}>
-                                        {isOpen ? 'Disponible Ahora' : 'Cerrado Actualmente'}
-                                     </span>
-                                  </div>
-                               </div>
-                               <div className="flex flex-col items-end gap-1">
-                                  <span className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em]">Distancia</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <Route className="w-4 h-4 text-primary opacity-60" />
-                                    <span className="text-xl font-display font-black text-on-surface leading-none">
-                                      {calculateDistance(userLocation, selectedClinic.location)}
-                                    </span>
-                                  </div>
-                               </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              <button 
-                                onClick={() => setIsNavigating(true)}
-                                className={`h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 group/btn overflow-hidden relative ${
-                                  selectedClinic.type === 'emergency' ? 'bg-error text-on-error shadow-error/30' : 'bg-primary text-on-primary shadow-primary-fixed/30'
-                                }`}
-                              >
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                <Navigation className="w-5 h-5 fill-current group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                                Iniciar Navegación
-                              </button>
-                              <a 
-                                href={`tel:${selectedClinic.phone}`} 
-                                className="h-14 bg-surface-container-high border border-outline-variant/40 rounded-2xl flex items-center justify-center gap-3 text-on-surface hover:text-primary transition-all hover:bg-surface-bright group/phone shadow-lg"
-                              >
-                                <Phone className="w-5 h-5 group-hover/phone:rotate-[15deg] transition-transform text-secondary" />
-                                <span className="text-[11px] font-black uppercase tracking-[0.2em]">Llamar</span>
-                              </a>
-                            </div>
-                            
-                            {selectedClinic.type === 'emergency' && (
-                              <div className="flex items-center gap-3 p-3 bg-error/5 rounded-xl border border-error/10">
-                                <AlertTriangle className="w-4 h-4 text-error animate-pulse shrink-0" />
-                                <p className="text-[10px] font-bold text-error uppercase tracking-wider leading-tight">
-                                  Prioridad de urgencia activada para este destino
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </InfoWindow>
-                )}
-              </Map>
-          ) : (
-            <div className="absolute inset-0 w-full h-full bg-cover bg-center grayscale opacity-60 mix-blend-screen" 
-                 style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAr1biyQAoYA3-Hq4qI8fOnXgkDERfbtqJkhE-oG7uZ4-nBBThi8jcCdIv0NgUFbXo3y-ZgwB_s_1I-5wAnm4FvBemeWNmid3vACTSYEsbzGZBuGoR5bXL2UudJAMv0AWlhvwFnKwgmGd5DOvNAdY8rTU1fkU19OHPwJpJD9sffZaPnlLUf3ZKASDhmvchKGnkH0COXzxRyi9GhwHgSlHa9ab-IfkSp-uJRxlwfm70XGgys-UtZ2YPaMWxQInl8Pz-lQNgr3E_C5g')` }}
-            />
-          )}
-
+        {/* Floating Desktop Controls */}
+        <div className="flex-1 relative hidden md:block">
+          {/* Map Section was moved to background, this area is for map-top overlays */}
+          
           {/* Route Overlay: Desktop only floating panel */}
-          <div className="hidden md:flex absolute top-6 right-6 p-6 glass-panel-elevated rounded-2xl w-[320px] flex-col gap-4 z-10 shadow-2xl border border-outline-variant/20">
+          <div className="absolute top-6 right-6 p-6 glass-panel-elevated rounded-2xl w-[320px] flex flex-col gap-4 z-10 shadow-2xl border border-outline-variant/20 pointer-events-auto">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-colors ${isEmergencyMode ? 'bg-error/20 text-error border-error/30' : 'bg-primary/20 text-primary border-primary/30'}`}>
                 {isEmergencyMode ? <AlertCircle className="w-4 h-4 animation-pulse" /> : <Route className="w-4 h-4" />}
@@ -1140,33 +1238,39 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+    </div>
 
-          {/* Map Controls */}
-          <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-10">
-             <button 
-               onClick={() => map?.setCenter(userLocation)}
-               className="w-12 h-12 bg-surface-container border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all active:scale-95"
-               title="Centrar en mi ubicación"
-             >
-               <Target className="w-6 h-6" />
-             </button>
-             <div className="flex flex-col bg-surface-container border border-outline-variant/30 rounded-2xl shadow-xl overflow-hidden">
-               <button className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all border-b border-outline-variant/20">
-                 <Plus className="w-6 h-6" />
-               </button>
-               <button className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all">
-                 <Minus className="w-6 h-6" />
-               </button>
-             </div>
-          </div>
-
-          {/* Mobile Toggle: Map View Label */}
-          <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 bg-surface-container/80 backdrop-blur-md border border-outline-variant/20 px-4 py-1.5 rounded-full text-[10px] font-bold text-primary-fixed uppercase tracking-widest shadow-lg">
-            Vista Satelital IA
-          </div>
-        </section>
+      {/* Map Controls - Always Floating Bottom Right */}
+      <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-30 pointer-events-auto">
+         <button 
+           onClick={() => {
+             if (map) {
+               map.setCenter(userLocation);
+               map.setZoom(15);
+             }
+           }}
+           className="w-12 h-12 bg-surface-container/90 backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all active:scale-95"
+           title="Centrar en mi ubicación"
+         >
+           <Target className="w-6 h-6" />
+         </button>
+         <div className="flex flex-col bg-surface-container/90 backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-xl overflow-hidden">
+           <button className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all border-b border-outline-variant/20">
+             <Plus className="w-6 h-6" />
+           </button>
+           <button className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all">
+             <Minus className="w-6 h-6" />
+           </button>
+         </div>
       </div>
 
+      {/* Mobile Map View Status */}
+      <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 bg-surface-container/80 backdrop-blur-md border border-outline-variant/20 px-4 py-1.5 rounded-full text-[10px] font-bold text-primary-fixed uppercase tracking-widest shadow-lg z-20 pointer-events-none">
+        Vista Satelital IA
+      </div>
     </div>
   );
 }
