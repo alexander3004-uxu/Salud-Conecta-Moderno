@@ -127,7 +127,7 @@ export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }
         <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-wrap justify-around gap-8 text-center text-on-surface-variant uppercase tracking-[0.2em] text-[10px] font-bold font-mono">
             <div className="flex items-center gap-2">{t('status.network')}: <span className="text-hospital-green flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-hospital-green animate-pulse" /> {t('status.active')}</span></div>
             <div>{t('status.pharmacies')}: <span className="text-primary">42 {t('status.available')}</span></div>
-            <div>{t('status.emergency')}: <span className="text-alert-red font-black">{t('status.call')} 911</span></div>
+            <div>{t('status.emergency')}: <span className="text-alert-red font-black">{t('status.call')} 128</span></div>
             <div>SISTEMA IA: <span className="text-hospital-green">ONLINE</span></div>
         </div>
       </section>

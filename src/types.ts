@@ -30,7 +30,7 @@ export interface UserProfile {
 export interface Clinic {
   id: string;
   name: string;
-  type: 'clinic' | 'pharmacy' | 'emergency';
+  type: 'clinic' | 'pharmacy' | 'emergency' | 'hospital' | 'health-center' | 'laboratory';
   sector: 'public' | 'private';
   location: {
     lat: number;
@@ -40,6 +40,11 @@ export interface Clinic {
   inStock?: boolean;
   open24h?: boolean;
   phone?: string;
+  description?: string;
+  rating?: number;
+  reviews?: number;
+  imageUrl?: string;
+  services?: string[];
 }
 
 export interface Appointment {

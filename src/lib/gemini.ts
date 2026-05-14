@@ -1,11 +1,27 @@
 import { GoogleGenAI } from "@google/genai";
+import { GEMINI_API_KEY } from "./config";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "undefined" || GEMINI_API_KEY === "MISSING" || GEMINI_API_KEY === "") {
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  }
+  return aiInstance;
+};
 
 export const getHealthAssistant = async (prompt: string, membership: 'free' | 'premium' = 'free', history: { role: string, parts: { text: string }[] }[] = []) => {
   try {
+    const ai = getAI();
+    if (!ai) {
+      return "El asistente de IA no está configurado. Por favor, asegúrate de añadir tu GEMINI_API_KEY en los secretos de la aplicación (Menú Settings).";
+    }
+
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         ...history.map(h => ({ role: h.role, parts: h.parts })),
         { role: 'user', parts: [{ text: prompt }] }
@@ -24,16 +40,39 @@ Responde siempre en español.`,
       },
     });
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
+    
+    const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
+                          errorMessage.toLowerCase().includes('resource_exhausted');
+
+    if (error instanceof Error || typeof error === 'object') {
+      if (errorMessage.includes('429')) {
+        if (isOutOfCredits) {
+           return "El sistema de IA requiere atención: Los créditos de prepago se han agotado en Google AI Studio. Visita ai.studio para gestionar tu facturación. ¡Recuerda seguir las recomendaciones médicas generales!";
+        }
+        return "Nuestra IA está descansando debido a alta demanda. ¡Recuerda seguir cuidando tu salud!";
+      }
+    }
     return "Lo siento, tuve un problema al procesar tu solicitud. Por favor, intenta de nuevo más tarde.";
   }
 };
 
 export const getSmartTriage = async (symptoms: string, membership: 'free' | 'premium' = 'free') => {
   try {
+    const ai = getAI();
+    if (!ai) {
+      return {
+        urgency: 'medium',
+        recommendation: 'El asistente de IA no está configurado (Falta GEMINI_API_KEY). Por favor, ve a la configuración de la aplicación para activarlo.',
+        reasoning: 'Configuración de API pendiente.',
+        error: true
+      };
+    }
+
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: [{ role: 'user', parts: [{ text: symptoms }] }],
       config: {
         systemInstruction: `Eres un motor de triaje médico de alta precisión para Salud Conecta IA. 
@@ -75,12 +114,26 @@ Responde siempre en español.`,
     }
     
     return parsed;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Triage Error:", error);
+    
+    const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    const isQuotaError = errorMessage.includes('429') || error?.status === 429;
+    const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
+                          errorMessage.toLowerCase().includes('resource_exhausted');
+    
     return {
       urgency: 'medium',
-      recommendation: 'No pudimos procesar tu evaluación de triaje automáticamente. Por favor, intenta describir tus síntomas con más detalle o consulta directamente con un profesional de la salud.',
-      reasoning: 'Lo sentimos, tuvimos un problema al analizar tus síntomas. Te recomendamos intentar de nuevo o acudir a tu centro médico más cercano para una evaluación profesional.',
+      recommendation: isOutOfCredits
+        ? 'El motor de IA ha agotado sus créditos en AI Studio. Por favor, verifica la facturación en ai.studio o acude a tu centro de salud local.'
+        : (isQuotaError 
+          ? 'El servicio de triaje automático está temporalmente limitado por alta demanda. Por favor, acércate a tu centro de salud más cercano.'
+          : 'No pudimos procesar tu evaluación de triaje automáticamente. Por favor, intenta describir tus síntomas con más detalle o consulta directamente con un profesional de la salud.'),
+      reasoning: isOutOfCredits 
+        ? 'Agotamiento de créditos en la plataforma de IA (AI Studio).'
+        : (isQuotaError
+          ? 'Límite de capacidad alcanzado en el motor de IA.'
+          : 'Lo sentimos, tuvimos un problema al analizar tus síntomas. Te recomendamos intentar de nuevo o acudir a tu centro médico más cercano para una evaluación profesional.'),
       error: true
     };
   }
@@ -88,6 +141,13 @@ Responde siempre en español.`,
 
 export const getDailyHealthTip = async (language: string = 'es', membership: 'free' | 'premium' = 'free') => {
   try {
+    const ai = getAI();
+    if (!ai) {
+      return language === 'es' 
+        ? "Nota: Configura tu GEMINI_API_KEY en Settings para recibir consejos personalizados. Tip: Camina 30m diario."
+        : "Note: Configure your GEMINI_API_KEY in Settings for personalized tips. Tip: Walk 30m daily.";
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ role: 'user', parts: [{ text: "Genera un consejo de salud breve, motivador y práctico para hoy." }] }],
@@ -100,8 +160,29 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
       },
     });
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Health Tip Error:", error);
+    
+    // Stringify error to search for patterns
+    const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    
+    // Check for quota or credit exhaustion
+    const isQuotaError = errorMessage.includes('429') || error?.status === 429;
+    const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
+                          errorMessage.toLowerCase().includes('resource_exhausted');
+    
+    if (isOutOfCredits) {
+      return language === 'es'
+        ? "Nota del sistema: Los créditos de IA han finalizado en el proyecto de AI Studio. Por favor, revisa la facturación en ai.studio. Recomendación general: Mantén una dieta rica en fibras."
+        : "System note: AI credits exhausted in AI Studio project. Please check billing at ai.studio. General advice: Maintain a high-fiber diet.";
+    }
+
+    if (isQuotaError) {
+      return language === 'es'
+        ? "Recuerda: El servicio de IA está bajo alta demanda. Caminar 30 minutos al día fortalece tu corazón y es gratuito."
+        : "Remember: IA service is under high demand. Walking 30 minutes a day strengthens your heart and is free.";
+    }
+
     return language === 'es' 
       ? (membership === 'free' ? "Recuerda: Tu Centro de Salud local ofrece vacunación gratuita. ¡Protege a tu familia!" : "¡Hidrátate hoy! Beber suficiente agua es la clave para mantener tu energía.") 
       : "Stay hydrated! Drinking enough water is key to maintaining your energy and focus.";

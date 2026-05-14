@@ -35,11 +35,13 @@ import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { UserProvider } from './contexts/UserContext';
 import Login from './components/auth/Login';
+import { auth, handleRedirectResult } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { syncUserProfile } from './lib/authUtils';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
   const [regType, setRegType] = useState<'doctor' | 'clinic' | 'lab_pharmacy'>('lab_pharmacy');
 
@@ -50,17 +52,40 @@ export default function App() {
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    localStorage.setItem('isLoggedIn', 'true');
   };
 
   useEffect(() => {
+    // Check for redirect result first
+    const checkRedirect = async () => {
+      try {
+        const user = await handleRedirectResult();
+        if (user) {
+          console.log("Redirect login success:", user.email);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Redirect check error:", error);
+      }
+    };
+    checkRedirect();
+
+    // Listen for auth changes
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        syncUserProfile(user);
+      } else {
+        setIsAuthenticated(false);
+      }
+      setIsInitializing(false);
+    });
+
     // Theme initialization
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
       document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
     } else {
-      // Default to dark or follow preference
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
     }
@@ -69,7 +94,10 @@ export default function App() {
       setActiveTab(e.detail);
     };
     window.addEventListener('changeTab', handleTabChange);
-    return () => window.removeEventListener('changeTab', handleTabChange);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('changeTab', handleTabChange);
+    };
   }, []);
 
   const renderContent = () => {
@@ -126,6 +154,20 @@ export default function App() {
         );
     }
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 text-center">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <div>
+            <h2 className="text-xl font-bold text-on-surface">Cargando Salud Conecta...</h2>
+            <p className="text-on-surface-variant mt-2">Verificando sesión segura</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

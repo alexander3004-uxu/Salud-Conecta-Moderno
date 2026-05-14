@@ -11,6 +11,7 @@ import {
   Stethoscope
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { signInWithGoogle, signInWithGoogleRedirect } from '../../lib/firebase';
 
 interface LoginProps {
   onLogin: () => void;
@@ -21,23 +22,45 @@ export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulamos una carga para dar sensación de seguridad/procesamiento
+    setError(null);
+    // Para simplificar, desabilitamos el login por email/password mock
+    // y sugerimos usar Google para tener una sesión real de Firebase
     setTimeout(() => {
-      // Guardamos datos ficticios para que el resto de la app los tome
-      const mockUser = {
-        uid: 'mock-user-123',
-        email: email,
-        displayName: email.split('@')[0],
-        photoURL: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
-      };
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      onLogin();
+      setError("El inicio de sesión por correo está deshabilitado. Por favor usa 'Continuar con Google' para una experiencia completa y segura.");
       setIsLoading(false);
-    }, 1500);
+    }, 800);
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const user = await signInWithGoogle();
+      if (user) {
+        onLogin();
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Error al iniciar sesión con Google");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRedirectLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signInWithGoogleRedirect();
+    } catch (err: any) {
+      setError(err.message || "Error al redireccionar");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -100,6 +123,36 @@ export default function Login({ onLogin }: LoginProps) {
             <h2 className="text-3xl font-display font-black text-on-surface mb-2">{t('login.welcome')}</h2>
             <p className="text-on-surface-variant font-medium">{t('login.subtitle')}</p>
           </div>
+
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mb-6 p-4 bg-error/10 border border-error/20 rounded-2xl flex items-start gap-3"
+            >
+              <div className="w-5 h-5 rounded-full bg-error text-white flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[10px] font-bold">!</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-error leading-relaxed">
+                  {error}
+                </p>
+                {error.includes("dominio") && (
+                  <p className="text-[10px] text-error/70 mt-1">
+                    Tip: Asegúrate de añadir el dominio actual (ais-dev-... o ais-pre-...) en la consola de Firebase {'>'} Authentication {'>'} Settings {'>'} Authorized Domains.
+                  </p>
+                )}
+                {error.includes("bloqueada") && (
+                  <button 
+                    onClick={handleRedirectLogin}
+                    className="text-[10px] font-black uppercase tracking-wider text-primary mt-2 border-b border-primary/30 pb-0.5 hover:border-primary transition-all"
+                  >
+                    Usar método de redirección
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -168,11 +221,18 @@ export default function Login({ onLogin }: LoginProps) {
           </div>
 
           <button
-            onClick={onLogin}
-            className="w-full bg-surface-container-high border border-outline-variant/40 text-on-surface py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-surface-container-highest transition-colors"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-full bg-surface-container-high border border-outline-variant/40 text-on-surface py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-surface-container-highest transition-colors disabled:opacity-50"
           >
-            <Chrome className="w-5 h-5" />
-            {t('login.google')}
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <Chrome className="w-5 h-5" />
+                {t('login.google')}
+              </>
+            )}
           </button>
 
           <p className="mt-10 text-center text-sm text-on-surface-variant font-medium">

@@ -35,8 +35,12 @@ interface ShellProps {
 export default function Shell({ children, activeTab, setActiveTab }: ShellProps) {
   const { t } = useLanguage();
   const [user, setUser] = React.useState<any>(null);
+  const [unauthorizedDomain, setUnauthorizedDomain] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    const handleUnauth = (e: any) => setUnauthorizedDomain(e.detail.domain);
+    window.addEventListener('firebase-unauthorized-domain', handleUnauth);
+    
     // Check for redirect result on mount
     handleRedirectResult().then(u => {
       if (u) {
@@ -74,6 +78,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
     return () => {
       unsubscribe();
       window.removeEventListener('changeTab', handleTabChange);
+      window.removeEventListener('firebase-unauthorized-domain', handleUnauth);
     };
   }, [setActiveTab]);
 
@@ -88,7 +93,18 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       {/* TopAppBar */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface-container-low border-b border-outline-variant/30 shadow-sm transition-colors duration-200">
+      {unauthorizedDomain && (
+        <div className="fixed top-0 left-0 w-full z-[100] bg-alert-red text-white p-2 text-center text-xs font-bold animate-pulse shadow-lg">
+          DOMINIO NO AUTORIZADO: Añade "{unauthorizedDomain}" en Firebase Console &gt; Auth &gt; Settings &gt; Authorized Domains.
+          <button 
+            onClick={() => setUnauthorizedDomain(null)}
+            className="ml-4 underline uppercase"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
+      <header className={`fixed ${unauthorizedDomain ? 'top-8' : 'top-0'} left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface-container-low border-b border-outline-variant/30 shadow-sm transition-all duration-200`}>
         <div 
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => setActiveTab('home')}
@@ -173,7 +189,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
       </div>
 
       {/* Main Content Area */}
-      <main className={`flex-grow pt-16 pb-20 md:pt-[104px] md:pb-0 flex flex-col items-center w-full max-w-7xl mx-auto`}>
+      <main className={`flex-grow ${activeTab === 'map' ? 'pt-16 pb-20 md:pt-16 md:pb-0' : 'pt-16 pb-20 md:pt-[104px] md:pb-0'} flex flex-col items-center w-full ${activeTab === 'map' ? 'max-w-none' : 'max-w-7xl mx-auto'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -181,7 +197,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className="w-full flex-grow flex flex-col"
+            className={`w-full flex-grow flex flex-col ${activeTab === 'map' ? 'h-[calc(100vh-64px)]' : ''}`}
           >
             {children}
           </motion.div>
@@ -213,46 +229,48 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
       </nav>
 
       {/* Global Footer (Desktop Only) */}
-      <footer className="hidden md:block w-full border-t border-outline-variant/10 py-16 mt-12 bg-surface-container-lowest">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-primary" />
-              <span className="text-xl font-bold text-primary">Salud Conecta IA</span>
-            </div>
-            <p className="text-on-surface-variant text-sm leading-relaxed max-w-sm">
-              {t('footer.desc')}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-8">
+      {!['map', 'dashboard', 'settings', 'profile'].includes(activeTab) && (
+        <footer className="hidden md:block w-full border-t border-outline-variant/10 py-16 mt-12 bg-surface-container-lowest">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
             <div>
-              <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.system')}</h4>
-              <ul className="text-sm text-on-surface-variant space-y-2">
-                <li>{t('footer.system.triage')}</li>
-                <li>{t('footer.system.pharmacy')}</li>
-                <li>{t('footer.system.pwa')}</li>
-              </ul>
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="w-5 h-5 text-primary" />
+                <span className="text-xl font-bold text-primary">Salud Conecta IA</span>
+              </div>
+              <p className="text-on-surface-variant text-sm leading-relaxed max-w-sm">
+                {t('footer.desc')}
+              </p>
             </div>
-            <div>
-              <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.legal')}</h4>
-              <ul className="text-sm text-on-surface-variant space-y-2">
-                <li>{t('footer.legal.privacy')}</li>
-                <li>{t('footer.legal.terms')}</li>
-                <li>{t('footer.legal.acc')}</li>
-              </ul>
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.system')}</h4>
+                <ul className="text-sm text-on-surface-variant space-y-2">
+                  <li>{t('footer.system.triage')}</li>
+                  <li>{t('footer.system.pharmacy')}</li>
+                  <li>{t('footer.system.pwa')}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-4 uppercase tracking-widest">{t('footer.legal')}</h4>
+                <ul className="text-sm text-on-surface-variant space-y-2">
+                  <li>{t('footer.legal.privacy')}</li>
+                  <li>{t('footer.legal.terms')}</li>
+                  <li>{t('footer.legal.acc')}</li>
+                </ul>
+              </div>
+            </div>
+            <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant">
+               <div className="flex items-center gap-2 text-alert-red font-black mb-2 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-alert-red" />
+                  {t('status.emergency')}: 911
+               </div>
+               <p className="text-xs text-on-surface-variant leading-relaxed">
+                 {t('footer.emergency.desc')}
+               </p>
             </div>
           </div>
-          <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-             <div className="flex items-center gap-2 text-alert-red font-black mb-2 animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-alert-red" />
-                {t('status.emergency')}: 911
-             </div>
-             <p className="text-xs text-on-surface-variant leading-relaxed">
-               {t('footer.emergency.desc')}
-             </p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
 
   );

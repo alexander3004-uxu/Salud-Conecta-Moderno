@@ -115,7 +115,7 @@ export default function TriageChecker() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: triageResult.error 
-          ? 'No hemos podido procesar tu informe de síntomas automáticamente. Por favor, intenta describirlos con más detalle o consulta con un médico profesional para una evaluación segura.'
+          ? (triageResult.recommendation || 'No hemos podido procesar tu informe de síntomas automáticamente. Por favor, consulta con un médico profesional.')
           : (triageResult.urgency === 'emergency' 
             ? 'He analizado sus síntomas y mi evaluación indica una posible EMERGENCIA MÉDICA.' 
             : 'He completado su evaluación de salud. A continuación le presento mi análisis y las recomendaciones sugeridas.'),
