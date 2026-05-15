@@ -229,7 +229,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
       </nav>
 
       {/* Global Footer (Desktop Only) */}
-      {!['map', 'dashboard', 'settings', 'profile'].includes(activeTab) && (
+      {!['map', 'dashboard', 'settings', 'profile', 'triage'].includes(activeTab) && (
         <footer className="hidden md:block w-full border-t border-outline-variant/10 py-16 mt-12 bg-surface-container-lowest">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
             <div>
