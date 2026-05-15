@@ -529,11 +529,21 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                     return (
                       <div className="p-0 -m-1 min-w-[300px] overflow-hidden bg-surface rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
                         {/* Card Header with Type-specific background gradient */}
-                        <div className={`p-4 ${
+                        <div className={`p-4 relative ${
                           selectedClinic.type === 'emergency' 
                             ? 'bg-gradient-to-br from-error/20 to-error/5' 
                             : 'bg-gradient-to-br from-primary/20 to-primary/5'
                         } border-b border-outline-variant/10`}>
+                          <button
+                            onClick={() => {
+                              setSelectedClinic(null);
+                              if (isNavigating) setIsNavigating(false);
+                            }}
+                            className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-surface/80 hover:bg-surface text-on-surface hover:text-primary transition-colors border border-outline-variant/30 shadow-md z-10"
+                            title="Cerrar"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                           <div className="flex items-start gap-4">
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-current shrink-0 shadow-xl ${
                               selectedClinic.type === 'emergency' ? 'bg-error/10 text-error shadow-error/10' : 'bg-primary/10 text-primary shadow-primary/10'
