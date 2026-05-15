@@ -516,7 +516,7 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
 
               {/* Floating Bottom Card custom logic */}
               {selectedClinic && (
-                <div className="absolute bottom-20 left-4 right-4 sm:bottom-4 sm:left-auto sm:right-4 sm:w-[380px] z-50 animate-in slide-in-from-bottom-8 duration-300">
+                <div className="absolute top-[88px] left-4 right-4 sm:top-[88px] sm:left-auto sm:right-4 sm:w-[380px] z-50 animate-in slide-in-from-top-8 duration-300">
                   {(() => {
                     const isOpen = selectedClinic.isOpen !== undefined ? selectedClinic.isOpen : selectedClinic.open24h;
                     return (

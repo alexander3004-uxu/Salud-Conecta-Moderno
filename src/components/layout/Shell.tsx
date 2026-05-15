@@ -91,7 +91,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
+    <div className="min-h-[100dvh] bg-background flex flex-col font-sans">
       {/* TopAppBar */}
       {unauthorizedDomain && (
         <div className="fixed top-0 left-0 w-full z-[100] bg-alert-red text-white p-2 text-center text-xs font-bold animate-pulse shadow-lg">
@@ -197,7 +197,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className={`w-full flex-grow flex flex-col ${activeTab === 'map' ? 'h-[calc(100vh-64px)]' : ''}`}
+            className={`w-full flex-grow flex flex-col ${activeTab === 'map' ? 'h-[calc(100dvh-64px)] overflow-hidden' : ''}`}
           >
             {children}
           </motion.div>
