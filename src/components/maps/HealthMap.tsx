@@ -1098,7 +1098,7 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
     </div>
 
       {/* Map Controls - Always Floating Bottom Right */}
-      <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-30 pointer-events-auto">
+      <div className="absolute bottom-[100px] md:bottom-6 right-4 md:right-6 flex flex-col gap-3 z-30 pointer-events-auto">
          <button 
            onClick={() => {
              if (map) {
@@ -1112,10 +1112,18 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
            <Target className="w-6 h-6" />
          </button>
          <div className="flex flex-col bg-surface-container/90 backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-xl overflow-hidden">
-           <button className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all border-b border-outline-variant/20">
+           <button 
+             onClick={() => map && map.setZoom((map.getZoom() || 13) + 1)}
+             className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all border-b border-outline-variant/20"
+             title="Acercar"
+           >
              <Plus className="w-6 h-6" />
            </button>
-           <button className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all">
+           <button 
+             onClick={() => map && map.setZoom((map.getZoom() || 13) - 1)}
+             className="w-12 h-12 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-all"
+             title="Alejar"
+           >
              <Minus className="w-6 h-6" />
            </button>
          </div>
