@@ -410,7 +410,7 @@ export const PUBLIC_HEALTH_NETWORK: Omit<Clinic, 'id'>[] = [
     sector: "public",
     address: "Barrio Xalteva, Granada",
     phone: "2552-1000",
-    location: { lat: 11.921, lng: -85.952 },
+    location: { lat: 11.9366, lng: -85.9764 },
     open24h: true,
     services: ["Emergencias", "Cirugía", "Maternidad"]
   },
