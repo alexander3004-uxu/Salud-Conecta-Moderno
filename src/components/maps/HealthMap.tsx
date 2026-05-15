@@ -268,6 +268,8 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
 
   // Function to search for places in the current map view
   const searchInView = async () => {
+    return; // DISABLED to prevent Google Places API quota exhaustion (429 Too Many Requests)
+    
     if (!placesLib || !map) return;
     
     const bounds = map.getBounds();
