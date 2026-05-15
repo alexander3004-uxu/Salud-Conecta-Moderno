@@ -362,57 +362,78 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
   };
 
   const handleManualSearch = async (query: string) => {
-    if (!query.trim() || !placesLib || !map) return;
+    if (!query.trim()) return;
     setIsSearching(true);
     try {
-      const bounds = map.getBounds() || null;
-      const result = await placesLib.Place.searchByText({
-        textQuery: query,
-        fields: ['id', 'displayName', 'location', 'formattedAddress', 'types', 'nationalPhoneNumber', 'regularOpeningHours', 'rating', 'userRatingCount'],
-        locationBias: bounds,
-        maxResultCount: 10,
-      });
+      const lowerQuery = query.toLowerCase();
+      // Local Search Fallback: Search existing loaded clinics (static + firestore)
+      const localResults = clinics.filter(c => 
+        c.name.toLowerCase().includes(lowerQuery) || 
+        c.address.toLowerCase().includes(lowerQuery)
+      );
 
-      if (result.places && result.places.length > 0) {
-        const mappedClinics: (Clinic & { isOpen?: boolean })[] = result.places.map((p: any) => {
-          const name = p.displayName || 'Resultado de Búsqueda';
-          const types = p.types || [];
-          let clinicType: Clinic['type'] = 'clinic';
-          
-          if (types.includes('hospital')) clinicType = 'hospital';
-          else if (types.includes('pharmacy') || types.includes('drugstore')) clinicType = 'pharmacy';
-          else if (types.includes('health') || types.includes('medical_center')) clinicType = 'health-center';
+      let placesResults: (Clinic & { isOpen?: boolean })[] = [];
+      if (placesLib && map) {
+        try {
+          const bounds = map.getBounds() || null;
+          const result = await placesLib.Place.searchByText({
+            textQuery: query,
+            fields: ['id', 'displayName', 'location', 'formattedAddress', 'types', 'nationalPhoneNumber', 'regularOpeningHours', 'rating', 'userRatingCount'],
+            locationBias: bounds,
+            maxResultCount: 10,
+          });
 
-          return {
-            id: p.id || `search-${Math.random().toString(36).substring(2, 9)}`,
-            name: name,
-            type: clinicType,
-            sector: 'private',
-            location: {
-              lat: typeof p.location?.lat === 'function' ? p.location.lat() : (p.location?.lat || 0),
-              lng: typeof p.location?.lng === 'function' ? p.location.lng() : (p.location?.lng || 0)
-            },
-            address: p.formattedAddress || 'Nicaragua',
-            phone: p.nationalPhoneNumber || '',
-            open24h: types.includes('hospital') || (p.regularOpeningHours?.periods?.length === 1 && p.regularOpeningHours?.periods[0].open?.day === 0 && !p.regularOpeningHours?.periods[0].close),
-            isOpen: p.regularOpeningHours?.isOpen ? p.regularOpeningHours.isOpen() : true,
-            rating: p.rating,
-            reviews: p.userRatingCount
-          };
-        });
+          if (result.places && result.places.length > 0) {
+            placesResults = result.places.map((p: any) => {
+              const name = p.displayName || 'Resultado de Búsqueda';
+              const types = p.types || [];
+              let clinicType: Clinic['type'] = 'clinic';
+              
+              if (types.includes('hospital')) clinicType = 'hospital';
+              else if (types.includes('pharmacy') || types.includes('drugstore')) clinicType = 'pharmacy';
+              else if (types.includes('health') || types.includes('medical_center')) clinicType = 'health-center';
 
+              return {
+                id: p.id || `search-${Math.random().toString(36).substring(2, 9)}`,
+                name: name,
+                type: clinicType,
+                sector: 'private',
+                location: {
+                  lat: typeof p.location?.lat === 'function' ? p.location.lat() : (p.location?.lat || 0),
+                  lng: typeof p.location?.lng === 'function' ? p.location.lng() : (p.location?.lng || 0)
+                },
+                address: p.formattedAddress || 'Nicaragua',
+                phone: p.nationalPhoneNumber || '',
+                open24h: types.includes('hospital') || (p.regularOpeningHours?.periods?.length === 1 && p.regularOpeningHours?.periods[0].open?.day === 0 && !p.regularOpeningHours?.periods[0].close),
+                isOpen: p.regularOpeningHours?.isOpen ? p.regularOpeningHours.isOpen() : true,
+                rating: p.rating,
+                reviews: p.userRatingCount
+              };
+            });
+          }
+        } catch (e) {
+          console.warn("Google Places falló (posible límite de cuota):", e);
+        }
+      }
+
+      const combinedResults = [...localResults, ...placesResults];
+
+      if (combinedResults.length > 0) {
         setClinics(prev => {
           const seenIds = new Set(prev.map(c => String(c.id)));
-          const newUnique = mappedClinics.filter(c => !seenIds.has(String(c.id)));
+          const newUnique = combinedResults.filter(c => !seenIds.has(String(c.id)));
           return [...newUnique, ...prev];
         });
         
         setIsMenuOpen(true);
-        if (mappedClinics[0]) {
-          map.panTo(mappedClinics[0].location);
+        setFilter('all');
+        if (map && combinedResults[0]) {
+          map.panTo(combinedResults[0].location);
           map.setZoom(15);
-          setSelectedClinic(mappedClinics[0]);
+          setSelectedClinic(combinedResults[0]);
         }
+      } else {
+        alert("No se encontraron resultados para: " + query);
       }
     } catch (error) {
       console.error("Manual search error:", error);
