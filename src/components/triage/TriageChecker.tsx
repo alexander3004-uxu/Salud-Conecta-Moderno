@@ -268,7 +268,7 @@ export default function TriageChecker() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-8 custom-scrollbar space-y-8 scroll-smooth pb-40">
+            <div className="flex-1 overflow-y-auto px-6 py-8 custom-scrollbar space-y-8 scroll-smooth pb-40 lg:pb-12">
               <div className="flex justify-center mb-4">
                 <span className="bg-surface-container-high/50 text-on-surface-variant px-4 py-1.5 rounded-full font-mono text-[10px] font-bold border border-outline-variant/30 uppercase tracking-[0.2em] shadow-sm">
                   {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase()}
