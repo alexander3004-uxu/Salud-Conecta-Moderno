@@ -340,7 +340,7 @@ export default function TriageChecker() {
             </div>
 
             <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-surface-container-low to-transparent shrink-0 z-20">
-              <div className="max-w-[800px] mx-auto bg-surface-container/95 backdrop-blur-xl rounded-[28px] p-2 border border-outline-variant/50 shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all focus-within:border-primary/50 focus-within:shadow-[0_12px_48px_rgba(46,144,250,0.2)]">
+              <div className="w-full bg-surface-container/95 backdrop-blur-xl rounded-[28px] p-2 border border-outline-variant/50 shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all focus-within:border-primary/50 focus-within:shadow-[0_12px_48px_rgba(46,144,250,0.2)]">
                 <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-hide px-2 pt-2">
                   {['Dolor de cabeza', 'Fiebre', 'Náuseas', 'Mareos', 'Tos'].map((chip) => (
                     <button
