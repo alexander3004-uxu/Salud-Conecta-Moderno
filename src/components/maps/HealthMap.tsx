@@ -527,7 +527,7 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                   {(() => {
                     const isOpen = selectedClinic.isOpen !== undefined ? selectedClinic.isOpen : selectedClinic.open24h;
                     return (
-                      <div className="p-0 -m-1 min-w-[300px] overflow-hidden bg-surface rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
+                      <div className="p-0 -m-1 w-[85vw] sm:w-[320px] max-w-[320px] overflow-hidden bg-surface rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
                         {/* Card Header with Type-specific background gradient */}
                         <div className={`p-4 relative ${
                           selectedClinic.type === 'emergency' 
@@ -552,16 +552,16 @@ function HealthMapInner({ hideMap = false }: { hideMap?: boolean }) {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-display font-black text-xl text-on-surface leading-tight tracking-tight">{selectedClinic.name}</h4>
+                                <h4 className="font-display font-black text-lg sm:text-xl text-on-surface leading-tight tracking-tight">{selectedClinic.name}</h4>
                               </div>
-                              <p className="text-xs text-on-surface-variant font-medium leading-relaxed opacity-70">
+                                <p className="text-[10px] sm:text-xs text-on-surface-variant font-medium leading-relaxed opacity-70">
                                 {selectedClinic.address}
                               </p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="p-4 flex flex-col gap-5">
+                        <div className="p-4 flex flex-col gap-4 sm:gap-5">
                           <div className="flex items-center justify-between">
                              <div className="flex flex-col gap-1">
                                 <span className="text-[10px] font-black text-outline-variant uppercase tracking-[0.2em]">Estado del Centro</span>
