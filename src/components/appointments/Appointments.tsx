@@ -23,7 +23,8 @@ import {
   X,
   Phone,
   Headphones,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Search
 } from 'lucide-react';
 import { Appointment, TriageRecord } from '../../types';
 import { auth, signInWithGoogle } from '../../lib/firebase';
@@ -42,6 +43,7 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
   const [triages, setTriages] = useState<TriageRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'doctors' | 'labs' | 'clinics'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmingCancel, setIsConfirmingCancel] = useState<string | null>(null);
 
@@ -109,11 +111,23 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
   }
 
   const filteredAppointments = (appointments || []).filter(appt => {
-    if (filter === 'all') return true;
-    const type = (appt?.serviceType || '').toLowerCase();
-    if (filter === 'doctors') return type.includes('médico') || type.includes('cardio');
-    if (filter === 'labs') return type.includes('laboratorio') || type.includes('sangre') || type.includes('lab');
-    if (filter === 'clinics') return type.includes('clínica');
+    // Filtrar por tipo (Pestañas)
+    if (filter !== 'all') {
+      const type = (appt?.serviceType || '').toLowerCase();
+      if (filter === 'doctors' && !(type.includes('médico') || type.includes('cardio'))) return false;
+      if (filter === 'labs' && !(type.includes('laboratorio') || type.includes('sangre') || type.includes('lab'))) return false;
+      if (filter === 'clinics' && !type.includes('clínica')) return false;
+    }
+    
+    // Filtrar por texto (Buscador)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const docName = (appt?.doctorName || '').toLowerCase();
+      const service = (appt?.serviceType || '').toLowerCase();
+      const loc = (appt?.location || '').toLowerCase();
+      if (!docName.includes(q) && !service.includes(q) && !loc.includes(q)) return false;
+    }
+    
     return true;
   });
 
@@ -144,27 +158,49 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Content Area (Left/Top) */}
         <div className="lg:col-span-8 flex flex-col gap-8">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2.5">
-            {[
-              { id: 'all', label: 'Todos', icon: Activity },
-              { id: 'doctors', label: 'Médicos', icon: Stethoscope },
-              { id: 'labs', label: 'Laboratorios', icon: FlaskConical },
-              { id: 'clinics', label: 'Clínicas', icon: Building2 },
-            ].map((btn) => (
-              <button
-                key={btn.id}
-                onClick={() => setFilter(btn.id as any)}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-full border font-display font-bold text-xs transition-all ${
-                  filter === btn.id 
-                  ? 'bg-primary/10 border-primary text-primary shadow-sm' 
-                  : 'bg-surface-container-low border-outline-variant/30 text-on-surface-variant hover:bg-surface-container hover:border-primary/20'
-                }`}
-              >
-                <btn.icon className="w-3.5 h-3.5" />
-                {btn.label}
-              </button>
-            ))}
+          {/* Search and Filters */}
+          <div className="flex flex-col gap-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-on-surface-variant" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar por médico, especialidad o ubicación..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-10 py-4 bg-surface-container-low border border-outline-variant/30 rounded-2xl text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute inset-y-0 right-0 pr-4 flex items-center text-on-surface-variant hover:text-on-surface transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2.5">
+              {[
+                { id: 'all', label: 'Todos', icon: Activity },
+                { id: 'doctors', label: 'Médicos', icon: Stethoscope },
+                { id: 'labs', label: 'Laboratorios', icon: FlaskConical },
+                { id: 'clinics', label: 'Clínicas', icon: Building2 },
+              ].map((btn) => (
+                <button
+                  key={btn.id}
+                  onClick={() => setFilter(btn.id as any)}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full border font-display font-bold text-xs transition-all ${
+                    filter === btn.id 
+                    ? 'bg-primary/10 border-primary text-primary shadow-sm' 
+                    : 'bg-surface-container-low border-outline-variant/30 text-on-surface-variant hover:bg-surface-container hover:border-primary/20'
+                  }`}
+                >
+                  <btn.icon className="w-3.5 h-3.5" />
+                  {btn.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Upcoming Appointments */}
@@ -195,7 +231,11 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
                   key={appt.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-6 justify-between hover:border-primary/30 transition-all shadow-sm group"
+                  className={`rounded-3xl border p-6 flex flex-col md:flex-row gap-6 justify-between transition-all shadow-sm group ${
+                    appt.status === 'confirmed'
+                    ? 'bg-gradient-to-br from-surface-container to-secondary/5 border-secondary/20 hover:border-secondary/40'
+                    : 'bg-gradient-to-br from-surface-container to-primary/5 border-primary/20 hover:border-primary/40'
+                  }`}
                 >
                   <div className="flex gap-6 items-start">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${
@@ -212,16 +252,18 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
                         )}
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] font-bold text-on-surface-variant border border-outline-variant/30 uppercase tracking-wider">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="px-2.5 py-1 rounded-md bg-surface-container-highest text-[10px] font-bold text-on-surface-variant border border-outline-variant/30 uppercase tracking-wider">
                             {appt.serviceType}
                           </span>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            appt.status === 'confirmed' ? 'bg-secondary' : 'bg-primary'
-                          } animate-pulse`} />
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                            appt.status === 'confirmed' ? 'text-secondary' : 'text-primary'
+                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border flex items-center gap-1.5 ${
+                            appt.status === 'confirmed' 
+                            ? 'bg-secondary/10 text-secondary border-secondary/30 shadow-[0_0_10px_rgba(81,223,142,0.1)]' 
+                            : 'bg-primary/10 text-primary border-primary/30 shadow-[0_0_10px_rgba(49,146,252,0.1)]'
                           }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              appt.status === 'confirmed' ? 'bg-secondary' : 'bg-primary'
+                            } animate-pulse`} />
                             {appt.status === 'confirmed' ? 'Confirmada' : 'Programada'}
                           </span>
                         </div>
