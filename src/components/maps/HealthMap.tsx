@@ -14,6 +14,7 @@ import { getClinics } from '../../services/clinicService';
 import { syncClinicToFirestore } from '../../services/triageService';
 import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
+import { getClinicTypeDetails } from './mapUtils';
 
 const API_KEY = GOOGLE_MAPS_KEY;
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
@@ -22,15 +23,9 @@ const NICARAGUA_CENTER = { lat: 12.1328, lng: -86.2504 };
 
 const ClinicMarker: React.FC<{ clinic: Clinic & { isOpen?: boolean }, onClick: (c: Clinic & { isOpen?: boolean }) => void }> = ({ clinic, onClick }) => {
   const isOpen = clinic.isOpen !== undefined ? clinic.isOpen : clinic.open24h;
-  const colors: Record<string, { bg: string; border: string }> = {
-    pharmacy: { bg: '#51df8e', border: '#2ecc71' },
-    emergency: { bg: '#F04438', border: '#c0392b' },
-    hospital: { bg: '#2E90FA', border: '#1a73e8' },
-    'health-center': { bg: '#9334E6', border: '#7c3aed' },
-    clinic: { bg: '#a6c8ff', border: '#2E90FA' },
-    laboratory: { bg: '#F59E0B', border: '#d97706' },
-  };
-  const color = colors[clinic.type] || colors.default;
+  const details = getClinicTypeDetails(clinic.type);
+  const color = details.markerColors;
+  const Icon = details.icon;
 
   return (
     <AdvancedMarker position={clinic.location} onClick={() => onClick(clinic)}>
@@ -44,12 +39,7 @@ const ClinicMarker: React.FC<{ clinic: Clinic & { isOpen?: boolean }, onClick: (
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
           opacity: !isOpen ? 0.6 : 1
         }}>
-          {clinic.type === 'pharmacy' ? <Pill className="w-4 h-4 text-white" /> : 
-           clinic.type === 'emergency' ? <ShieldAlert className="w-4 h-4 text-white" /> : 
-           clinic.type === 'hospital' ? <Hospital className="w-4 h-4 text-white" /> :
-           clinic.type === 'health-center' ? <Stethoscope className="w-4 h-4 text-white" /> :
-           clinic.type === 'laboratory' ? <Activity className="w-4 h-4 text-white" /> :
-           <MapPin className="w-4 h-4 text-white" />}
+          <Icon className="w-4 h-4 text-white" />
         </div>
         <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `8px solid ${isOpen ? color.bg : '#404753'}`, marginTop: '-1px' }} />
         {isOpen && <div style={{ width: '8px', height: '8px', background: color.bg, borderRadius: '50%', position: 'absolute', bottom: '14px', right: '-2px', border: '1.5px solid white' }} />}
@@ -369,26 +359,6 @@ export default function HealthMap() {
     }
   };
 
-  const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      hospital: 'Hospital', pharmacy: 'Farmacia', 'health-center': 'Centro de Salud',
-      emergency: 'Emergencia', clinic: 'Clínica', laboratory: 'Laboratorio'
-    };
-    return labels[type] || type;
-  };
-
-  const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      hospital: 'bg-blue-100 text-blue-700',
-      pharmacy: 'bg-green-100 text-green-700',
-      emergency: 'bg-red-100 text-red-700',
-      'health-center': 'bg-purple-100 text-purple-700',
-      clinic: 'bg-indigo-100 text-indigo-700',
-      laboratory: 'bg-amber-100 text-amber-700',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-700';
-  };
-
   if (!hasValidKey) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background p-6">
@@ -479,7 +449,7 @@ export default function HealthMap() {
                     {(['all', 'hospital', 'emergency', 'health-center', 'pharmacy', 'clinic', 'laboratory'] as const).map(f => (
                       <button key={f} onClick={() => setFilter(f)}
                         className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap transition-colors ${filter === f ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}>
-                        {f === 'all' ? 'Todos' : getTypeLabel(f)}
+                        {f === 'all' ? 'Todos' : getClinicTypeDetails(f).label}
                       </button>
                     ))}
                   </div>
@@ -509,13 +479,8 @@ export default function HealthMap() {
                     filteredClinics.filter(c => !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(clinic => (
                       <button key={clinic.id} onClick={() => handleClinicSelect(clinic)}
                         className={`w-full p-3 flex items-start gap-3 border-b border-outline-variant/10 hover:bg-surface-container-high transition-colors ${selectedClinic?.id === clinic.id ? 'bg-primary/10' : ''}`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${getTypeColor(clinic.type)}`}>
-                          {clinic.type === 'pharmacy' ? <Pill className="w-4 h-4" /> : 
-                           clinic.type === 'emergency' ? <ShieldAlert className="w-4 h-4" /> : 
-                           clinic.type === 'hospital' ? <Hospital className="w-4 h-4" /> :
-                           clinic.type === 'health-center' ? <Stethoscope className="w-4 h-4" /> :
-                           clinic.type === 'laboratory' ? <Activity className="w-4 h-4" /> :
-                           <MapPin className="w-4 h-4" />}
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${getClinicTypeDetails(clinic.type).colorClasses}`}>
+                          {React.createElement(getClinicTypeDetails(clinic.type).icon, { className: "w-4 h-4" })}
                         </div>
                         <div className="flex-1 text-left min-w-0">
                           <p className="text-xs font-bold text-on-surface truncate">{clinic.name}</p>
@@ -544,7 +509,7 @@ export default function HealthMap() {
             className="absolute bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-surface rounded-3xl shadow-2xl border border-outline-variant/20 z-50 overflow-hidden">
             <div className={`p-4 border-b ${selectedClinic.type === 'emergency' ? 'bg-error/10' : 'bg-primary/10'}`}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase">{getTypeLabel(selectedClinic.type)}</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase">{getClinicTypeDetails(selectedClinic.type).label}</span>
                 {selectedClinic.sector === 'public' && <span className="text-[9px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">PÚBLICO</span>}
               </div>
               <h3 className="text-base font-black text-on-surface">{selectedClinic.name}</h3>

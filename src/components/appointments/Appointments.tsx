@@ -44,6 +44,7 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
   const [filter, setFilter] = useState<'all' | 'doctors' | 'labs' | 'clinics'>('all');
   const [activeTab, setActiveTab] = useState<'appointments' | 'history'>(initialTab);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -73,10 +74,15 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
     }
   };
 
-  const handleCancel = async (id: string) => {
-    if (confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
-      await cancelAppointment(id);
+  const handleCancel = (id: string) => {
+    setIsConfirmingCancel(id);
+  };
+
+  const confirmCancellation = async () => {
+    if (isConfirmingCancel) {
+      await cancelAppointment(isConfirmingCancel);
       if (user) fetchAllData(user.uid);
+      setIsConfirmingCancel(null);
     }
   };
 
@@ -110,6 +116,11 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
     if (filter === 'clinics') return appt.serviceType.toLowerCase().includes('clínica');
     return true;
   });
+
+  const today = new Date();
+  const currentMonthName = today.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const startOffset = new Date(today.getFullYear(), today.getMonth(), 1).getDay(); // Días vacíos antes del día 1
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col gap-8">
@@ -320,7 +331,7 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
           {/* Mini Calendar Mockup */}
           <div className="bg-surface-container rounded-3xl border border-outline-variant/30 p-6 shadow-md">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-display font-bold text-on-surface">Noviembre 2024</h3>
+              <h3 className="text-xl font-display font-bold text-on-surface capitalize">{currentMonthName}</h3>
               <div className="flex gap-1">
                 <button className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all"><ChevronLeft className="w-4 h-4" /></button>
                 <button className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all"><ChevronRight className="w-4 h-4" /></button>
@@ -330,24 +341,27 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
               <div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div>
             </div>
             <div className="grid grid-cols-7 gap-2.5 text-center font-sans font-bold text-xs">
-              {Array.from({ length: 30 }).map((_, i) => {
+              {Array.from({ length: startOffset }).map((_, i) => <div key={`empty-${i}`} />)}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
-                const isSelected = day === 15;
-                const isToday = day === 18;
+                const hasAppt = filteredAppointments.some(a => {
+                  const d = new Date(a.date);
+                  return d.getDate() === day && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+                });
+                const isToday = day === today.getDate();
                 return (
                   <div 
                     key={i}
                     className={`p-2.5 rounded-xl cursor-pointer transition-all relative ${
-                      isSelected 
-                      ? 'bg-primary text-on-primary shadow-lg scale-110 z-10' 
+                      hasAppt 
+                      ? 'bg-primary/10 text-primary font-black border border-primary/30 shadow-sm' 
                       : isToday
-                      ? 'border-2 border-primary text-primary'
+                      ? 'bg-primary text-on-primary shadow-lg'
                       : 'text-on-surface-variant hover:bg-surface-container-highest'
                     }`}
                   >
                     {day}
-                    {day === 15 && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-secondary rounded-full shadow-sm" />}
-                    {day === 18 && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full shadow-sm" />}
+                    {hasAppt && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full shadow-sm" />}
                   </div>
                 );
               })}
@@ -394,6 +408,33 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
         userId={user.uid}
         latestTriage={triages[0]}
       />
+
+      <AnimatePresence>
+        {isConfirmingCancel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-surface-container rounded-3xl p-6 max-w-sm w-full border border-outline-variant/30 shadow-2xl"
+            >
+              <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center mb-4">
+                <AlertCircle className="w-6 h-6 text-error" />
+              </div>
+              <h3 className="text-xl font-display font-bold text-on-surface mb-2">Confirmar Cancelación</h3>
+              <p className="text-sm text-on-surface-variant mb-6">¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.</p>
+              <div className="flex gap-3 justify-end">
+                <button onClick={() => setIsConfirmingCancel(null)} className="px-4 py-2 rounded-xl font-bold text-sm text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                  Mantener Cita
+                </button>
+                <button onClick={confirmCancellation} className="px-4 py-2 rounded-xl font-bold text-sm bg-error text-on-error hover:bg-error/90 transition-colors shadow-sm">
+                  Sí, Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
