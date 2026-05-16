@@ -84,7 +84,6 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
 
   const navItems = [
     { id: 'triage', label: t('nav.triage'), icon: Stethoscope },
-    { id: 'appointments', label: t('nav.appointments'), icon: Calendar },
     { id: 'pharmacy', label: t('nav.pharmacy'), icon: Store },
     { id: 'search', label: t('nav.search'), icon: SearchIcon },
     { id: 'rewards', label: t('nav.rewards'), icon: Trophy },
@@ -118,13 +117,13 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
 
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => setActiveTab('triage')}
+            onClick={() => setActiveTab('appointments')}
             className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
-              activeTab === 'triage' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:bg-surface-container'
+              activeTab === 'appointments' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:bg-surface-container'
             }`}
-            title={t('nav.triage')}
+            title={t('nav.appointments')}
           >
-            <Stethoscope className="w-5 h-5" />
+            <Calendar className="w-5 h-5" />
           </button>
           <button 
             onClick={() => setActiveTab('map')}
