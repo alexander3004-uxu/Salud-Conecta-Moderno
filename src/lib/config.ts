@@ -5,12 +5,19 @@
  * This config reads from import.meta.env which is automatically populated by Vite.
  */
 
-const getApiKey = (envVar: string, fallback: string, name: string): string => {
+const getApiKey = (envVars: string | string[], fallback: string, name: string): string => {
   // @ts-ignore - import.meta.env is automatically available in Vite
   const env = import.meta.env;
   
-  // Try to get the value from VITE_ prefixed env var
-  const val = env[envVar] as string | undefined;
+  const vars = Array.isArray(envVars) ? envVars : [envVars];
+  let val: string | undefined;
+
+  for (const key of vars) {
+    if (env[key]) {
+      val = env[key] as string;
+      break;
+    }
+  }
   
   if (!val) {
     return fallback;
@@ -35,7 +42,7 @@ const getApiKey = (envVar: string, fallback: string, name: string): string => {
   return trimmed;
 };
 
-export const GOOGLE_MAPS_KEY = getApiKey('VITE_GOOGLE_MAPS_PLATFORM_KEY', '', 'Google Maps');
+export const GOOGLE_MAPS_KEY = getApiKey(['VITE_GOOGLE_MAPS_API_KEY', 'VITE_GOOGLE_MAPS_PLATFORM_KEY'], '', 'Google Maps');
 export const GEMINI_API_KEY = getApiKey('VITE_GEMINI_API_KEY', '', 'Gemini');
 
 export const APP_CONFIG = {
