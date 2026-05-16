@@ -263,11 +263,27 @@ export default function TriageChecker() {
                       <div className="flex flex-col gap-1.5">
                         <div className={`px-5 py-3.5 rounded-2xl text-[13px] md:text-sm leading-relaxed shadow-sm ${
                           message.role === 'assistant'
-                            ? 'bg-surface-container-low text-on-surface border border-outline-variant/20 rounded-tl-none'
+                            ? 'bg-surface-container-low text-on-surface border border-outline-variant/20 rounded-tl-none whitespace-pre-wrap'
                             : 'bg-primary text-on-primary rounded-tr-none'
                         }`}>
                           {message.content}
                         </div>
+                        
+                        {/* Renderizar Chips de sugerencia */}
+                        {message.role === 'assistant' && message.chips && messages.indexOf(message) === messages.length - 1 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {message.chips.map((chip) => (
+                              <button
+                                key={chip}
+                                onClick={() => handleSend(chip)}
+                                className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold hover:bg-primary/20 transition-colors"
+                              >
+                                {chip}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
                         <span className={`text-[9px] font-bold text-on-surface-variant/40 px-1 uppercase tracking-wider ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
                           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
