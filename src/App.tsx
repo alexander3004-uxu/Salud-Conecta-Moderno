@@ -107,6 +107,7 @@ export default function App() {
           <Hero 
             onStartAssistant={() => setActiveTab('triage')} 
             onViewMap={() => setActiveTab('map')} 
+            onViewAppointments={() => setActiveTab('appointments')}
             onOpenRegistration={(type) => openRegistration(type)}
           />
         );
@@ -149,6 +150,7 @@ export default function App() {
           <Hero 
             onStartAssistant={() => setActiveTab('triage')} 
             onViewMap={() => setActiveTab('map')} 
+            onViewAppointments={() => setActiveTab('appointments')}
             onOpenRegistration={(type) => openRegistration(type)}
           />
         );

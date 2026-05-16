@@ -1,16 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { MapPin, Phone, Clock, ArrowRight, ShieldCheck, HeartPulse, Activity, Stethoscope } from 'lucide-react';
+import { MapPin, Phone, Clock, ArrowRight, ShieldCheck, HeartPulse, Activity, Stethoscope, Calendar } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AIServiceStatus } from '../common/AIServiceStatus';
 
 interface HeroProps {
   onStartAssistant: () => void;
   onViewMap: () => void;
+  onViewAppointments: () => void;
   onOpenRegistration: (type?: 'doctor' | 'clinic' | 'lab_pharmacy') => void;
 }
 
-export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }: HeroProps) {
+export default function Hero({ onStartAssistant, onViewMap, onViewAppointments, onOpenRegistration }: HeroProps) {
   const { t, language } = useLanguage();
 
   return (
@@ -58,7 +59,7 @@ export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }
                 {t('hero.subtitle')}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto justify-center">
+              <div className="flex flex-col md:flex-row gap-4 mt-4 w-full md:w-auto justify-center flex-wrap">
                 <button 
                   onClick={onStartAssistant}
                   className="bg-primary text-on-primary px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 hover:brightness-110 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3"
@@ -72,6 +73,13 @@ export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }
                 >
                   {t('hero.cta.secondary')}
                   <MapPin className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={onViewAppointments}
+                  className="bg-surface-container-high text-on-surface-variant border-2 border-outline-variant/30 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 hover:bg-surface-container-highest transition-all flex items-center justify-center gap-3"
+                >
+                  Mis Citas
+                  <Calendar className="w-5 h-5" />
                 </button>
               </div>
             </div>
