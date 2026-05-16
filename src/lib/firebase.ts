@@ -5,6 +5,9 @@ import {
   signInWithPopup, 
   signInWithRedirect, 
   getRedirectResult,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   AuthError
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
