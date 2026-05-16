@@ -71,14 +71,9 @@ export interface TriageWithLocationResult {
 
 export async function getEnhancedTriageWithLocation(symptoms: string, membership: 'free' | 'premium' = 'free'): Promise<TriageWithLocationResult> {
   try {
-<<<<<<< HEAD
     // Coordenadas por defecto (Managua Centro) alineadas con el mapa
     let userLat = 12.1328;
     let userLng = -86.2504;
-=======
-    let userLat = 12.122;
-    let userLng = -86.236;
->>>>>>> bca9cc914f1f13153373447372184d8eade43b6a
     
     // Combinamos ambas redes para tener cobertura total, especialmente la pública detallada
     const fullNetwork = [...NICARAGUA_HOSPITALS, ...PUBLIC_HEALTH_NETWORK];
@@ -92,7 +87,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     let nearestFacility = null;
     let distanceKm = 0;
 
-    if (userLat !== 12.122) {
+    if (userLat !== 12.1328) {
       const result = getNearestFacility(fullNetwork, userLat, userLng, membership === 'free');
       nearestFacility = result.facility;
       distanceKm = result.distanceKm;
@@ -101,7 +96,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     let isEmergency = false;
     let nearestEmergency = null;
 
-    if (userLat !== 12.122) {
+    if (userLat !== 12.1328) {
       const emergencyHospitals = getEmergencyFacilities(fullNetwork);
       if (emergencyHospitals?.length > 0) {
         for (const hospital of emergencyHospitals) {
@@ -132,7 +127,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
       };
     }
 
-    if (userLat !== 12.122) {
+    if (userLat !== 12.1328) {
       return {
         severity: 'high',
         recommendation: membership === 'free'
