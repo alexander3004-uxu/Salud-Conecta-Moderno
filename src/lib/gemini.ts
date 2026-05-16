@@ -21,7 +21,7 @@ export const getHealthAssistant = async (prompt: string, membership: 'free' | 'p
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: [
         ...history.map(h => ({ role: h.role, parts: h.parts })),
         { role: 'user', parts: [{ text: prompt }] }
@@ -46,6 +46,12 @@ Responde siempre en español.`,
     const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
     const isOutOfCredits = errorMessage.toLowerCase().includes('prepayment credits are depleted') || 
                           errorMessage.toLowerCase().includes('resource_exhausted');
+    const imageError = errorMessage.toLowerCase().includes('image input') || 
+                       errorMessage.toLowerCase().includes('clipboard');
+
+    if (imageError) {
+      return "Lo siento, actualmente no puedo procesar imágenes. Estoy configurado para responder solo texto. ¿Podrías describirme lo que quieres saber en palabras?";
+    }
 
     if (error instanceof Error || typeof error === 'object') {
       if (errorMessage.includes('429')) {
@@ -72,7 +78,7 @@ export const getSmartTriage = async (symptoms: string, membership: 'free' | 'pre
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: [{ role: 'user', parts: [{ text: symptoms }] }],
       config: {
         systemInstruction: `Eres un motor de triaje médico de alta precisión para Salud Conecta IA. 
@@ -149,7 +155,7 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: [{ role: 'user', parts: [{ text: "Genera un consejo de salud breve, motivador y práctico para hoy." }] }],
       config: {
         systemInstruction: `Eres un asistente de bienestar de Salud Conecta IA con enfoque social. 

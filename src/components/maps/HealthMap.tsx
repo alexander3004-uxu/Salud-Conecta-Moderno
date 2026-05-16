@@ -302,9 +302,8 @@ export default function HealthMap() {
           </div>
           <h2 className="text-xl font-black text-on-surface">{t('maps.key_required.title') || 'API Key requerida'}</h2>
           <p className="text-sm text-on-surface-variant">{t('maps.key_required.description') || 'Configure su API key de Google Maps para usar el mapa.'}</p>
-          <div className="text-xs text-on-surface-variant bg-surface-container p-3 rounded-lg space-y-1">
-            <p>📍 <strong>{clinics.length}</strong> centros de salud cargados</p>
-            <p className="text-[10px] opacity-70">Sin Google Places - solo datos locales</p>
+          <div className="text-xs text-on-surface-variant bg-surface-container p-3 rounded-lg">
+            <p>📍 {clinics.length} centros de salud cargados de la base de datos</p>
           </div>
         </div>
       </div>
@@ -332,15 +331,6 @@ export default function HealthMap() {
             />
           </Map>
         </section>
-
-        <div className="absolute top-4 left-4 z-30">
-          <div className="bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-outline-variant/20 shadow-lg flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-            <span className="text-[10px] font-bold text-on-surface">
-              {clinics.length} lugares • {placesLib ? 'Google Places activo' : 'Cargando...'}
-            </span>
-          </div>
-        </div>
 
         {loadingPlaces && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-surface/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-2">
