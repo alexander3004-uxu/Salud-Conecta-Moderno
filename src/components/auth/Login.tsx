@@ -1,16 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, ArrowRight, Mail, Lock, Chrome } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Mail, Lock, Chrome, Loader2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { auth } from '../../lib/firebase';
+import { 
+  signInWithEmailAndPassword, 
+  signInWithPopup, 
+  GoogleAuthProvider 
+} from 'firebase/auth';
 
-export default function Login() {
+interface LoginProps {
+  onLogin?: () => void;
+}
+
+export default function Login({ onLogin }: LoginProps) {
   const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement logic for Firebase or your auth provider here
+    if (!email || !password) return;
+
+    setError(null);
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      if (onLogin) onLogin();
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
+        ? 'Correo o contraseña incorrectos' 
+        : 'Error al iniciar sesión. Inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      if (onLogin) onLogin();
+    } catch (err: any) {
+      console.error("Google login error:", err);
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError('Error al conectar con Google.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -28,6 +71,17 @@ export default function Login() {
           <p className="text-sm text-on-surface-variant mt-1">{t('login.subtitle')}</p>
         </div>
 
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-error/10 border border-error/20 rounded-2xl flex items-center gap-3 text-error text-[10px] font-bold"
+          >
+            <AlertCircle className="w-4 h-4" />
+            {error}
+          </motion.div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">
@@ -41,6 +95,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-14 bg-surface-container rounded-2xl pl-12 pr-4 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40 border border-outline-variant/20 transition-all"
                 placeholder="correo@ejemplo.com"
+                required
               />
             </div>
           </div>
@@ -61,16 +116,24 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-14 bg-surface-container rounded-2xl pl-12 pr-4 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40 border border-outline-variant/20 transition-all"
+                required
               />
             </div>
           </div>
 
           <button 
             type="submit"
-            className="w-full h-14 bg-primary text-on-primary rounded-2xl font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/20 mt-2"
+            disabled={isLoading}
+            className="w-full h-14 bg-primary text-on-primary rounded-2xl font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/20 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {t('login.btn')}
-            <ArrowRight className="w-5 h-5" />
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                {t('login.btn')}
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
           </button>
 
           <div className="relative py-4">
@@ -86,7 +149,9 @@ export default function Login() {
 
           <button 
             type="button"
-            className="w-full h-14 bg-surface-container-high border border-outline-variant/30 rounded-2xl flex items-center justify-center gap-3 text-on-surface font-black text-[11px] uppercase tracking-widest hover:bg-surface-container-highest transition-all shadow-sm"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-full h-14 bg-surface-container-high border border-outline-variant/30 rounded-2xl flex items-center justify-center gap-3 text-on-surface font-black text-[11px] uppercase tracking-widest hover:bg-surface-container-highest transition-all shadow-sm disabled:opacity-50"
           >
             <Chrome className="w-5 h-5" />
             Google
