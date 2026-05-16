@@ -169,25 +169,16 @@ export default function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <LanguageProvider>
-        <UserProvider>
-          <Login onLogin={handleLogin} />
-        </UserProvider>
-      </LanguageProvider>
-    );
-  }
-
   return (
-    <LanguageProvider>
-      <UserProvider>
+    <UserProvider>
+      {!isAuthenticated ? (
+        <Login onLogin={handleLogin} />
+      ) : (
         <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
           {renderContent()}
           <PWAInstallPrompt />
         </Shell>
-      </UserProvider>
-    </LanguageProvider>
+      )}
+    </UserProvider>
   );
 }
-
