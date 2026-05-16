@@ -176,8 +176,6 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
     const result = await model.generateContent("Genera un consejo de salud breve, motivador y práctico para hoy.");
     const response = await result.response;
     return response.text();
-    });
-    return response.text;
   } catch (error: any) {
     console.error("Gemini Health Tip Error:", error);
     
