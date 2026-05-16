@@ -27,46 +27,52 @@ export default function Hero({ onStartAssistant, onViewMap, onOpenRegistration }
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-transparent" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10 w-full mt-10">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 relative z-10 w-full mt-10 flex justify-center">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="max-w-2xl text-on-background drop-shadow-sm"
+            className="relative bg-surface-container-low/40 backdrop-blur-2xl border border-outline-variant/30 shadow-2xl rounded-[40px] p-10 md:p-16 w-full text-center overflow-hidden group"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container/60 backdrop-blur-md rounded-full border border-outline-variant/30 mb-8">
-               <span className="w-2 h-2 rounded-full bg-hospital-green animate-pulse" />
-               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">{t('hero.badge')}</span>
-            </div>
+            {/* Efectos de iluminación (Glow) de fondo */}
+            <div className="absolute -top-32 -right-32 w-80 h-80 bg-primary/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/30 transition-colors duration-700" />
+            <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-secondary/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-secondary/30 transition-colors duration-700" />
 
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.1]">
-              <span className="text-primary">
-                {language === 'es' ? 'Eficiencia' : 'Empathetic'}
-              </span>
-              {' '}
-              {language === 'es' ? 'Empática' : 'Efficiency'}
-              {' '}
-              {language === 'es' ? 'al servicio de tu salud.' : "at your health's service."}
-            </h1>
+            <div className="relative z-10 flex flex-col items-center gap-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container/60 backdrop-blur-md rounded-full border border-outline-variant/30 shadow-sm">
+                 <span className="w-2 h-2 rounded-full bg-hospital-green animate-pulse" />
+                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">{t('hero.badge')}</span>
+              </div>
 
-            <p className="text-xl md:text-2xl text-on-surface-variant mb-10 leading-relaxed font-semibold">
-              {t('hero.subtitle')}
-            </p>
-            <div className="flex flex-wrap gap-5">
-              <button 
-                onClick={onStartAssistant}
-                className="bg-primary text-on-primary px-10 py-5 rounded-xl font-black text-xl hover:scale-105 hover:brightness-110 shadow-lg shadow-primary/20 transition-all flex items-center gap-3"
-              >
-                {t('hero.cta.primary')}
-                <Stethoscope className="w-6 h-6" />
-              </button>
-              <button 
-                onClick={onViewMap}
-                className="bg-surface-container-high text-on-surface-variant border-2 border-outline-variant/30 px-10 py-5 rounded-xl font-black text-xl hover:scale-105 hover:bg-surface-container-highest transition-all flex items-center gap-3"
-              >
-                {t('hero.cta.secondary')}
-                <MapPin className="w-6 h-6" />
-              </button>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-black tracking-tight text-on-surface leading-[1.1]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                  {language === 'es' ? 'Eficiencia Empática' : 'Empathetic Efficiency'}
+                </span>
+                <br className="hidden sm:block" />
+                {' '}
+                {language === 'es' ? 'al servicio de tu salud.' : "at your health's service."}
+              </h1>
+
+              <p className="text-lg md:text-xl text-on-surface-variant font-medium max-w-3xl mx-auto leading-relaxed opacity-90">
+                {t('hero.subtitle')}
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto justify-center">
+                <button 
+                  onClick={onStartAssistant}
+                  className="bg-primary text-on-primary px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 hover:brightness-110 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3"
+                >
+                  {t('hero.cta.primary')}
+                  <Stethoscope className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={onViewMap}
+                  className="bg-surface-container-high text-on-surface-variant border-2 border-outline-variant/30 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 hover:bg-surface-container-highest transition-all flex items-center justify-center gap-3"
+                >
+                  {t('hero.cta.secondary')}
+                  <MapPin className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
