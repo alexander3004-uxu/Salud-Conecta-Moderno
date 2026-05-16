@@ -1,6 +1,7 @@
 import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { TriageRecord, OperationType, FirestoreErrorInfo, Clinic } from '../types';
+import { getClinics } from './clinicService'; // Importar getClinics para obtener los centros verificados
 import { getCurrentLocation, getNearestFacility, getEmergencyFacilities, estimateTravelTime, calculateDistance } from '../lib/geolocationService';
 import { NICARAGUA_HOSPITALS } from '../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../data/nicaraguaPublicHealthNetwork';
@@ -89,9 +90,9 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     // Coordenadas por defecto (Managua Centro) alineadas con el mapa
     let userLat = 12.1328;
     let userLng = -86.2504;
-    
-    // Combinamos ambas redes para tener cobertura total, especialmente la pública detallada
-    const fullNetwork = [...NICARAGUA_HOSPITALS, ...PUBLIC_HEALTH_NETWORK];
+
+    // Obtener la red completa de clínicas verificadas desde Firestore (incluye las MINSA cacheadas de Google)
+    const fullNetwork = await getClinics();
 
     const userLocation = await getCurrentLocation();
     if (userLocation) {

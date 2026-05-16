@@ -39,7 +39,7 @@ const getApiKey = (envVars: string | string[], fallback: string, name: string): 
   }
   
   console.log(`[Config] ${name} loaded successfully`);
-  return trimmed;
+  return trimmed; //
 };
 
 export const GOOGLE_MAPS_KEY = getApiKey(['VITE_GOOGLE_MAPS_API_KEY', 'VITE_GOOGLE_MAPS_PLATFORM_KEY'], '', 'Google Maps');

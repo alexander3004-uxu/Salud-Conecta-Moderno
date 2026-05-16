@@ -131,7 +131,7 @@ export const NICARAGUA_HOSPITALS: Omit<Clinic, 'id'>[] = [
     phone: "+505 2552 4000",
     type: "health-center",
     sector: "public",
-    location: { lat: 11.93158, lng: -85.96385 },
+    location: { lat: 11.93158, lng: -85.96385 }, //
     rating: 3.7,
     reviews: 42,
     imageUrl: "https://images.unsplash.com/photo-1519494083224-703c185c80a5?auto=format&fit=crop&q=80&w=1000",

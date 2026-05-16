@@ -14,7 +14,7 @@ const getAI = () => {
     }
     aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   }
-  return aiInstance;
+  return aiInstance; //
 };
 
 export const getHealthAssistant = async (prompt: string, membership: 'free' | 'premium' = 'free', history: { role: string, parts: { text: string }[] }[] = []) => {
@@ -22,7 +22,7 @@ export const getHealthAssistant = async (prompt: string, membership: 'free' | 'p
     const ai = getAI();
     if (!ai) {
       return "El asistente de IA no está configurado. Por favor, asegúrate de añadir tu GEMINI_API_KEY en los secretos de la aplicación (Menú Settings).";
-    }
+    } //
 
     const model = ai.getGenerativeModel({ 
       model: "gemini-1.5-flash",
@@ -44,7 +44,7 @@ Responde siempre en español.`,
         { role: 'user', parts: [{ text: prompt }] }
       ],
     });
-    const response = await result.response;
+    const response = await result.response; //
     return response.text();
   } catch (error: any) {
     console.error("Gemini API Error:", error);
@@ -76,7 +76,7 @@ export const getSmartTriage = async (symptoms: string, membership: 'free' | 'pre
     const ai = getAI();
     if (!ai) {
       return {
-        urgency: 'medium',
+        urgency: 'medium', //
         recommendation: 'El asistente de IA no está configurado (Falta GEMINI_API_KEY). Por favor, ve a la configuración de la aplicación para activarlo.',
         reasoning: 'Configuración de API pendiente.',
         error: true
@@ -117,7 +117,7 @@ Responde siempre en español.`,
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: symptoms }] }],
     });
-    const response = await result.response;
+    const response = await result.response; //
     const text = response.text();
     const parsed = JSON.parse(text);
     
@@ -160,7 +160,7 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
     const ai = getAI();
     if (!ai) {
       return language === 'es' 
-        ? "Nota: Configura tu GEMINI_API_KEY en Settings para recibir consejos personalizados. Tip: Camina 30m diario."
+        ? "Nota: Configura tu GEMINI_API_KEY en Settings para recibir consejos personalizados. Tip: Camina 30m diario." //
         : "Note: Configure your GEMINI_API_KEY in Settings for personalized tips. Tip: Walk 30m daily.";
     }
 
@@ -174,7 +174,7 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
     });
 
     const result = await model.generateContent("Genera un consejo de salud breve, motivador y práctico para hoy.");
-    const response = await result.response;
+    const response = await result.response; //
     return response.text();
   } catch (error: any) {
     console.error("Gemini Health Tip Error:", error);

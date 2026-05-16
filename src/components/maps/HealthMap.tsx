@@ -168,16 +168,16 @@ export default function HealthMap() {
     const loadClinics = async () => {
       setLoading(true);
       try {
-        // Solo cargamos clínicas verificadas/especiales de nuestra DB de Firestore
+        // Carga las clínicas verificadas y cacheadas desde Firestore
         const dbClinics = await getClinics();
         setClinics(dbClinics);
-      } catch (error) {
-        console.error('Error loading clinics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadClinics();
+      } catch (error) { //
+        console.error('Error loading clinics:', error); //
+      } finally { //
+        setLoading(false); //
+      } //
+    }; //
+    loadClinics(); //
   }, []);
 
   const searchPlacesInArea = useCallback(async (map: google.maps.Map) => {
@@ -197,12 +197,21 @@ export default function HealthMap() {
         { term: 'emergencia médica', type: 'emergency' },
       ];
 
-      // Creamos un set de nombres normalizados de nuestra red pública para búsqueda rápida
+      // Creamos un set de nombres normalizados de nuestra red pública (MINSA) para búsqueda rápida
+      // Estos datos se usan SOLO para identificar si un lugar de Google es 'público'.
       const minsaReferenceNames = [...PUBLIC_HEALTH_NETWORK, ...NICARAGUA_HOSPITALS]
         .filter(c => c.sector === 'public')
         .map(c => normalizeString(c.name));
 
-      let updatedList = [...clinics];
+      // Mapeamos las clínicas existentes por su ID de Google Place o nombre normalizado
+      const existingClinicsMap = new Map<string, Clinic>();
+      clinics.forEach(c => {
+        if (c.id.startsWith('google-')) existingClinicsMap.set(c.id, c);
+        existingClinicsMap.set(normalizeString(c.name), c); // Para clínicas que no tienen ID de Google aún
+      });
+
+      let newOrUpdatedClinics: Clinic[] = []; // Para almacenar las clínicas nuevas o actualizadas de Google
+      const processedGooglePlaceIds = new Set<string>(); // Para evitar procesar el mismo Google Place varias veces
 
       for (const { term, type } of searchTerms) {
         try {
@@ -224,53 +233,56 @@ export default function HealthMap() {
           });
 
           for (const place of results) {
-            if (place.geometry?.location) {
+            if (place.geometry?.location && place.place_id && !processedGooglePlaceIds.has(place.place_id)) {
               const placeName = normalizeString(place.name || '');
               const googleId = `google-${place.place_id}`;
               
-              // Buscamos si ya existe en la lista para no duplicar
-              const existingIndex = updatedList.findIndex(c => 
-                c.id === googleId || normalizeString(c.name) === placeName
-              );
+              let clinicToProcess: Clinic | undefined;
+              let isUpdate = false;
+
+              // 1. Buscar por ID de Google Place (más fiable)
+              if (existingClinicsMap.has(googleId)) {
+                clinicToProcess = existingClinicsMap.get(googleId)!;
+                isUpdate = true;
+              } 
+              // 2. Si no se encuentra por ID, buscar por nombre normalizado (para centros MINSA que no tienen ID de Google aún)
+              else if (existingClinicsMap.has(placeName)) {
+                clinicToProcess = existingClinicsMap.get(placeName)!;
+                isUpdate = true;
+              }
 
               // Verificamos si este lugar de Google pertenece a la red pública del MINSA
               const isPublicMinsa = minsaReferenceNames.some(minsaName => 
                 placeName.includes(minsaName) || minsaName.includes(placeName)
               );
 
-              // Si coincide con MINSA, sincronizamos con Firestore para persistir la ubicación correcta de Google
-              if (isPublicMinsa) {
-                syncClinicToFirestore({
-                  id: googleId,
-                  name: place.name || 'Sin nombre',
-                  type: type as Clinic['type'],
-                  sector: 'public',
+              if (clinicToProcess) {
+                // Si ya existe, actualizamos sus datos con la información de Google
+                const updatedClinic = {
+                  ...clinicToProcess,
                   location: {
                     lat: place.geometry.location.lat(),
                     lng: place.geometry.location.lng(),
                   },
-                  address: place.formatted_address || '',
-                  phone: place.formatted_phone_number || '',
-                  open24h: type === 'hospital' || type === 'emergency',
-                  rating: place.rating,
-                  reviews: place.user_ratings_total,
-                });
-              }
-
-              if (existingIndex !== -1) {
-                // Si existe, actualizamos su ubicación con la precisión de Google
-                updatedList[existingIndex] = {
-                  ...updatedList[existingIndex],
-                  location: {
-                    lat: place.geometry.location.lat(),
-                    lng: place.geometry.location.lng(),
-                  },
-                  // Si lo identificamos como público en Google, mantenemos ese metadato
-                  sector: isPublicMinsa ? 'public' : updatedList[existingIndex].sector
+                  sector: isPublicMinsa ? 'public' : clinicToProcess.sector, // Priorizamos MINSA para el sector
+                  address: place.formatted_address || clinicToProcess.address,
+                  phone: place.formatted_phone_number || clinicToProcess.phone,
+                  rating: place.rating || clinicToProcess.rating,
+                  reviews: place.user_ratings_total || clinicToProcess.reviews,
                 };
+                newOrUpdatedClinics.push(updatedClinic);
+                
+                // Si es un centro MINSA, lo sincronizamos con Firestore para actualizar su ubicación/datos
+                if (isPublicMinsa && (
+                    updatedClinic.location.lat !== clinicToProcess.location.lat ||
+                    updatedClinic.location.lng !== clinicToProcess.location.lng ||
+                    updatedClinic.sector !== clinicToProcess.sector // Sincronizar si el sector cambió
+                )) {
+                  syncClinicToFirestore(updatedClinic);
+                }
               } else {
-                // Si es un sitio nuevo detectado por Google, lo agregamos con sus datos reales
-                updatedList.push({
+                // Si es un centro completamente nuevo de Google Places
+                const newClinic: Clinic = {
                   id: googleId,
                   name: place.name || 'Sin nombre',
                   type: type as Clinic['type'],
@@ -286,26 +298,44 @@ export default function HealthMap() {
                   rating: place.rating,
                   reviews: place.user_ratings_total,
                 });
+                newOrUpdatedClinics.push(newClinic);
+
+                // Si es un centro MINSA, lo guardamos en Firestore
+                if (isPublicMinsa) {
+                  syncClinicToFirestore(newClinic);
+                }
               }
+              processedGooglePlaceIds.add(place.place_id); // Marcar como procesado
             }
           }
         } catch (err) {
           console.warn(`Search failed for ${term}:`, err);
         }
       }
-      setClinics(updatedList);
+
+      // Combinar las clínicas existentes con las nuevas/actualizadas, eliminando duplicados por ID
+      setClinics(prevClinics => {
+        const combinedMap = new Map<string, Clinic>();
+        // Añadir todas las clínicas previas
+        prevClinics.forEach(c => combinedMap.set(c.id, c));
+        // Sobreescribir/añadir con las nuevas/actualizadas de Google Places
+        newOrUpdatedClinics.forEach(c => combinedMap.set(c.id, c));
+        return Array.from(combinedMap.values());
+      });
     } catch (error) {
       console.error('Error searching places:', error);
     } finally {
       setLoadingPlaces(false);
     }
-  }, [placesLib, clinics, hasValidKey]);
+  }, [placesLib, hasValidKey, clinics, normalizeString, PUBLIC_HEALTH_NETWORK, NICARAGUA_HOSPITALS]);
 
   const handleMapIdle = useCallback(() => {
-    if (mapInstance && placesLib && hasValidKey && clinics.length < 50) {
+    // Solo buscar si el mapa está listo, Places API está cargada y no estamos ya cargando
+    // La condición clinics.length < 50 es un heurístico para evitar sobrecargar la API en el inicio
+    if (mapInstance && placesLib && hasValidKey && !loadingPlaces) {
       searchPlacesInArea(mapInstance);
     }
-  }, [mapInstance, placesLib, hasValidKey, clinics.length, searchPlacesInArea]);
+  }, [mapInstance, placesLib, hasValidKey, loadingPlaces, searchPlacesInArea]);
 
   const filteredClinics = clinics.filter(c => filter === 'all' || c.type === filter);
 

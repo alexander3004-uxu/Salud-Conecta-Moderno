@@ -69,7 +69,7 @@ const translations: Translations = {
     'profile.validated_true': 'Identidad validada correctamente',
     'profile.name_label': 'Nombre',
     'profile.rel_label': 'Parentesco',
-    'profile.edit': 'Editar',
+    'profile.edit': 'Editar', //
     'profile.delete': 'Eliminar',
     'profile.encryption': 'Cifrado de Extremo a Extremo',
     'profile.encryption_desc': 'Requiere autenticación biométrica para desencriptar historial clínico y documentos locales.',
@@ -90,7 +90,7 @@ const translations: Translations = {
     'biometric.pin_desc': 'Ingresa tu código de 4 dígitos',
     'biometric.confirm_pin': 'Confirmar PIN',
     'biometric.back': 'Volver a biometría',
-    'biometric.validated': '¡Validado!',
+    'biometric.validated': '¡Validado!', //
     'biometric.confirmed': 'Identidad confirmada',
     'ai.status.title': 'Núcleo de IA Gemini',
     'ai.status.active': 'ACTIVO - FREE TIER',
@@ -105,7 +105,7 @@ const translations: Translations = {
     'maps.filter.public': 'Solo Sector Público',
     'maps.filter.private': 'Añadir Red Privada',
     'maps.social_mission.title': 'Misión Social de Salud Conecta',
-    'maps.social_mission.desc': 'Estamos comprometidos con el acceso a la salud para todos. Si eres usuario Free, te conectamos con toda la Red Pública de Salud de Nicaragua sin costo alguno.',
+    'maps.social_mission.desc': 'Estamos comprometidos con el acceso a la salud para todos. Si eres usuario Free, te conectamos con toda la Red Pública de Salud de Nicaragua sin costo alguno.', //
     'maps.key_required.title': 'Llave de Google Maps Requerida',
     'maps.key_required.desc': 'No se detectó VITE_GOOGLE_MAPS_API_KEY. Verifica tu archivo .env y reinicia el servidor de desarrollo.',
     'maps.key_required.step1': 'Obtén una llave en',
@@ -113,7 +113,7 @@ const translations: Translations = {
     'maps.key_required.step2_middle': 'con el nombre',
     'maps.key_required.rebuild': 'La aplicación se reiniciará automáticamente al guardar el secreto.',
     'ai.tip.title': 'Consejo de Salud IA',
-    'ai.tip.loading': 'Generando consejo personalizado...',
+    'ai.tip.loading': 'Generando consejo personalizado...', //
     'login.hero_title': 'El futuro de la salud en tus manos.',
     'login.hero_desc': 'Únete a Salud Conecta IA y accede a un ecosistema inteligente diseñado para cuidar de ti y de los tuyos en Nicaragua.',
     'login.feat.doctors': 'Red de Médicos',
@@ -123,7 +123,7 @@ const translations: Translations = {
     'login.welcome': 'Bienvenido',
     'login.subtitle': 'Ingresa tus credenciales para continuar.',
     'login.forgot': '¿La olvidaste?',
-    'login.btn': 'Iniciar Sesión',
+    'login.btn': 'Iniciar Sesión', //
     'login.or': 'O continúa con',
     'login.no_account': '¿No tienes una cuenta?',
     'login.signup': 'Regístrate gratis',
@@ -134,7 +134,7 @@ const translations: Translations = {
     'settings.theme.light': 'Modo Diurno',
     'settings.theme.dark': 'Modo Nocturno',
     'settings.theme.desc.light': 'Fondo claro, alto contraste',
-    'settings.theme.desc.dark': 'Tonos profundos, ahorro de batería',
+    'settings.theme.desc.dark': 'Tonos profundos, ahorro de batería', //
     'settings.notifications': 'Notificaciones',
     'settings.notif.critical': 'Alertas Médicas (Críticas)',
     'settings.notif.critical.desc': 'Recordatorios ineludibles de medicamentos y confirmaciones urgentes de citas.',
@@ -146,7 +146,7 @@ const translations: Translations = {
     'settings.channels.push': 'Push (App)',
     'settings.channels.whatsapp': 'WhatsApp',
     'settings.channels.email': 'Correo Electrónico',
-    'settings.summary': 'Resumen Diario',
+    'settings.summary': 'Resumen Diario', //
     'settings.summary.desc': 'Agrupa notificaciones de retos y beneficios en un solo envío diario para reducir distracciones.',
     'settings.summary.time': 'Hora de entrega',
     'settings.save': 'Guardar Cambios',
@@ -154,7 +154,7 @@ const translations: Translations = {
     'settings.processed': '¡Cambios Sincronizados!',
     'settings.processing': 'Procesando...',
     'settings.config.alerts': 'Configuración de Alertas',
-    'settings.config.desc': 'Tus cambios se guardan automáticamente en tu bóveda segura.',
+    'settings.config.desc': 'Tus cambios se guardan automáticamente en tu bóveda segura.', //
     'settings.theme.light.label': 'Fondo claro, alto contraste',
     'settings.theme.dark.label': 'Tonos profundos, ahorro de batería',
     'settings.channels.push.label': 'Push (App)',
@@ -162,7 +162,7 @@ const translations: Translations = {
     'settings.channels.email.label': 'Correo Electrónico',
     'settings.summary.label': 'Agrupa notificaciones de retos y beneficios en un solo envío diario para reducir distracciones.',
     'settings.notif.critical.label': 'Recomendado mantener activo',
-    'wallet.title': 'Puntos de Salud',
+    'wallet.title': 'Puntos de Salud', //
     'wallet.balance': 'Balance Actual',
     'wallet.history': 'Historial Reciente',
     'wallet.rewards': 'Recompensas Premium',
@@ -172,7 +172,7 @@ const translations: Translations = {
     'hero.cta.primary': 'Iniciar Triaje IA',
     'hero.cta.secondary': 'Protocolo Realon™',
     'features.title': 'Servicios Integrales',
-    'features.1.title': 'Confiabilidad Institucional',
+    'features.1.title': 'Confiabilidad Institucional', //
     'features.1.desc': 'Información verificada directamente de fuentes oficiales de salud pública.',
     'features.2.title': 'Eficiencia Empática',
     'features.2.desc': 'Diseñado para reducir tu carga mental en momentos de necesidad.',
@@ -184,7 +184,7 @@ const translations: Translations = {
     'status.available': 'DISPONIBLES',
     'status.emergency': 'EMERGENCIAS',
     'status.call': 'LLAMAR',
-    'cta.professional.title': '¿Eres un profesional de la salud o regente de farmacia?',
+    'cta.professional.title': '¿Eres un profesional de la salud o regente de farmacia?', //
     'cta.professional.desc': 'Únete a la red interoperable {brand}. Registra tu laboratorio, clínica o farmacia para aparecer en el mapa de stock y disponibilidad en tiempo real.',
     'cta.professional.doctor': 'Soy Profesional',
     'cta.professional.clinic': 'Centro de Salud',
@@ -194,7 +194,7 @@ const translations: Translations = {
     'footer.system.triage': 'Triaje Avanzado',
     'footer.system.pharmacy': 'Red de Farmacias',
     'footer.system.pwa': 'Pasaporte PWA',
-    'footer.legal': 'Legal',
+    'footer.legal': 'Legal', //
     'footer.legal.privacy': 'Privacidad',
     'footer.legal.terms': 'Términos',
     'footer.legal.acc': 'Accesibilidad',
@@ -204,7 +204,7 @@ const translations: Translations = {
     'pharmacy.subtitle': 'Acceso exclusivo a precios preferenciales en medicamentos crónicos y de venta libre en nuestra red de farmacias verificadas.',
     'pharmacy.search_placeholder': 'Buscar medicamentos para ver precios premium...',
     'pharmacy.scan_prescription': 'Escanear Receta',
-    'pharmacy.my_coupons': 'Mis Cupones Activos',
+    'pharmacy.my_coupons': 'Mis Cupones Activos', //
     'pharmacy.verified_title': 'Farmacias Premium Verificadas',
     'pharmacy.view_all': 'Ver todas',
     'pharmacy.qr_code': 'Mostrar QR',
@@ -214,7 +214,7 @@ const translations: Translations = {
     'pharmacy.card_chronic_desc': 'Válido para medicación cardiovascular y metabólica.',
     'pharmacy.card_general_desc': 'Aplica a venta libre y productos de cuidado personal.',
     'activity.title': 'Registros de Actividad',
-    'activity.subtitle': 'Tu progreso de salud y retos completados esta semana.',
+    'activity.subtitle': 'Tu progreso de salud y retos completados esta semana.', //
     'activity.week': 'Semana',
     'activity.month': 'Mes',
     'activity.daily_progress': 'Progreso Diario',
@@ -225,7 +225,7 @@ const translations: Translations = {
     'activity.morning_walk': 'Caminata matutina',
     'activity.today': 'Hoy',
     'activity.hydration_session': 'Sesión de hidratación',
-    'activity.yesterday': 'Ayer',
+    'activity.yesterday': 'Ayer', //
     'activity.blood_pressure': 'Registro de Presión',
     'activity.monthly_goal_reached_water': 'Meta mensual alcanzada (Agua)',
     'activity.monthly_checkup': 'Chequeo Médico Mensual',
@@ -236,7 +236,7 @@ const translations: Translations = {
     'activity.progress': 'Progreso',
     'activity.completed_yesterday': 'Completado ayer',
     'activity.3_days_ago': 'Hace 3 días',
-    'stats.total_steps': 'Pasos Totales',
+    'stats.total_steps': 'Pasos Totales', //
     'stats.vs_prev_week': 'vs sem. ant.',
     'stats.vs_prev_month': 'vs mes ant.',
     'stats.active_calories': 'Calorías Activas',
@@ -245,7 +245,7 @@ const translations: Translations = {
     'stats.goal_reached': 'Meta alcanzada',
     'stats.stable_avg': 'Promedio estable',
     'stats.activity': 'actividad',
-    'challenges.title': 'Retos de Salud',
+    'challenges.title': 'Retos de Salud', //
     'challenges.subtitle': 'Completa hábitos saludables para ganar puntos extra y mejorar tu bienestar general.',
     'challenges.weekly': 'Semanales',
     'challenges.monthly': 'Mensuales',
@@ -255,7 +255,7 @@ const translations: Translations = {
     'challenges.level': 'Nivel',
     'challenges.next_level': 'Sig. Nivel',
     'challenges.sync': 'Sincronizar',
-    'challenges.perfect_week': 'Semana Perfecta',
+    'challenges.perfect_week': 'Semana Perfecta', //
     'challenges.streak': 'Racha 5 Días',
     'challenges.hero_hydration': 'Héroe de la Hidratación',
     'challenges.hero_hydration_desc': 'Registra 2 litros de agua diarios por 5 días consecutivos.',
@@ -265,7 +265,7 @@ const translations: Translations = {
     'challenges.active_weekend_desc': 'Realiza 60 minutos de actividad física al aire libre este fin de semana.',
     'challenges.marathon': 'Maratón Mensual',
     'challenges.marathon_desc': 'Completa 300,000 pasos en el transcurso del mes.',
-    'challenges.sleep_consistency': 'Consistencia de Sueño',
+    'challenges.sleep_consistency': 'Consistencia de Sueño', //
     'challenges.sleep_consistency_desc': 'Mantén un horario regular de sueño por 4 semanas seguidas.',
     'challenges.mindfulness': 'Mindfulness 30',
     'challenges.mindfulness_desc': 'Realiza 30 sesiones de meditación este mes.',
@@ -273,7 +273,7 @@ const translations: Translations = {
     'challenges.steps_10k_desc': 'Mantén un promedio de 10,000 pasos durante toda la semana.',
     'challenges.day_4_of_7': 'Día 4 de 7 consecutivos',
     'challenges.optimal_hydration': 'Hidratación Óptima',
-    'challenges.drink_2l_daily_week': 'Bebe 2L diarios (Semana)',
+    'challenges.drink_2l_daily_week': 'Bebe 2L diarios (Semana)', //
     'challenges.your_profile': 'Tú Perfil',
     'challenges.current_challenge': 'Reto Actual',
     'challenges.coming_soon': 'Próximos retos en 3 días',
@@ -341,7 +341,7 @@ const translations: Translations = {
     'profile.validated_true': 'Identity correctly validated',
     'profile.name_label': 'Name',
     'profile.rel_label': 'Relationship',
-    'profile.edit': 'Edit',
+    'profile.edit': 'Edit', //
     'profile.delete': 'Delete',
     'profile.encryption': 'End-to-End Encryption',
     'profile.encryption_desc': 'Requires biometric authentication to decrypt medical history and local documents.',
@@ -362,7 +362,7 @@ const translations: Translations = {
     'biometric.pin_desc': 'Enter your 4-digit code',
     'biometric.confirm_pin': 'Confirm PIN',
     'biometric.back': 'Back to biometrics',
-    'biometric.validated': 'Validated!',
+    'biometric.validated': 'Validated!', //
     'biometric.confirmed': 'Identity confirmed',
     'ai.status.title': 'Gemini AI Core',
     'ai.status.active': 'ACTIVE - FREE TIER',
@@ -377,7 +377,7 @@ const translations: Translations = {
     'maps.filter.public': 'Public Sector Only',
     'maps.filter.private': 'Add Private Network',
     'maps.social_mission.title': 'Salud Conecta Social Mission',
-    'maps.social_mission.desc': 'We are committed to health access for all. As a Free user, we connect you with the entire Public Health Network of Nicaragua at no cost.',
+    'maps.social_mission.desc': 'We are committed to health access for all. As a Free user, we connect you with the entire Public Health Network of Nicaragua at no cost.', //
     'maps.key_required.title': 'Google Maps API Key Required',
     'maps.key_required.desc': 'VITE_GOOGLE_MAPS_API_KEY not detected. Check your .env file and restart the development server.',
     'maps.key_required.step1': 'Get a key at',
@@ -385,7 +385,7 @@ const translations: Translations = {
     'maps.key_required.step2_middle': 'with the name',
     'maps.key_required.rebuild': 'The application will restart automatically after saving the secret.',
     'ai.tip.title': 'AI Health Tip',
-    'ai.tip.loading': 'Generating personalized tip...',
+    'ai.tip.loading': 'Generating personalized tip...', //
     'login.hero_title': 'The future of health in your hands.',
     'login.hero_desc': 'Join Salud Conecta IA and access an intelligent ecosystem designed to take care of you and your loved ones in Nicaragua.',
     'login.feat.doctors': 'Doctor Network',
@@ -395,7 +395,7 @@ const translations: Translations = {
     'login.welcome': 'Welcome',
     'login.subtitle': 'Enter your credentials to continue.',
     'login.forgot': 'Forgot it?',
-    'login.btn': 'Sign In',
+    'login.btn': 'Sign In', //
     'login.or': 'Or continue with',
     'login.no_account': 'Do not have an account?',
     'login.signup': 'Sign up for free',
@@ -406,7 +406,7 @@ const translations: Translations = {
     'settings.theme.light': 'Light Mode',
     'settings.theme.dark': 'Dark Mode',
     'settings.theme.desc.light': 'Light background, high contrast',
-    'settings.theme.desc.dark': 'Deep tones, battery saving',
+    'settings.theme.desc.dark': 'Deep tones, battery saving', //
     'settings.notifications': 'Notifications',
     'settings.notif.critical': 'Medical Alerts (Critical)',
     'settings.notif.critical.desc': 'Unavoidable medication reminders and urgent appointment confirmations.',
@@ -418,7 +418,7 @@ const translations: Translations = {
     'settings.channels.push': 'Push (App)',
     'settings.channels.whatsapp': 'WhatsApp',
     'settings.channels.email': 'Email',
-    'settings.summary': 'Daily Summary',
+    'settings.summary': 'Daily Summary', //
     'settings.summary.desc': 'Group challenge and benefit notifications into a single daily delivery to reduce distractions.',
     'settings.summary.time': 'Delivery time',
     'settings.save': 'Save Changes',
@@ -426,7 +426,7 @@ const translations: Translations = {
     'settings.processed': 'Changes Synchronized!',
     'settings.processing': 'Processing...',
     'settings.config.alerts': 'Alert Configuration',
-    'settings.config.desc': 'Your changes are automatically saved in your secure vault.',
+    'settings.config.desc': 'Your changes are automatically saved in your secure vault.', //
     'settings.theme.light.label': 'Light background, high contrast',
     'settings.theme.dark.label': 'Deep tones, battery saving',
     'settings.channels.push.label': 'Push (App)',
@@ -434,7 +434,7 @@ const translations: Translations = {
     'settings.channels.email.label': 'Email',
     'settings.summary.label': 'Group challenge and benefit notifications into a single daily delivery to reduce distractions.',
     'settings.notif.critical.label': 'Recommended to keep active',
-    'wallet.title': 'Health Points',
+    'wallet.title': 'Health Points', //
     'wallet.balance': 'Current Balance',
     'wallet.history': 'Recent History',
     'wallet.rewards': 'Premium Rewards',
@@ -444,7 +444,7 @@ const translations: Translations = {
     'hero.cta.primary': 'Start AI Triage',
     'hero.cta.secondary': 'Realon™ Protocol',
     'features.title': 'Comprehensive Services',
-    'features.1.title': 'Institutional Reliability',
+    'features.1.title': 'Institutional Reliability', //
     'features.1.desc': 'Information verified directly from official public health sources.',
     'features.2.title': 'Empathetic Efficiency',
     'features.2.desc': 'Designed to reduce your mental load in times of need.',
@@ -456,7 +456,7 @@ const translations: Translations = {
     'status.available': 'AVAILABLE',
     'status.emergency': 'EMERGENCIES',
     'status.call': 'CALL',
-    'cta.professional.title': 'Are you a healthcare professional or pharmacy manager?',
+    'cta.professional.title': 'Are you a healthcare professional or pharmacy manager?', //
     'cta.professional.desc': 'Join the interoperable {brand} network. Register your lab, clinic or pharmacy to appear on the real-time stock and availability map.',
     'cta.professional.doctor': 'I am Professional',
     'cta.professional.clinic': 'Health Center',
@@ -466,7 +466,7 @@ const translations: Translations = {
     'footer.system.triage': 'Advanced Triage',
     'footer.system.pharmacy': 'Pharmacy Network',
     'footer.system.pwa': 'PWA Passport',
-    'footer.legal': 'Legal',
+    'footer.legal': 'Legal', //
     'footer.legal.privacy': 'Privacy',
     'footer.legal.terms': 'Terms',
     'footer.legal.acc': 'Accessibility',
@@ -476,7 +476,7 @@ const translations: Translations = {
     'pharmacy.subtitle': 'Exclusive access to preferential prices on chronic and over-the-counter medications in our network of verified pharmacies.',
     'pharmacy.search_placeholder': 'Search medications to see premium prices...',
     'pharmacy.scan_prescription': 'Scan Prescription',
-    'pharmacy.my_coupons': 'My Active Coupons',
+    'pharmacy.my_coupons': 'My Active Coupons', //
     'pharmacy.verified_title': 'Verified Premium Pharmacies',
     'pharmacy.view_all': 'View all',
     'pharmacy.qr_code': 'Show QR',
@@ -486,7 +486,7 @@ const translations: Translations = {
     'pharmacy.card_chronic_desc': 'Valid for cardiovascular and metabolic medication.',
     'pharmacy.card_general_desc': 'Applies to over-the-counter and personal care products.',
     'activity.title': 'Activity Logs',
-    'activity.subtitle': 'Your health progress and challenges completed this week.',
+    'activity.subtitle': 'Your health progress and challenges completed this week.', //
     'activity.week': 'Week',
     'activity.month': 'Month',
     'activity.daily_progress': 'Daily Progress',
@@ -497,7 +497,7 @@ const translations: Translations = {
     'activity.morning_walk': 'Morning walk',
     'activity.today': 'Today',
     'activity.hydration_session': 'Hydration session',
-    'activity.yesterday': 'Yesterday',
+    'activity.yesterday': 'Yesterday', //
     'activity.blood_pressure': 'Blood Pressure Log',
     'activity.monthly_goal_reached_water': 'Monthly goal reached (Water)',
     'activity.monthly_checkup': 'Monthly Medical Checkup',
@@ -508,7 +508,7 @@ const translations: Translations = {
     'activity.progress': 'Progress',
     'activity.completed_yesterday': 'Completed yesterday',
     'activity.3_days_ago': '3 days ago',
-    'stats.total_steps': 'Total Steps',
+    'stats.total_steps': 'Total Steps', //
     'stats.vs_prev_week': 'vs prev week',
     'stats.vs_prev_month': 'vs prev month',
     'stats.active_calories': 'Active Calories',
@@ -517,7 +517,7 @@ const translations: Translations = {
     'stats.goal_reached': 'Goal reached',
     'stats.stable_avg': 'Stable average',
     'stats.activity': 'activity',
-    'challenges.title': 'Health Challenges',
+    'challenges.title': 'Health Challenges', //
     'challenges.subtitle': 'Complete healthy habits to earn extra points and improve your general well-being.',
     'challenges.weekly': 'Weekly',
     'challenges.monthly': 'Monthly',
@@ -527,7 +527,7 @@ const translations: Translations = {
     'challenges.level': 'Level',
     'challenges.next_level': 'Next Level',
     'challenges.sync': 'Sync',
-    'challenges.perfect_week': 'Perfect Week',
+    'challenges.perfect_week': 'Perfect Week', //
     'challenges.streak': '5 Day Streak',
     'challenges.hero_hydration': 'Hydration Hero',
     'challenges.hero_hydration_desc': 'Log 2 liters of water daily for 5 consecutive days.',
@@ -537,7 +537,7 @@ const translations: Translations = {
     'challenges.active_weekend_desc': 'Perform 60 minutes of outdoor physical activity this weekend.',
     'challenges.marathon': 'Monthly Marathon',
     'challenges.marathon_desc': 'Complete 300,000 steps during the month.',
-    'challenges.sleep_consistency': 'Sleep Consistency',
+    'challenges.sleep_consistency': 'Sleep Consistency', //
     'challenges.sleep_consistency_desc': 'Maintain a regular sleep schedule for 4 weeks in a row.',
     'challenges.mindfulness': 'Mindfulness 30',
     'challenges.mindfulness_desc': 'Perform 30 meditation sessions this month.',
@@ -545,7 +545,7 @@ const translations: Translations = {
     'challenges.steps_10k_desc': 'Maintain an average of 10,000 steps throughout the week.',
     'challenges.day_4_of_7': 'Day 4 of 7 consecutive',
     'challenges.optimal_hydration': 'Optimal Hydration',
-    'challenges.drink_2l_daily_week': 'Drink 2L daily (Week)',
+    'challenges.drink_2l_daily_week': 'Drink 2L daily (Week)', //
     'challenges.your_profile': 'Your Profile',
     'challenges.current_challenge': 'Current Challenge',
     'challenges.coming_soon': 'Next challenges in 3 days',
