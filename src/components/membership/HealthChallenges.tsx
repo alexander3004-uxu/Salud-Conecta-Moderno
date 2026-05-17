@@ -197,7 +197,7 @@ export default function HealthChallenges() {
                     <h4 className="text-lg font-display font-black text-on-surface mb-2">{challenge.title}</h4>
                     <p className="text-xs font-medium text-on-surface-variant mb-6 leading-relaxed opacity-70">{challenge.desc}</p>
                   </div>
-                  <button className="w-full bg-primary text-on-primary-fixed-variant py-4 rounded-2xl font-display font-black text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/10">
+                  <button className="w-full bg-primary text-on-primary py-4 rounded-2xl font-display font-black text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/10">
                     {t('challenges.join')}
                   </button>
                 </motion.div>

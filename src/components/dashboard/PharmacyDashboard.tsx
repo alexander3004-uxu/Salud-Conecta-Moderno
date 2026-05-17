@@ -220,7 +220,7 @@ export default function PharmacyDashboard() {
                     <p className="text-[10px] font-medium text-on-surface-variant">{val.center}</p>
                   </div>
                   <div className="flex gap-2 mt-1">
-                    <button className="flex-1 bg-primary text-on-primary-fixed-variant py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all">
+                    <button className="flex-1 bg-primary text-on-primary py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all">
                       Aprobar
                     </button>
                     <button className="flex-1 border border-outline-variant/30 hover:bg-surface-container-highest text-on-surface py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">

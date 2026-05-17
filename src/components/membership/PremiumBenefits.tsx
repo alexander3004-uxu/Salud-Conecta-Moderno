@@ -106,7 +106,7 @@ export default function PremiumBenefits() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto z-10">
-            <button className="flex-1 bg-primary text-on-primary-fixed-variant font-display font-black text-xs uppercase tracking-widest py-4 px-6 rounded-2xl hover:brightness-110 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-primary/20">
+            <button className="flex-1 bg-primary text-on-primary font-display font-black text-xs uppercase tracking-widest py-4 px-6 rounded-2xl hover:brightness-110 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-primary/20">
               <Settings2 className="w-4 h-4" />
               Gestionar Plan
             </button>

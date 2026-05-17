@@ -302,12 +302,12 @@ export default function History() {
                             </div>
                             <div className="flex items-start gap-3">
                               {isOrderValidated && (
-                                <span className="bg-secondary/10 text-secondary-fixed px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest">
+                                <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest">
                                   <Sparkles className="w-3 h-3" />
                                   Confirmado por IA
                                 </span>
                               )}
-                              <span className="bg-primary/20 text-primary-fixed px-3 py-1 rounded-lg font-mono font-bold text-[9px] border border-primary/30 uppercase tracking-widest">OBLIGATORIO</span>
+                              <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg font-mono font-bold text-[9px] border border-primary/30 uppercase tracking-widest">OBLIGATORIO</span>
                             </div>
                           </div>
                           <p className="text-on-surface-variant text-base leading-relaxed font-medium pl-0 sm:pl-19">
@@ -343,7 +343,7 @@ export default function History() {
                               <h5 className="font-display font-bold text-on-surface text-lg">Hidratación Adecuada</h5>
                             </div>
                             {isOrderValidated && (
-                              <span className="bg-secondary/10 text-secondary-fixed px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest w-fit mt-1">
+                              <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest w-fit mt-1">
                                 <Sparkles className="w-3 h-3" />
                                 Confirmado por IA
                               </span>
@@ -380,7 +380,7 @@ export default function History() {
                               <h5 className="font-display font-bold text-on-surface text-lg">Evitar Ejercicio</h5>
                             </div>
                             {isOrderValidated && (
-                              <span className="bg-secondary/10 text-secondary-fixed px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest w-fit mt-1">
+                              <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest w-fit mt-1">
                                 <Sparkles className="w-3 h-3" />
                                 Confirmado por IA
                               </span>
@@ -422,7 +422,7 @@ export default function History() {
                               </div>
                              </div>
                              {isOrderValidated && (
-                              <span className="bg-secondary/10 text-secondary-fixed px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest w-fit ml-18 mt-1">
+                              <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full font-mono font-bold text-[9px] flex items-center gap-1.5 border border-secondary/20 uppercase tracking-widest w-fit ml-18 mt-1">
                                 <Sparkles className="w-3 h-3" />
                                 Confirmado por IA
                               </span>

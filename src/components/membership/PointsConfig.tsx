@@ -103,7 +103,7 @@ export default function PointsConfig() {
           <button 
             onClick={handleSave}
             disabled={saving}
-            className="px-8 py-4 rounded-2xl bg-primary text-on-primary-fixed-variant font-display font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+            className="px-8 py-4 rounded-2xl bg-primary text-on-primary font-display font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Configuration'}
             <Save className="w-4 h-4" />

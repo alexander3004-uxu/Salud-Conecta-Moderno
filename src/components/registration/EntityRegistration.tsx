@@ -171,7 +171,7 @@ export default function EntityRegistration({ onBack, onFinish, initialType = 'la
             {onFinish && (
               <button 
                 onClick={onFinish}
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-primary text-on-primary-fixed-variant font-display font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg shadow-primary/20"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-primary text-on-primary font-display font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg shadow-primary/20"
               >
                 <Activity className="w-5 h-5" />
                 Ver Dashboard (Demo)
@@ -206,9 +206,9 @@ export default function EntityRegistration({ onBack, onFinish, initialType = 'la
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-2xl sm:text-3xl font-display font-black text-primary-fixed-dim">Registro de Entidad</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-black text-primary">Registro de Entidad</h1>
         </div>
-        <div className="hidden sm:block text-primary-fixed-dim text-xl font-display font-bold">
+        <div className="hidden sm:block text-primary text-xl font-display font-bold">
           Salud Conecta IA
         </div>
       </header>
@@ -544,7 +544,7 @@ export default function EntityRegistration({ onBack, onFinish, initialType = 'la
             <div className="flex flex-col gap-4 mt-auto">
               <button 
                 onClick={handleFinishRegistration}
-                className="w-full py-5 bg-primary text-on-primary-fixed-variant font-display font-black text-lg rounded-2xl flex justify-center items-center gap-3 hover:brightness-110 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]" 
+                className="w-full py-5 bg-primary text-on-primary font-display font-black text-lg rounded-2xl flex justify-center items-center gap-3 hover:brightness-110 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]" 
                 type="button"
               >
                 <Save className="w-6 h-6" />

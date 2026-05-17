@@ -212,7 +212,7 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
               className={`w-full py-5 rounded-2xl font-display font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg transition-all ${
                 isProcessing 
                   ? 'bg-surface-container-high text-on-surface-variant cursor-not-allowed' 
-                  : 'bg-primary text-on-primary-fixed-variant hover:brightness-110 shadow-primary/20 active:scale-95'
+                  : 'bg-primary text-on-primary hover:brightness-110 shadow-primary/20 active:scale-95'
               }`}
             >
               {isProcessing ? (

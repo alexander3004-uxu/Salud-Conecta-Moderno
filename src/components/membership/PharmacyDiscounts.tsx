@@ -71,7 +71,7 @@ export default function PharmacyDiscounts() {
             placeholder={t('pharmacy.search_placeholder')} 
             type="text"
           />
-          <button className="hidden sm:flex items-center gap-2 px-4 py-3 bg-surface-container-highest rounded-xl text-on-surface hover:bg-primary hover:text-on-primary-fixed-variant transition-all font-display font-black text-[10px] uppercase tracking-widest border border-outline-variant/20 ml-2">
+          <button className="hidden sm:flex items-center gap-2 px-4 py-3 bg-surface-container-highest rounded-xl text-on-surface hover:bg-primary hover:text-on-primary transition-all font-display font-black text-[10px] uppercase tracking-widest border border-outline-variant/20 ml-2">
             <QrCode className="w-4 h-4" />
             {t('pharmacy.scan_prescription')}
           </button>
@@ -116,7 +116,7 @@ export default function PharmacyDiscounts() {
                   </div>
                 )}
                 <div className="flex gap-3">
-                  <button className={`flex-1 ${coupon.color === 'primary' ? 'bg-primary text-on-primary-fixed-variant' : 'bg-surface-container-high text-on-surface'} py-4 rounded-2xl font-display font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2`}>
+                  <button className={`flex-1 ${coupon.color === 'primary' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface'} py-4 rounded-2xl font-display font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2`}>
                     <QrCode className="w-4 h-4" />
                     {t('pharmacy.qr_code')}
                   </button>
@@ -154,7 +154,7 @@ export default function PharmacyDiscounts() {
             
             {/* Map Pin Example */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none">
-              <div className="bg-primary text-on-primary-fixed-variant p-2.5 rounded-full shadow-2xl animate-bounce">
+              <div className="bg-primary text-on-primary p-2.5 rounded-full shadow-2xl animate-bounce">
                 <Store className="w-5 h-5" />
               </div>
               <div className="bg-surface/90 backdrop-blur-md text-on-surface text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl shadow-xl border border-outline-variant/30">

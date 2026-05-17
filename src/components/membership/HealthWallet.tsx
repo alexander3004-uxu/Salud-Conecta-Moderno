@@ -121,7 +121,7 @@ export default function HealthWallet() {
             </div>
             
             <div className="flex flex-col gap-4 w-full sm:w-auto">
-              <button className="bg-primary text-on-primary-fixed-variant px-10 py-5 rounded-[24px] font-display font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3">
+              <button className="bg-primary text-on-primary px-10 py-5 rounded-[24px] font-display font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3">
                 <Star className="w-5 h-5" />
                 Canjear Puntos
               </button>
@@ -159,7 +159,7 @@ export default function HealthWallet() {
               <div key={i} className="flex flex-col items-center gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
                   wd.active 
-                    ? 'bg-secondary text-on-secondary-fixed shadow-[0_0_20px_rgba(81,223,142,0.4)] scale-110' 
+                    ? 'bg-secondary text-on-secondary shadow-[0_0_20px_rgba(81,223,142,0.4)] scale-110' 
                     : wd.completed 
                     ? 'bg-secondary/20 border-2 border-secondary/40 text-secondary' 
                     : 'bg-surface-container-highest/50 border-2 border-outline-variant/30 text-on-surface-variant opacity-40'
@@ -277,7 +277,7 @@ export default function HealthWallet() {
                   className={`w-full mt-6 py-5 rounded-[24px] font-display font-black text-[10px] uppercase tracking-[0.2em] transition-all border shadow-lg ${
                     reward.locked 
                     ? 'bg-surface-container-highest text-on-surface-variant border-outline-variant/30 cursor-not-allowed' 
-                    : 'bg-primary/5 hover:bg-primary text-primary hover:text-on-primary-fixed-variant border-primary/20'
+                    : 'bg-primary/5 hover:bg-primary text-primary hover:text-on-primary border-primary/20'
                   }`}
                 >
                   {reward.locked ? `Faltan ${reward.needed?.toLocaleString()} pts` : 'Canjear Reward'}

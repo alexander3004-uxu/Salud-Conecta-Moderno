@@ -387,7 +387,7 @@ export function Profile() {
             <button 
               onClick={handleSave}
               disabled={!isValidated || isSaving}
-              className="bg-primary-container hover:bg-primary-fixed text-on-primary-container px-8 py-4 rounded-2xl font-display font-bold text-sm shadow-xl transition-all flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary-container hover:brightness-95 text-on-primary-container px-8 py-4 rounded-2xl font-display font-bold text-sm shadow-xl transition-all flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-5 h-5 group-hover:animate-bounce" />
               {isSaving ? t('profile.saving') : t('profile.save')}

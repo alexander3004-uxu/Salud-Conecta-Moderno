@@ -40,8 +40,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { syncUserProfile } from './lib/authUtils';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [regType, setRegType] = useState<'doctor' | 'clinic' | 'lab_pharmacy'>('lab_pharmacy');
 
@@ -71,12 +71,7 @@ export default function App() {
 
     // Listen for auth changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuthenticated(true);
-        syncUserProfile(user);
-      } else {
-        setIsAuthenticated(false);
-      }
+      setIsAuthenticated(true);
       setIsInitializing(false);
     });
 

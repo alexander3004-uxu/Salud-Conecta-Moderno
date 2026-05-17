@@ -175,7 +175,7 @@ export default function Membership() {
               onClick={() => setSelectedPlan(tier)}
               className={`w-full py-4 rounded-2xl font-display font-black text-sm uppercase tracking-widest transition-all ${
               tier.highlighted 
-                ? 'bg-primary text-on-primary-fixed-variant shadow-lg shadow-primary/20 hover:brightness-110 active:scale-[0.98]' 
+                ? 'bg-primary text-on-primary shadow-lg shadow-primary/20 hover:brightness-110 active:scale-[0.98]' 
                 : 'border-2 border-outline-variant/30 text-on-surface hover:bg-surface-container-high'
             }`}>
               {tier.buttonText}
