@@ -140,19 +140,18 @@ export const getClinicTypeDetails = (type: string): TypeDetails =>
 
 /** Lista ordenada de todos los filtros con sus etiquetas */
 export const FILTER_OPTIONS: { value: FilterType; label: string; labelShort: string }[] = [
-  { value: 'all',             label: 'Todos',            labelShort: 'Todos'    },
+  { value: 'all',               label: 'Todos',           labelShort: 'Todos'      },
   { value: 'hospital-national', label: 'Hospital Nacional', labelShort: 'H. Nacional' },
-  { value: 'emergency',       label: 'Emergencia',       labelShort: 'Emergencia' },
-  { value: 'health-center',   label: 'Centro de Salud',  labelShort: 'C. Salud' },
-  { value: 'pharmacy',        label: 'Farmacia',         labelShort: 'Farmacia' },
-  { value: 'clinic',          label: 'Clínica',          labelShort: 'Clínica'  },
-  { value: 'laboratory',      label: 'Laboratorio',      labelShort: 'Lab.'     },
+  { value: 'emergency',         label: 'Emergencia',      labelShort: 'Emergencia' },
+  { value: 'health-center',     label: 'Centro de Salud', labelShort: 'C. Salud'   },
+  { value: 'pharmacy',          label: 'Farmacia',        labelShort: 'Farmacia'   },
+  { value: 'clinic',            label: 'Clínica',         labelShort: 'Clínica'    },
+  { value: 'laboratory',        label: 'Laboratorio',     labelShort: 'Lab.'       },
   { value: 'hospital-regional', label: 'Hospital Regional', labelShort: 'H. Regional' },
   { value: 'hospital-primary',  label: 'Hospital Primario', labelShort: 'H. Primario' },
-  { value: 'hospital',        label: 'Hospital',         labelShort: 'Hospital' },
-  { value: 'health-post',     label: 'Puesto de Salud',  labelShort: 'Puesto'   },
-  { value: 'dental',          label: 'Clínica Dental',   labelShort: 'Dental'   },
-  { value: 'mental-health',   label: 'Salud Mental',     labelShort: 'S. Mental'},
+  { value: 'health-post',       label: 'Puesto de Salud', labelShort: 'Puesto'     },
+  { value: 'dental',            label: 'Clínica Dental',  labelShort: 'Dental'     },
+  { value: 'mental-health',     label: 'Salud Mental',    labelShort: 'S. Mental'  },
 ];
 
 /** Todos los search terms agrupados para una sola búsqueda en Places */
