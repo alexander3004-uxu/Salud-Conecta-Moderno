@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { APIProvider, Map as GoogleMap, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   MapPin, Phone, Navigation, Search, Clock,
   Target, Plus, Minus, X, ShieldAlert, ChevronRight,
-  RefreshCw, Loader2, Menu, Flag, Globe2
+  Loader2, Flag, Star, Globe2, Accessibility
 } from 'lucide-react';
 import { Clinic } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUser } from '../../contexts/UserContext';
 import { GOOGLE_MAPS_KEY } from "../../lib/config";
+import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
 import { getClinicTypeDetails, FILTER_OPTIONS, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
 import { getReportSummaries, getConfidenceBadge, ReportSummary } from '../../services/facilityReportService';
 import { ReportModal } from './ReportModal';
@@ -345,8 +346,17 @@ export default function HealthMap() {
     setPlacesLib(placesLibrary || null);
   }, [placesLibrary]);
 
-  // ── Local fallback search (works without Google API key) ──────────────────
-  // Searches the already-discovered clinics by name instantly as user types
+  // ── Seed static data so local search always works (even without API key) ────
+  useEffect(() => {
+    const seedClinics: (Clinic & { isOpen?: boolean })[] = NICARAGUA_HOSPITALS.map((h, i) => ({
+      ...h,
+      id: `seed-${i}-${h.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+      isOpen: h.open24h ?? true,
+    }));
+    setClinics(seedClinics);
+  }, []);
+
+  // ── Local fallback search: always works regardless of API key ────────────
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
       setLocalSuggestions([]);
@@ -354,8 +364,8 @@ export default function HealthMap() {
     }
     const q = normalizeString(searchQuery);
     const matches = clinics
-      .filter(c => normalizeString(c.name).includes(q) || normalizeString(c.address).includes(q))
-      .slice(0, 6);
+      .filter(c => normalizeString(c.name).includes(q) || normalizeString(c.address || '').includes(q))
+      .slice(0, 8);
     setLocalSuggestions(matches);
   }, [searchQuery, clinics]);
 
@@ -762,19 +772,19 @@ export default function HealthMap() {
           )}
         </AnimatePresence>
 
-        {/* ── Google Maps-Style Search Bar ────────────────────────────────── */}
-        <div className="absolute top-4 left-4 right-4 z-40 flex flex-col gap-2">
+        {/* ── Google Maps-Style Search: Left compact panel ─────────────────── */}
+        <div className="absolute top-3 left-3 z-40 flex flex-col gap-2" style={{ width: 'min(360px, calc(100vw - 1.5rem))' }}>
 
-          {/* Main search bar */}
+          {/* Main search bar — white, Google-style */}
           <div className="relative">
-            <div className={`flex items-center bg-surface/97 backdrop-blur-xl rounded-2xl shadow-2xl border transition-all duration-200 overflow-visible ${
-              searchFocused ? 'border-primary/50 shadow-primary/20' : 'border-outline-variant/20'
-            }`}>
+            <div className={`flex items-center bg-white rounded-3xl shadow-xl border transition-all duration-200 ${
+              searchFocused ? 'border-blue-400' : 'border-gray-200'
+            }`} style={{ height: '46px' }}>
               {/* Search icon */}
               <div className="pl-4 pr-3 shrink-0">
                 {autocompleteLoading
-                  ? <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                  : <Search className="w-5 h-5 text-on-surface-variant" />
+                  ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                  : <Search className="w-4 h-4 text-gray-500" />
                 }
               </div>
 
@@ -785,35 +795,31 @@ export default function HealthMap() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-                placeholder="Buscar en el mapa..."
-                className="flex-1 py-3.5 bg-transparent text-sm font-medium text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
+                placeholder="Buscar en Google Maps"
+                className="flex-1 bg-transparent text-[14px] text-gray-800 placeholder:text-gray-400 focus:outline-none font-normal"
               />
 
-              {/* Clear button */}
               {searchQuery && (
                 <button
-                  onClick={() => { setSearchQuery(''); setSuggestions([]); searchInputRef.current?.focus(); }}
-                  className="p-2 mr-1 text-on-surface-variant hover:text-on-surface rounded-full hover:bg-surface-container transition-all"
+                  onClick={() => { setSearchQuery(''); setSuggestions([]); setLocalSuggestions([]); searchInputRef.current?.focus(); }}
+                  className="p-1.5 mr-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
 
               {/* Divider */}
-              <div className="w-px h-6 bg-outline-variant/30 shrink-0" />
+              <div className="w-px h-5 bg-gray-200 shrink-0" />
 
-              {/* Directions button (Google Maps style) */}
+              {/* Directions button — Google Maps blue hexagon style */}
               <button
                 onClick={() => { if (selectedClinic) setIsNavigating(true); }}
                 title="Cómo llegar"
-                className={`px-4 py-3.5 shrink-0 transition-colors ${
-                  selectedClinic
-                    ? 'text-primary hover:text-primary/80'
-                    : 'text-on-surface-variant/50 cursor-default'
-                }`}
+                className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0 transition-all"
+                style={{ background: selectedClinic ? '#1a73e8' : '#e8f0fe' }}
               >
-                <Navigation className="w-5 h-5" />
+                <Navigation className="w-4 h-4" style={{ color: selectedClinic ? 'white' : '#1a73e8' }} />
               </button>
             </div>
 
@@ -825,7 +831,8 @@ export default function HealthMap() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full mt-2 left-0 right-0 bg-surface/98 backdrop-blur-xl rounded-2xl shadow-2xl border border-outline-variant/20 overflow-hidden z-50"
+              className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50"
+              style={{ maxHeight: '65vh', overflowY: 'auto' }}
                 >
                   {/* \u2500 Local results from already-discovered clinics (always works) \u2500 */}
                   {localSuggestions.length > 0 && (
@@ -964,31 +971,29 @@ export default function HealthMap() {
           </div>
 
 
-          {/* ── Category filter chips row ────────────────────────────────── */}
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5" style={{ scrollbarWidth: 'none' }}>
+          {/* ── Category chips — Google Maps style white pills ─── */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none' }}>
             {FILTER_OPTIONS.map(({ value, label, labelShort }) => {
               const details = value !== 'all' ? getClinicTypeDetails(value) : null;
-              const count = value === 'all'
-                ? clinics.length
-                : clinics.filter(c => value === 'hospital' ? c.type.startsWith('hospital') : c.type === value).length;
+              const isActive = filter === value;
               return (
                 <button
                   key={value}
                   onClick={() => setFilter(value)}
                   title={label}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all shrink-0 shadow-sm backdrop-blur-sm ${
-                    filter === value
-                      ? 'bg-primary text-on-primary shadow-primary/30'
-                      : 'bg-surface/90 text-on-surface-variant hover:bg-surface-container-high border border-outline-variant/20'
-                  }`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-all shrink-0"
+                  style={{
+                    background: isActive ? '#1a73e8' : 'white',
+                    color: isActive ? 'white' : '#444',
+                    border: isActive ? 'none' : '1px solid #dadce0',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                  }}
                 >
-                  {details && React.createElement(details.icon, { className: 'w-3 h-3' })}
+                  {details && React.createElement(details.icon, {
+                    className: 'w-3 h-3',
+                    style: { color: isActive ? 'white' : details.markerColors.bg }
+                  })}
                   <span>{labelShort}</span>
-                  {count > 0 && (
-                    <span className={`ml-0.5 px-1.5 rounded-full text-[9px] font-black ${
-                      filter === value ? 'bg-on-primary/20 text-on-primary' : 'bg-surface-container text-on-surface-variant'
-                    }`}>{count}</span>
-                  )}
                 </button>
               );
             })}
