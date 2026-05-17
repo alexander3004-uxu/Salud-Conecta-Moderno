@@ -87,12 +87,14 @@ function MapContent({
   clinics, 
   userLocation, 
   onClinicSelect,
-  onMapReady
+  onMapReady,
+  reportSummaries,
 }: { 
   clinics: (Clinic & { isOpen?: boolean })[]; 
   userLocation: { lat: number; lng: number };
   onClinicSelect: (c: Clinic & { isOpen?: boolean }) => void;
   onMapReady: (map: google.maps.Map) => void;
+  reportSummaries: Map<string, ReportSummary>;
 }) {
   const map = useMap();
   
@@ -103,7 +105,12 @@ function MapContent({
   return (
     <>
       {clinics.map(clinic => (
-        <ClinicMarker key={clinic.id} clinic={clinic} onClick={onClinicSelect} />
+        <ClinicMarker
+          key={clinic.id}
+          clinic={clinic}
+          confidence={getConfidenceBadge(reportSummaries.get(clinic.id))}
+          onClick={onClinicSelect}
+        />
       ))}
       <UserLocationMarker position={userLocation} />
     </>
