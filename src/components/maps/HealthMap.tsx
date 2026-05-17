@@ -1,48 +1,69 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { APIProvider, Map, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
-  MapPin, Phone, Pill, Activity, Navigation, Search, Clock, CheckCircle2, 
-  Route, Target, Plus, Minus, X, ShieldAlert, Stethoscope, ChevronRight, 
-  Hospital, RefreshCw, Loader2, Menu
+  MapPin, Phone, Navigation, Search, Clock,
+  Target, Plus, Minus, X, ShieldAlert, ChevronRight,
+  RefreshCw, Loader2, Menu, Flag
 } from 'lucide-react';
 import { Clinic } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUser } from '../../contexts/UserContext';
 import { GOOGLE_MAPS_KEY } from "../../lib/config";
 import { getClinics } from '../../services/clinicService';
+import { getMinsaReferenceNames, getMinsaMetadata } from '../../services/clinicService';
 import { syncClinicToFirestore } from '../../services/triageService';
-import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
-import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
 import { getClinicTypeDetails, FILTER_OPTIONS, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
+import { getReportSummaries, getConfidenceBadge, ReportSummary } from '../../services/facilityReportService';
+import { ReportModal } from './ReportModal';
 
 const API_KEY = GOOGLE_MAPS_KEY;
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 const NICARAGUA_CENTER = { lat: 12.1328, lng: -86.2504 };
 
-const ClinicMarker: React.FC<{ clinic: Clinic & { isOpen?: boolean }, onClick: (c: Clinic & { isOpen?: boolean }) => void }> = ({ clinic, onClick }) => {
+const CONFIDENCE_BADGE_STYLE: Record<string, { border: string; dot?: string }> = {
+  verified:    { border: '#10B981', dot: '#10B981' },
+  unconfirmed: { border: 'transparent' },
+  warned:      { border: '#F59E0B', dot: '#F59E0B' },
+  flagged:     { border: '#EF4444', dot: '#EF4444' },
+};
+
+const ClinicMarker: React.FC<{
+  clinic: Clinic & { isOpen?: boolean };
+  confidence: ReturnType<typeof getConfidenceBadge>;
+  onClick: (c: Clinic & { isOpen?: boolean }) => void;
+}> = ({ clinic, confidence, onClick }) => {
   const isOpen = clinic.isOpen !== undefined ? clinic.isOpen : clinic.open24h;
   const details = getClinicTypeDetails(clinic.type);
   const color = details.markerColors;
   const Icon = details.icon;
+  const badge = CONFIDENCE_BADGE_STYLE[confidence];
+  const isFlagged = confidence === 'flagged';
 
   return (
     <AdvancedMarker position={clinic.location} onClick={() => onClick(clinic)}>
       <div className="relative flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform">
         <div style={{
           width: '40px', height: '40px',
-          background: isOpen ? color.bg : '#404753',
-          border: `3px solid ${color.border}`,
+          background: isOpen && !isFlagged ? color.bg : '#6B7280',
+          border: `3px solid ${badge.border || color.border}`,
           borderRadius: '12px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          opacity: !isOpen ? 0.6 : 1
+          boxShadow: confidence === 'warned' ? '0 0 0 2px rgba(245,158,11,0.3)' : '0 4px 12px rgba(0,0,0,0.3)',
+          opacity: isFlagged ? 0.5 : !isOpen ? 0.65 : 1,
         }}>
           <Icon className="w-4 h-4 text-white" />
         </div>
-        <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `8px solid ${isOpen ? color.bg : '#404753'}`, marginTop: '-1px' }} />
-        {isOpen && <div style={{ width: '8px', height: '8px', background: color.bg, borderRadius: '50%', position: 'absolute', bottom: '14px', right: '-2px', border: '1.5px solid white' }} />}
+        <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `8px solid ${isOpen && !isFlagged ? color.bg : '#6B7280'}`, marginTop: '-1px' }} />
+        {badge.dot && (
+          <div style={{ width: '9px', height: '9px', background: badge.dot, borderRadius: '50%', position: 'absolute', bottom: '14px', right: '-3px', border: '1.5px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+        )}
+        {isFlagged && (
+          <div style={{ position: 'absolute', top: '-6px', right: '-6px', width: '14px', height: '14px', background: '#EF4444', borderRadius: '50%', border: '1.5px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '8px', color: 'white', fontWeight: 'bold' }}>!</span>
+          </div>
+        )}
       </div>
     </AdvancedMarker>
   );
@@ -112,6 +133,8 @@ export default function HealthMap() {
   const [loading, setLoading] = useState(true);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [selectedClinic, setSelectedClinic] = useState<(Clinic & { isOpen?: boolean }) | null>(null);
+  const [selectedForReport, setSelectedForReport] = useState<(Clinic & { isOpen?: boolean }) | null>(null);
+  const [reportSummaries, setReportSummaries] = useState<Map<string, ReportSummary>>(new Map());
   const [center, setCenter] = useState(NICARAGUA_CENTER);
   const [userLocation, setUserLocation] = useState(NICARAGUA_CENTER);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -158,16 +181,23 @@ export default function HealthMap() {
     const loadClinics = async () => {
       setLoading(true);
       try {
-        // Carga las clínicas verificadas y cacheadas desde Firestore
+        // Google Places is the primary source — Firestore only has enriched/cached results
         const dbClinics = await getClinics();
         setClinics(dbClinics);
-      } catch (error) { //
-        console.error('Error loading clinics:', error); //
-      } finally { //
-        setLoading(false); //
-      } //
-    }; //
-    loadClinics(); //
+
+        // Load confidence badges from report summaries
+        if (dbClinics.length > 0) {
+          const ids = dbClinics.map(c => c.id);
+          const summaries = await getReportSummaries(ids);
+          setReportSummaries(summaries);
+        }
+      } catch (error) {
+        console.error('Error loading clinics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadClinics();
   }, []);
 
   const searchPlacesInArea = useCallback(async (map: google.maps.Map) => {
@@ -180,11 +210,8 @@ export default function HealthMap() {
 
       const searchTerms = ALL_SEARCH_TERMS;
 
-      // Creamos un set de nombres normalizados de nuestra red pública (MINSA) para búsqueda rápida
-      // Estos datos se usan SOLO para identificar si un lugar de Google es 'público'.
-      const minsaReferenceNames = [...PUBLIC_HEALTH_NETWORK, ...NICARAGUA_HOSPITALS]
-        .filter(c => c.sector === 'public')
-        .map(c => normalizeString(c.name));
+      // MINSA names are used ONLY to tag public sector — NOT as location source
+      const minsaReferenceNames = getMinsaReferenceNames();
 
       // Mapeamos las clínicas existentes por su ID de Google Place o nombre normalizado
       const existingClinicsMap = new Map<string, Clinic>();
@@ -239,55 +266,31 @@ export default function HealthMap() {
                 placeName.includes(minsaName) || minsaName.includes(placeName)
               );
 
-              if (clinicToProcess) {
-                // Si ya existe, actualizamos sus datos con la información de Google
-                const updatedClinic = {
-                  ...clinicToProcess,
-                  location: {
-                    lat: place.geometry.location.lat(),
-                    lng: place.geometry.location.lng(),
-                  },
-                  sector: isPublicMinsa ? 'public' : clinicToProcess.sector, // Priorizamos MINSA para el sector
-                  address: place.formatted_address || clinicToProcess.address,
-                  phone: place.formatted_phone_number || clinicToProcess.phone,
-                  rating: place.rating || clinicToProcess.rating,
-                  reviews: place.user_ratings_total || clinicToProcess.reviews,
-                };
-                newOrUpdatedClinics.push(updatedClinic);
-                
-                // Si es un centro MINSA, lo sincronizamos con Firestore para actualizar su ubicación/datos
-                if (isPublicMinsa && (
-                    updatedClinic.location.lat !== clinicToProcess.location.lat ||
-                    updatedClinic.location.lng !== clinicToProcess.location.lng ||
-                    updatedClinic.sector !== clinicToProcess.sector // Sincronizar si el sector cambió
-                )) {
-                  syncClinicToFirestore(updatedClinic);
-                }
-              } else {
-                // Si es un centro completamente nuevo de Google Places
-                const newClinic: Clinic = {
-                  id: googleId,
-                  name: place.name || 'Sin nombre',
-                  type: type as Clinic['type'],
-                  sector: isPublicMinsa ? 'public' : 'private',
-                  location: {
-                    lat: place.geometry.location.lat(),
-                    lng: place.geometry.location.lng(),
-                  },
-                  address: place.formatted_address || '',
-                  phone: place.formatted_phone_number || '',
-                  open24h: type === 'hospital' || type === 'emergency',
-                  isOpen: true,
-                  rating: place.rating,
-                  reviews: place.user_ratings_total,
-                };
-                newOrUpdatedClinics.push(newClinic);
+              // Google Places is ALWAYS the authoritative source for location.
+              // MINSA metadata (phone, services) enriches but never overrides Google coordinates.
+              const minsaMeta = isPublicMinsa ? getMinsaMetadata(place.name || '') : null;
 
-                // Si es un centro MINSA, lo guardamos en Firestore
-                if (isPublicMinsa) {
-                  syncClinicToFirestore(newClinic);
-                }
-              }
+              const clinicData: Clinic = {
+                id: googleId,
+                name: place.name || 'Sin nombre',
+                type: (clinicToProcess?.type ?? type) as Clinic['type'],
+                sector: isPublicMinsa ? 'public' : (clinicToProcess?.sector ?? 'private'),
+                location: {
+                  lat: place.geometry.location.lat(),
+                  lng: place.geometry.location.lng(),
+                },
+                address: place.formatted_address || clinicToProcess?.address || '',
+                phone: place.formatted_phone_number || minsaMeta?.phone || clinicToProcess?.phone || '',
+                open24h: clinicToProcess?.open24h ?? minsaMeta?.open24h ?? (type === 'hospital' || type === 'emergency'),
+                isOpen: true,
+                rating: place.rating ?? clinicToProcess?.rating,
+                reviews: place.user_ratings_total ?? clinicToProcess?.reviews,
+                description: minsaMeta?.description || clinicToProcess?.description,
+                services: minsaMeta?.services || clinicToProcess?.services,
+              };
+
+              newOrUpdatedClinics.push(clinicData);
+              if (isPublicMinsa) syncClinicToFirestore(clinicData);
               processedGooglePlaceIds.add(place.place_id); // Marcar como procesado
             }
           }
@@ -392,6 +395,7 @@ export default function HealthMap() {
               userLocation={userLocation}
               onClinicSelect={handleClinicSelect}
               onMapReady={setMapInstance}
+              reportSummaries={reportSummaries}
             />
           </Map>
         </section>
@@ -528,7 +532,21 @@ export default function HealthMap() {
             <div className={`p-4 border-b ${selectedClinic.type === 'emergency' ? 'bg-error/10' : 'bg-primary/10'}`}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold text-on-surface-variant uppercase">{getClinicTypeDetails(selectedClinic.type).label}</span>
-                {selectedClinic.sector === 'public' && <span className="text-[9px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">PÚBLICO</span>}
+                <div className="flex items-center gap-2">
+                  {selectedClinic.sector === 'public' && <span className="text-[9px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">PÚBLICO</span>}
+                  {(() => {
+                    const badge = getConfidenceBadge(reportSummaries.get(selectedClinic.id));
+                    const badgeConfig = {
+                      verified:    { label: '✅ Verificado', cls: 'bg-emerald-500/10 text-emerald-600' },
+                      warned:      { label: '⚠️ En revisión', cls: 'bg-amber-500/10 text-amber-600' },
+                      flagged:     { label: '🚩 Reportado', cls: 'bg-red-500/10 text-red-600' },
+                      unconfirmed: null,
+                    }[badge];
+                    return badgeConfig ? (
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${badgeConfig.cls}`}>{badgeConfig.label}</span>
+                    ) : null;
+                  })()}
+                </div>
               </div>
               <h3 className="text-base font-black text-on-surface">{selectedClinic.name}</h3>
               <p className="text-xs text-on-surface-variant">{selectedClinic.address}</p>
@@ -554,12 +572,27 @@ export default function HealthMap() {
                 className="flex-1 py-3 bg-primary text-on-primary font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
                 <Navigation className="w-4 h-4" /> Cómo Llegar
               </button>
+              <button
+                onClick={() => setSelectedForReport(selectedClinic)}
+                className="px-4 py-3 bg-amber-500/10 text-amber-600 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
+                title="Reportar un problema con este sitio"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                Reportar
+              </button>
               <button onClick={() => setSelectedClinic(null)}
                 className="px-4 py-3 bg-surface-container text-on-surface font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-surface-container-high">
-                Cerrar
+                <X className="w-4 h-4" />
               </button>
             </div>
           </motion.div>
+        )}
+
+        {selectedForReport && (
+          <ReportModal
+            facility={selectedForReport}
+            onClose={() => setSelectedForReport(null)}
+          />
         )}
 
         <MapControls onCenter={handleCenterToUser} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
