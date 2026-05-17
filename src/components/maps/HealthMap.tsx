@@ -328,7 +328,7 @@ export default function HealthMap() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [isAutoCentered, setIsAutoCentered] = useState(false);
-  const [placesLib, setPlacesLib] = useState<google.maps.places.PlacesLibrary | null>(null);
+  const [placesLib, setPlacesLib] = useState<any>(null);
 
   const placesLibrary = useMapsLibrary('places');
 
