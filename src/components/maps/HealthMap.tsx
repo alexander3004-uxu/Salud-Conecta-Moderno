@@ -1190,21 +1190,22 @@ export default function HealthMap() {
         {selectedClinic && !isNavigating && (
           <motion.div
             key={selectedClinic.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-0 left-0 bottom-0 z-45 flex"
+            initial={{ opacity: 0, y: 100, x: 0 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, y: 100, x: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="fixed lg:absolute bottom-0 lg:top-0 lg:left-0 lg:bottom-0 left-0 right-0 lg:right-auto z-45 flex flex-col lg:flex-row h-[60vh] lg:h-full w-full lg:w-auto"
             style={{ zIndex: 45 }}
           >
-            {/* --- Narrow left strip (like Google Maps sidebar) --- */}
-            <div className="w-10 shrink-0" />
+            {/* --- Narrow left strip (like Google Maps sidebar) --- hidden on mobile */}
+            <div className="hidden lg:block w-10 shrink-0" />
 
-            {/* --- Main detail panel (Google Maps left panel) --- */}
+            {/* --- Main detail panel (Google Maps left/bottom sheet) --- */}
             <div
-              className="flex flex-col bg-white shadow-2xl overflow-hidden"
-              style={{ width: 'min(360px, calc(100vw - 2.5rem))', maxHeight: '100dvh', overflowY: 'auto' }}
+              className="flex flex-col bg-white shadow-[0_-8px_30px_rgb(0,0,0,0.12)] lg:shadow-2xl overflow-y-auto w-full lg:w-[360px] h-full rounded-t-[32px] lg:rounded-t-none lg:rounded-none relative"
             >
+              {/* Mobile drag handle indicator */}
+              <div className="lg:hidden w-12 h-1 bg-gray-300 rounded-full mx-auto my-3 shrink-0" />
               {/* --- Photo --- */}
               {selectedClinic.photos && selectedClinic.photos.length > 0 ? (
                 <div className="relative shrink-0" style={{ height: '200px' }}>
@@ -1264,32 +1265,32 @@ export default function HealthMap() {
                   </div>
                 ) : null}
 
-                {/* Type badge + wheelchair --- like "Hospital â€¢ \u267F" */}
+                {/* Type badge + wheelchair --- like "Hospital • ♿" */}
                 <div className="flex items-center gap-1.5 mt-1.5 text-[13px] text-gray-600">
                   <span>{getClinicTypeDetails(selectedClinic.type).label}</span>
                   {selectedClinic.wheelchairAccessible && (
                     <>
-                      <span className="text-gray-400">\u00B7</span>
-                      <span>\u267F</span>
+                      <span className="text-gray-400">·</span>
+                      <span>♿</span>
                     </>
                   )}
                   {selectedClinic.sector === 'public' && (
                     <>
-                      <span className="text-gray-400">\u00B7</span>
-                      <span className="text-blue-600 font-medium">P\u00FAblico</span>
+                      <span className="text-gray-400">·</span>
+                      <span className="text-blue-600 font-medium">Público</span>
                     </>
                   )}
                   {/* Confidence badge */}
                   {(() => {
                     const badge = getConfidenceBadge(reportSummaries.get(selectedClinic.id));
                     const map: Record<string, string> = {
-                      verified: '\u2705 Verificado',
-                      warned: 'âš ï¸ En revisi\u00F3n',
-                      flagged: '\u1F6A9 Reportado',
+                      verified: '✅ Verificado',
+                      warned: '⚠️ En revisión',
+                      flagged: '🚩 Reportado',
                     };
                     return map[badge] ? (
                       <>
-                        <span className="text-gray-400">\u00B7</span>
+                        <span className="text-gray-400">·</span>
                         <span className="text-[12px] text-gray-500">{map[badge]}</span>
                       </>
                     ) : null;
