@@ -37,6 +37,10 @@ export default function Search({ onOpenRegistration }: SearchProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [locationQuery, setLocationQuery] = React.useState('');
   const [selectedItem, setSelectedItem] = React.useState<any | null>(null);
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  const [likedItems, setLikedItems] = React.useState<Record<string, boolean>>({});
+
+
 
   React.useEffect(() => {
     const handleCategory = (e: any) => {
@@ -156,6 +160,26 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       location: { lat: 11.929, lng: -85.953 }
     }
   ];
+
+  const topFeaturedItems = React.useMemo(() => {
+    return [...allItems].sort((a, b) => b.rating - a.rating).slice(0, 6);
+  }, [allItems]);
+
+  React.useEffect(() => {
+    if (topFeaturedItems.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % topFeaturedItems.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [topFeaturedItems.length]);
+
+  const toggleLike = (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLikedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
 
   const filteredItems = (() => {
     let items = activeCategory 
@@ -428,77 +452,136 @@ export default function Search({ onOpenRegistration }: SearchProps) {
           </section>
         </div>
 
-        {/* Right column: Map */}
-        <aside className="w-full lg:w-[400px] shrink-0 h-[400px] lg:h-[calc(100vh-140px)] lg:sticky lg:top-[100px] rounded-[32px] overflow-hidden border border-outline-variant bg-surface-container relative group shadow-2xl">
-          <div className="absolute inset-0 bg-surface-container-lowest">
-            <img 
-              src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=1000" 
-              alt="Map View" 
-              className="w-full h-full object-cover opacity-20 contrast-[1.2] grayscale mix-blend-luminosity scale-110 group-hover:scale-100 transition-transform duration-[10s]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent opacity-90" />
-            
-            {/* Simulated Pin */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="relative">
-                <div className="absolute -inset-4 bg-primary/20 rounded-full animate-ping" />
-                <div className="relative w-10 h-10 bg-primary rounded-full flex items-center justify-center text-on-primary shadow-2xl border-2 border-surface">
-                  <MapPin className="w-5 h-5" />
+        {/* Right column: Dynamic & Premium Image Carousel */}
+        <aside className="w-full lg:w-[400px] shrink-0 h-[500px] lg:h-[calc(100vh-140px)] lg:sticky lg:top-[100px] rounded-[32px] overflow-hidden border border-outline-variant/30 bg-surface-container relative shadow-2xl flex flex-col group/aside">
+          {topFeaturedItems.length > 0 && (
+            <div className="absolute inset-0 z-0">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.8 }}
+                  className="absolute inset-0"
+                >
+                  <img 
+                    src={topFeaturedItems[currentSlide].image} 
+                    alt={topFeaturedItems[currentSlide].name}
+                    className="w-full h-full object-cover select-none"
+                  />
+                  {/* Glassmorphic and dark overlays for readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/25" />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Carousel UI Elements */}
+          {topFeaturedItems.length > 0 && (
+            <div className="relative z-10 p-6 flex flex-col h-full justify-between text-white">
+              {/* Header inside carousel: Badge and Heart Button */}
+              <div className="flex justify-between items-center w-full">
+                <span className="bg-primary/95 text-on-primary backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 fill-on-primary text-on-primary animate-pulse" />
+                  Destacados Red
+                </span>
+                
+                <button 
+                  onClick={(e) => toggleLike(topFeaturedItems[currentSlide].id, e)}
+                  className={`p-3.5 rounded-full border transition-all shadow-xl active:scale-90 ${
+                    likedItems[topFeaturedItems[currentSlide].id] 
+                      ? 'bg-red-500 border-red-500 text-white scale-110' 
+                      : 'bg-black/35 backdrop-blur-md border-white/20 text-white hover:bg-black/55'
+                  }`}
+                  title="Guardar en favoritos"
+                >
+                  <Heart className={`w-5 h-5 ${likedItems[topFeaturedItems[currentSlide].id] ? 'fill-white' : ''}`} />
+                </button>
+              </div>
+
+              {/* Bottom Card details inside carousel */}
+              <div className="space-y-5">
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    key={currentSlide}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl"
+                  >
+                    <div>
+                      {/* Rating star/heart indicators */}
+                      <div className="flex justify-between items-center gap-4 mb-2">
+                        <span className="flex items-center text-amber-300 gap-1.5 text-xs font-black bg-amber-400/10 border border-amber-300/20 px-2.5 py-1 rounded-md">
+                          ★ {topFeaturedItems[currentSlide].rating.toFixed(1)}
+                        </span>
+                        
+                        <span className="text-[10px] font-bold text-red-300 flex items-center gap-1">
+                          <Heart className="w-3.5 h-3.5 fill-red-400 text-red-400" />
+                          {Math.round((topFeaturedItems[currentSlide].rating * 14) + (likedItems[topFeaturedItems[currentSlide].id] ? 1 : 0))} Recomendaciones
+                        </span>
+                      </div>
+
+                      <h3 className="font-display font-black text-xl leading-tight text-white mb-1.5 drop-shadow">
+                        {topFeaturedItems[currentSlide].name}
+                      </h3>
+                      
+                      <p className="text-white/80 text-xs font-medium line-clamp-2">
+                        {topFeaturedItems[currentSlide].description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[10px] font-semibold text-white/70">
+                      <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="truncate">{topFeaturedItems[currentSlide].address || 'Ubicación General'}</span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          const hasCoordinates = !!topFeaturedItems[currentSlide].location;
+                          const url = hasCoordinates
+                            ? `https://www.google.com/maps/search/?api=1&query=${topFeaturedItems[currentSlide].location.lat},${topFeaturedItems[currentSlide].location.lng}`
+                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(topFeaturedItems[currentSlide].name + ', ' + topFeaturedItems[currentSlide].address)}`;
+                          window.open(url, '_blank');
+                        }}
+                        className="flex-1 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Mapa
+                      </button>
+
+                      <button 
+                        onClick={() => setSelectedItem(topFeaturedItems[currentSlide])}
+                        className="flex-1 py-3 bg-primary text-on-primary hover:brightness-110 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5"
+                      >
+                        Detalles
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Indicators dots */}
+                <div className="flex justify-center gap-2 pt-2">
+                  {topFeaturedItems.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage && setCurrentSlide(idx)}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        idx === currentSlide 
+                          ? 'w-6 bg-primary' 
+                          : 'w-2 bg-white/40 hover:bg-white/70'
+                      }`}
+                      title={`Ver slide ${idx + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="relative z-10 p-6 flex flex-col h-full justify-between pointer-events-none">
-            <div className="flex justify-end pointer-events-auto">
-              <button 
-                onClick={() => {
-                  if (featuredItem) {
-                    const hasCoordinates = !!featuredItem.location;
-                    const url = hasCoordinates
-                      ? `https://www.google.com/maps/search/?api=1&query=${featuredItem.location.lat},${featuredItem.location.lng}`
-                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(featuredItem.name + ', ' + featuredItem.address)}`;
-                    window.open(url, '_blank');
-                  }
-                }}
-                className="bg-surface/80 backdrop-blur-xl p-4 rounded-2xl border border-outline-variant/30 text-on-surface-variant hover:text-primary transition-all shadow-xl active:scale-95"
-                title="Cómo llegar"
-              >
-                <Navigation className="w-6 h-6" />
-              </button>
-            </div>
-
-            {featuredItem && (
-              <div className="space-y-4 pointer-events-auto">
-                <motion.div 
-                  key={featuredItem.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-surface/90 backdrop-blur-2xl border border-outline-variant/30 rounded-3xl p-5 shadow-2xl"
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary">
-                      <Hospital className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display font-bold text-base text-on-surface truncate">{featuredItem.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                        <span className="text-[10px] font-mono font-black text-secondary uppercase tracking-widest truncate">{featuredItem.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setSelectedItem(featuredItem)}
-                    className="w-full py-3 bg-primary text-on-primary rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-lg active:scale-95"
-                  >
-                    Ver Detalles
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              </div>
-            )}
-          </div>
+          )}
         </aside>
       </div>
       <AnimatePresence>
