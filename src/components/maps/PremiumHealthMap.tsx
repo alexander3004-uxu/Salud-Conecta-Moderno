@@ -86,9 +86,9 @@ export default function PremiumHealthMap() {
     return matchesFilter && matchesSearch;
   });
 
-  const getGoogleMapsUrl = (facility: Clinic) => {
-    if (!userLocation) return `https://www.google.com/maps/dir/?api=1&destination=${facility.location.lat},${facility.location.lng}&travelmode=driving`;
-    return `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${facility.location.lat},${facility.location.lng}&travelmode=driving`;
+  const getNavigationUrl = (facility: Clinic) => {
+    if (!userLocation) return `https://www.openstreetmap.org/directions?engine=osrm_car&route=${facility.location.lat},${facility.location.lng}`;
+    return `https://www.openstreetmap.org/directions?engine=osrm_car&route=${userLocation.lat},${userLocation.lng};${facility.location.lat},${facility.location.lng}`;
   };
 
   const getTypeLabel = (type: string) => {
@@ -128,7 +128,7 @@ export default function PremiumHealthMap() {
           </div>
           <div className="p-6 space-y-4">
             <div className="space-y-3">
-              {['Hospitales y clínicas privadas', 'Laboratorios especializados', 'Navegación directa con Google Maps', 'Atención prioritaria'].map((feature) => (
+              {['Hospitales y clínicas privadas', 'Laboratorios especializados', 'Navegación en tiempo real', 'Atención prioritaria'].map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
                   <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                     <Star className="w-3 h-3 text-amber-600" />
@@ -291,13 +291,13 @@ export default function PremiumHealthMap() {
                 {/* Actions */}
                 <div className="flex gap-2 mt-3">
                   <a
-                    href={getGoogleMapsUrl(facility)}
+                    href={getNavigationUrl(facility)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 h-9 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-all active:scale-[0.98]"
                   >
                     <Navigation className="w-3.5 h-3.5" />
-                    Ruta en Google Maps
+                    Ruta en Mapa
                   </a>
                   {facility.phone && (
                     <a

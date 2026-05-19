@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { APIProvider, Map as GoogleMap, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   MapPin, Phone, Navigation, Search, Clock,
@@ -9,7 +8,6 @@ import {
 import { Clinic } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUser } from '../../contexts/UserContext';
-import { GOOGLE_MAPS_KEY } from "../../lib/config";
 import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
 import { getClinicTypeDetails, FILTER_OPTIONS, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
@@ -17,8 +15,6 @@ import { getReportSummaries, getConfidenceBadge, ReportSummary } from '../../ser
 import { ReportModal } from './ReportModal';
 import { obtenerTodosLosCentros } from '../../data/granadaDatabase';
 
-const API_KEY = GOOGLE_MAPS_KEY;
-const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 const NICARAGUA_CENTER = { lat: 11.93749, lng: -85.968 }; // Granada, Nicaragua center
 
@@ -31,285 +27,6 @@ const CONFIDENCE_BADGE_STYLE: Record<string, { border: string; dot?: string }> =
   warned:      { border: '#F59E0B', dot: '#F59E0B' },
   flagged:     { border: '#EF4444', dot: '#EF4444' },
 };
-
-class SafeMarkerBoundary extends React.Component<
-  { children: React.ReactNode; fallback: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.warn("SafeMarkerBoundary caught an error (AdvancedMarker vector/cloud failure):", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
-}
-
-// Proactive Google Maps capability checks
-const getGoogleMapsSupport = () => {
-  if (typeof window === 'undefined' || !window.google || !window.google.maps) {
-    return { standard: false, advanced: false };
-  }
-  const hasMarker = typeof window.google.maps.Marker === 'function';
-  // Check if AdvancedMarkerElement is supported in the loaded Maps SDK version
-  const hasAdvancedMarker = typeof (window.google.maps as any).marker?.AdvancedMarkerElement !== 'undefined' ||
-                            typeof (window.google.maps as any).AdvancedMarkerElement !== 'undefined';
-  return { standard: hasMarker, advanced: hasAdvancedMarker };
-};
-
-// Custom lightweight React component wrapping standard google.maps.Marker
-const Marker: React.FC<{
-  position: { lat: number; lng: number };
-  onClick?: () => void;
-  icon?: string;
-  zIndex?: number;
-}> = ({ position, onClick, icon, zIndex }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || typeof window === 'undefined' || !(window as any).google?.maps?.Marker) return;
-    
-    const googleMaps = (window as any).google.maps;
-    const marker = new googleMaps.Marker({
-      position,
-      map,
-      icon,
-      zIndex
-    });
-
-    let clickListener: any;
-    if (onClick) {
-      clickListener = marker.addListener('click', onClick);
-    }
-
-    return () => {
-      if (clickListener) {
-        googleMaps.event.removeListener(clickListener);
-      }
-      marker.setMap(null);
-    };
-  }, [map, position, icon, zIndex, onClick]);
-
-  return null;
-};
-
-const FallbackClinicMarker: React.FC<{
-  clinic: Clinic & { isOpen?: boolean };
-  confidence: ReturnType<typeof getConfidenceBadge>;
-  onClick: (c: Clinic & { isOpen?: boolean }) => void;
-}> = ({ clinic, confidence, onClick }) => {
-  const support = getGoogleMapsSupport();
-  if (!support.standard) {
-    return null; // Gracefully return null if Google Maps API failed to load to prevent app crashes
-  }
-
-  const details = getClinicTypeDetails(clinic.type);
-  const color = details.markerColors;
-  const badgeColor = {
-    verified: '#10B981',
-    unconfirmed: '#6B7280',
-    warned: '#F59E0B',
-    flagged: '#EF4444',
-  }[confidence];
-
-  // Dynamically constructed high-fidelity SVG path for fallback marker icon
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="46" viewBox="0 0 36 46">
-      <path d="M18,0 C8.1,0 0,8.1 0,18 C0,28.8 18,46 18,46 C18,46 36,28.8 36,18 C36,8.1 27.9,0 18,0 Z" fill="${color.border}" />
-      <path d="M18,2.5 C9.4,2.5 2.5,9.4 2.5,18 C2.5,26.6 18,42.5 18,42.5 C18,42.5 33.5,26.6 33.5,18 C33.5,9.4 26.6,2.5 18,2.5 Z" fill="${color.bg}" />
-      <circle cx="18" cy="18" r="9" fill="white" opacity="0.9" />
-      <path d="M14,18 h8 M18,14 v8" stroke="${color.bg}" stroke-width="2.5" stroke-linecap="round" />
-      <circle cx="28" cy="10" r="5" fill="${badgeColor}" stroke="white" stroke-width="1.2" />
-    </svg>
-  `;
-  const iconUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.trim())}`;
-
-  return (
-    <Marker
-      position={clinic.location}
-      onClick={() => onClick(clinic)}
-      icon={iconUrl}
-    />
-  );
-};
-
-const FallbackUserLocationMarker: React.FC<{ position: google.maps.LatLngLiteral }> = ({ position }) => {
-  const support = getGoogleMapsSupport();
-  if (!support.standard) {
-    return null; // Gracefully return null if Google Maps API failed to load to prevent app crashes
-  }
-
-  // Dynamically constructed SVG for user location standard marker
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
-      <circle cx="15" cy="15" r="13" fill="#005fb0" fill-opacity="0.15" />
-      <circle cx="15" cy="15" r="9" fill="#005fb0" fill-opacity="0.3" />
-      <circle cx="15" cy="15" r="6" fill="white" />
-      <circle cx="15" cy="15" r="4.5" fill="#005fb0" />
-    </svg>
-  `;
-  const iconUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.trim())}`;
-
-  return (
-    <Marker
-      position={position}
-      icon={iconUrl}
-      zIndex={100}
-    />
-  );
-};
-
-const ClinicMarker: React.FC<{
-  clinic: Clinic & { isOpen?: boolean };
-  confidence: ReturnType<typeof getConfidenceBadge>;
-  onClick: (c: Clinic & { isOpen?: boolean }) => void;
-}> = ({ clinic, confidence, onClick }) => {
-  const support = getGoogleMapsSupport();
-  
-  // Proactively fallback to standard Marker if AdvancedMarker is not supported (cloud/MapID failure)
-  if (!support.advanced) {
-    return (
-      <FallbackClinicMarker
-        clinic={clinic}
-        confidence={confidence}
-        onClick={onClick}
-      />
-    );
-  }
-
-  const isOpen = clinic.isOpen !== undefined ? clinic.isOpen : clinic.open24h;
-  const details = getClinicTypeDetails(clinic.type);
-  const color = details.markerColors;
-  const Icon = details.icon;
-  const badge = CONFIDENCE_BADGE_STYLE[confidence];
-  const isFlagged = confidence === 'flagged';
-
-  return (
-    <AdvancedMarker position={clinic.location} onClick={() => onClick(clinic)}>
-      <div className="relative flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform">
-        <div style={{
-          width: '40px', height: '40px',
-          background: isOpen && !isFlagged ? color.bg : '#6B7280',
-          border: `3px solid ${badge.border || color.border}`,
-          borderRadius: '12px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: confidence === 'warned' ? '0 0 0 2px rgba(245,158,11,0.3)' : '0 4px 12px rgba(0,0,0,0.3)',
-          opacity: isFlagged ? 0.5 : !isOpen ? 0.65 : 1,
-        }}>
-          <Icon className="w-4 h-4 text-white" />
-        </div>
-        <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `8px solid ${isOpen && !isFlagged ? color.bg : '#6B7280'}`, marginTop: '-1px' }} />
-        {badge.dot && (
-          <div style={{ width: '9px', height: '9px', background: badge.dot, borderRadius: '50%', position: 'absolute', bottom: '14px', right: '-3px', border: '1.5px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
-        )}
-        {isFlagged && (
-          <div style={{ position: 'absolute', top: '-6px', right: '-6px', width: '14px', height: '14px', background: '#EF4444', borderRadius: '50%', border: '1.5px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '8px', color: 'white', fontWeight: 'bold' }}>!</span>
-          </div>
-        )}
-      </div>
-    </AdvancedMarker>
-  );
-};
-
-function UserLocationMarker({ position }: { position: google.maps.LatLngLiteral }) {
-  const support = getGoogleMapsSupport();
-  
-  // Proactively fallback to standard Marker if AdvancedMarker is not supported (cloud/MapID failure)
-  if (!support.advanced) {
-    return <FallbackUserLocationMarker position={position} />;
-  }
-
-  return (
-    <AdvancedMarker position={position} zIndex={100}>
-      <div className="relative flex items-center justify-center">
-        <div className="absolute w-14 h-14 bg-primary/10 rounded-full animate-ping opacity-40" />
-        <div className="absolute w-8 h-8 bg-primary/20 rounded-full animate-ping opacity-60" />
-        <div className="relative w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-lg border-[2.5px] border-primary">
-          <div className="w-2 h-2 bg-primary rounded-full" />
-        </div>
-      </div>
-    </AdvancedMarker>
-  );
-}
-
-function MapContent({ 
-  clinics, 
-  userLocation, 
-  onClinicSelect,
-  onMapReady,
-  reportSummaries,
-}: { 
-  clinics: (Clinic & { isOpen?: boolean })[]; 
-  userLocation: { lat: number; lng: number };
-  onClinicSelect: (c: Clinic & { isOpen?: boolean }) => void;
-  onMapReady: (map: google.maps.Map) => void;
-  reportSummaries: Map<string, ReportSummary>;
-}) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (map) onMapReady(map);
-  }, [map, onMapReady]);
-
-  return (
-    <SafeMarkerBoundary
-      fallback={
-        <>
-          {clinics.map(clinic => (
-            <FallbackClinicMarker
-              key={clinic.id}
-              clinic={clinic}
-              confidence={getConfidenceBadge(reportSummaries.get(clinic.id))}
-              onClick={onClinicSelect}
-            />
-          ))}
-          <FallbackUserLocationMarker position={userLocation} />
-        </>
-      }
-    >
-      {clinics.map(clinic => (
-        <ClinicMarker
-          key={clinic.id}
-          clinic={clinic}
-          confidence={getConfidenceBadge(reportSummaries.get(clinic.id))}
-          onClick={onClinicSelect}
-        />
-      ))}
-      <UserLocationMarker position={userLocation} />
-    </SafeMarkerBoundary>
-  );
-}
-
-function MapControls({ onCenter, onZoomIn, onZoomOut }: { onCenter: () => void; onZoomIn: () => void; onZoomOut: () => void }) {
-  return (
-    <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-30">
-      <button onClick={onCenter} className="w-12 h-12 bg-surface/90 backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center hover:bg-surface-container-high transition-colors" title="Mi ubicaciÃ³n">
-        <Target className="w-5 h-5" />
-      </button>
-      <button onClick={onZoomIn} className="w-12 h-12 bg-surface/90 backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center hover:bg-surface-container-high transition-colors" title="Acercar">
-        <Plus className="w-5 h-5" />
-      </button>
-      <button onClick={onZoomOut} className="w-12 h-12 bg-surface/90 backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center hover:bg-surface-container-high transition-colors" title="Alejar">
-        <Minus className="w-5 h-5" />
-      </button>
-    </div>
-  );
-}
-
-
 
 function LeafletMapContent({
   clinics,
@@ -625,10 +342,8 @@ export default function HealthMap() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [isEmergencyMode, setIsEmergencyMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
-  const [isAutoCentered, setIsAutoCentered] = useState(false);
-  const [placesLib, setPlacesLib] = useState<any>(null);
-
+    const [isAutoCentered, setIsAutoCentered] = useState(false);
+  
   // --- Autocomplete state (Google Maps-style live search) ---------------------------
   const [searchQuery, setSearchQuery] = useState('');
   // Use 'any' to avoid crashes when google.maps.places types are not available (API key restriction)
@@ -651,17 +366,10 @@ export default function HealthMap() {
   const [autocompleteLoading, setAutocompleteLoading] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteSessionRef = useRef<any>(null);
-
-  const placesLibrary = useMapsLibrary('places');
-
+  
+  
   const normalizeString = (str: string) => 
     str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
-  useEffect(() => {
-    setPlacesLib(placesLibrary || null);
-  }, [placesLibrary]);
-
   // --- Seed static data so local search always works (even without API key) ------
   useEffect(() => {
     const seenNames = new Set<string>();
@@ -726,140 +434,6 @@ export default function HealthMap() {
       .slice(0, 8);
     setLocalSuggestions(matches);
   }, [searchQuery, clinics]);
-
-  // --- Google Places Autocomplete: real-time predictions -------------------------------
-  // Only runs when Google Maps API is fully authorized (production / Vercel)
-  useEffect(() => {
-    if (!placesLib || !searchQuery.trim() || searchQuery.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    let cancelled = false;
-    setAutocompleteLoading(true);
-
-    try {
-      const service = new placesLib.AutocompleteService();
-      if (!autocompleteSessionRef.current) {
-        autocompleteSessionRef.current = new placesLib.AutocompleteSessionToken();
-      }
-
-      service.getPlacePredictions(
-        {
-          input: searchQuery,
-          sessionToken: autocompleteSessionRef.current,
-          bounds: mapInstance?.getBounds() ?? undefined,
-          // 'establishment' is the only valid type for PlacesAutocomplete
-          types: ['establishment'],
-        },
-        (predictions: any[] | null) => {
-          if (cancelled) return;
-          setAutocompleteLoading(false);
-          setSuggestions(predictions && predictions.length > 0 ? predictions : []);
-        }
-      );
-    } catch (err) {
-      // Google Maps not loaded or API key blocked --- silently fall back to local search
-      setAutocompleteLoading(false);
-      setSuggestions([]);
-    }
-
-    return () => { cancelled = true; };
-  }, [searchQuery, placesLib, mapInstance]);
-
-  // --- Handle suggestion selection: fetch full details + open panel ------------
-  const handleSuggestionSelect = useCallback((prediction: google.maps.places.AutocompletePrediction) => {
-    if (!placesLib || !mapInstance) return;
-
-    // Clear autocomplete session so next query starts fresh
-    autocompleteSessionRef.current = null;
-    setSearchQuery(prediction.structured_formatting.main_text);
-    setSuggestions([]);
-    setSearchFocused(false);
-    searchInputRef.current?.blur();
-
-    const service = new placesLib.PlacesService(mapInstance);
-    service.getDetails(
-      {
-        placeId: prediction.place_id,
-        fields: [
-          'place_id', 'name', 'geometry', 'formatted_address',
-          'formatted_phone_number', 'rating', 'user_ratings_total',
-          'photos', 'opening_hours', 'website', 'price_level',
-          'wheelchair_accessible_entrance', 'types',
-        ],
-      },
-      (place: google.maps.places.PlaceResult | null, status: string) => {
-        if (!place?.geometry?.location) return;
-
-        // Pan map to place
-        mapInstance.panTo(place.geometry.location);
-        mapInstance.setZoom(17);
-
-        // Resolve photos
-        const photos: string[] = [];
-        place.photos?.slice(0, 3).forEach(ref => {
-          try { photos.push(ref.getUrl({ maxWidth: 800, maxHeight: 600 })); } catch (_) {}
-        });
-
-        // Determine type from Google place types
-        const googleTypes = place.types || [];
-        let detectedType: Clinic['type'] = 'clinic';
-        if (googleTypes.includes('hospital')) detectedType = 'hospital';
-        else if (googleTypes.includes('pharmacy')) detectedType = 'pharmacy';
-        else if (googleTypes.includes('dentist')) detectedType = 'dental';
-        else if (googleTypes.includes('doctor')) detectedType = 'clinic';
-
-        const nameLower = (place.name || '').toLowerCase();
-        if (/hospital nacional/i.test(nameLower)) detectedType = 'hospital-national';
-        else if (/hospital regional/i.test(nameLower)) detectedType = 'hospital-regional';
-        else if (/hospital primario/i.test(nameLower)) detectedType = 'hospital-primary';
-        else if (/emergencia|urgencias/i.test(nameLower)) detectedType = 'emergency';
-        else if (/centro de salud|minsa/i.test(nameLower)) detectedType = 'health-center';
-        else if (/puesto de salud/i.test(nameLower)) detectedType = 'health-post';
-        else if (/laboratorio/i.test(nameLower)) detectedType = 'laboratory';
-        else if (/salud mental|psicolog|psiquiat/i.test(nameLower)) detectedType = 'mental-health';
-
-        const isPublic = /minsa|hospital|centro de salud|puesto de salud|gobierno/i.test(nameLower);
-
-        const clinic: Clinic & { isOpen?: boolean } = {
-          id: `google-${place.place_id}`,
-          placeId: place.place_id,
-          name: place.name || 'Sin nombre',
-          type: detectedType,
-          sector: isPublic ? 'public' : 'private',
-          location: {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-          },
-          address: place.formatted_address || '',
-          phone: place.formatted_phone_number || '',
-          rating: place.rating,
-          reviews: place.user_ratings_total,
-          open24h: detectedType === 'hospital' || detectedType === 'hospital-national' ||
-                   detectedType === 'hospital-regional' || detectedType === 'emergency',
-          isOpen: place.opening_hours?.isOpen?.() ?? true,
-          photos: photos.length > 0 ? photos : undefined,
-          website: (place as any).website,
-          openingHours: place.opening_hours ? {
-            isOpen: place.opening_hours.isOpen?.(),
-            weekdayText: place.opening_hours.weekday_text,
-          } : undefined,
-          wheelchairAccessible: (place as any).wheelchair_accessible_entrance,
-          priceLevel: (place as any).price_level,
-        };
-
-        // Add to clinics list and select it
-        setClinics(prev => {
-          const merged = new Map(prev.map(c => [c.id, c]));
-          merged.set(clinic.id, clinic);
-          return Array.from(merged.values());
-        });
-        setSelectedClinic(clinic);
-
-      }
-    );
-  }, [placesLib, mapInstance]);
-
   // --- Geolocation ---------------------------------------------------------------------------------------
   useEffect(() => {
     if (navigator.geolocation) {
@@ -872,16 +446,6 @@ export default function HealthMap() {
       );
     }
   }, []);
-
-  // --- Auto-center once user location is detected ------------------------------------------
-  useEffect(() => {
-    if (mapInstance && userLocation !== NICARAGUA_CENTER && !isAutoCentered) {
-      mapInstance.panTo(userLocation);
-      mapInstance.setZoom(15);
-      setIsAutoCentered(true);
-    }
-  }, [mapInstance, userLocation, isAutoCentered]);
-
   // --- Load community report badges from Firestore (lightweight) ------------------
   // This is the ONLY Firestore read at startup --- clinics come from Google Places.
   useEffect(() => {
@@ -918,18 +482,15 @@ export default function HealthMap() {
 
         setSelectedClinic(targetClinic);
 
-        if (mapInstance) {
-          mapInstance.panTo(targetClinic.location);
-          mapInstance.setZoom(16);
-        }
+        
 
         // If startNavigation was requested, open Google Maps externally
         if (customEvent.detail.startNavigation && targetClinic.location) {
           navigator.geolocation?.getCurrentPosition((pos) => {
-            const url = `https://www.google.com/maps/dir/?api=1&origin=${pos.coords.latitude},${pos.coords.longitude}&destination=${targetClinic.location.lat},${targetClinic.location.lng}&travelmode=driving`;
+            const url = `https://www.openstreetmap.org/directions?engine=osrm_car&route=${pos.coords.latitude},${pos.coords.longitude};${targetClinic.location.lat},${targetClinic.location.lng}`;
             window.open(url, '_blank');
           }, () => {
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${targetClinic.location.lat},${targetClinic.location.lng}&travelmode=driving`;
+            const url = `https://www.openstreetmap.org/directions?engine=osrm_car&route=${targetClinic.location.lat},${targetClinic.location.lng}`;
             window.open(url, '_blank');
           });
         }
@@ -940,136 +501,7 @@ export default function HealthMap() {
     return () => {
       window.removeEventListener('selectAndNavigateClinic', handleSelectAndNavigate);
     };
-  }, [mapInstance]);
-
-  // --- Google Places \u2192 Clinics (Zero-DB real-time discovery) ------------------------
-  // No static data. No MINSA files. Google Places is the sole truth source.
-  // Each search term maps to a specific Salud Conecta facility type.
-  const lastSearchBoundsRef = useRef<string | null>(null);
-
-  const searchPlacesInArea = useCallback(async (map: google.maps.Map) => {
-    if (!placesLib || !hasValidKey) return;
-
-    // Throttle: skip if bounds haven't changed significantly
-    const bounds = map.getBounds();
-    if (!bounds) return;
-    const boundsKey = [
-      bounds.getNorthEast().lat().toFixed(3),
-      bounds.getNorthEast().lng().toFixed(3),
-      bounds.getSouthWest().lat().toFixed(3),
-      bounds.getSouthWest().lng().toFixed(3),
-    ].join(',');
-    if (boundsKey === lastSearchBoundsRef.current) return;
-    lastSearchBoundsRef.current = boundsKey;
-
-    setLoadingPlaces(true);
-    try {
-      const newClinics: Clinic[] = [];
-      const processedIds = new Set<string>();
-      const service = new placesLib.PlacesService(map);
-
-      // Run all type searches sequentially to avoid overloading the API
-      for (const { term, type } of ALL_SEARCH_TERMS) {
-        try {
-          const request: any = {
-            query: term,
-            bounds,
-            fields: [
-              'place_id', 'name', 'geometry', 'formatted_address',
-              'formatted_phone_number', 'rating', 'user_ratings_total',
-              'photos', 'opening_hours', 'website', 'price_level',
-              'wheelchair_accessible_entrance',
-            ],
-          };
-
-          const results = await new Promise<google.maps.places.PlaceResult[]>((resolve) => {
-            service.textSearch(request, (res, status) => {
-              resolve(
-                status === google.maps.places.PlacesServiceStatus.OK && res ? res : []
-              );
-            });
-          });
-
-          for (const place of results) {
-            if (!place.geometry?.location || !place.place_id) continue;
-            if (processedIds.has(place.place_id)) continue;
-            processedIds.add(place.place_id);
-
-            // Resolve up to 3 real photo URLs from Places references
-            const photos: string[] = [];
-            place.photos?.slice(0, 3).forEach(ref => {
-              try { photos.push(ref.getUrl({ maxWidth: 800, maxHeight: 600 })); } catch (_) {}
-            });
-
-            // Classify sector: if Google name or address mentions known public keywords â†’ public
-            const nameLower = (place.name || '').toLowerCase();
-            const isPublic = /minsa|hospital|centro de salud|puesto de salud|gobierno|public/i.test(nameLower);
-
-            const clinic: Clinic = {
-              id: `google-${place.place_id}`,
-              placeId: place.place_id,
-              name: place.name || 'Sin nombre',
-              type: type as Clinic['type'],
-              sector: isPublic ? 'public' : 'private',
-              location: {
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-              },
-              address: place.formatted_address || '',
-              phone: place.formatted_phone_number || '',
-              rating: place.rating,
-              reviews: place.user_ratings_total,
-              open24h: type === 'hospital' || type === 'hospital-national' ||
-                       type === 'hospital-regional' || type === 'hospital-primary' ||
-                       type === 'emergency',
-              isOpen: place.opening_hours?.isOpen?.() ?? true,
-              photos: photos.length > 0 ? photos : undefined,
-              website: (place as any).website,
-              openingHours: place.opening_hours ? {
-                isOpen: place.opening_hours.isOpen?.(),
-                weekdayText: place.opening_hours.weekday_text,
-              } : undefined,
-              wheelchairAccessible: (place as any).wheelchair_accessible_entrance,
-              priceLevel: (place as any).price_level,
-            };
-
-            newClinics.push(clinic);
-          }
-        } catch (err) {
-          console.warn(`[Places] Search failed for "${term}":`, err);
-        }
-      }
-
-      // Merge with existing clinics, Google Places always wins on duplicates
-      setClinics(prev => {
-        const merged = new Map<string, Clinic>();
-        prev.forEach(c => merged.set(c.id, c));
-        newClinics.forEach(c => merged.set(c.id, c));
-        return Array.from(merged.values());
-      });
-
-      // Update confidence badges for newly discovered clinic IDs
-      if (newClinics.length > 0) {
-        const ids = newClinics.map(c => c.id);
-        getReportSummaries(ids).then(summaries => {
-          setReportSummaries(prev => new Map([...prev, ...summaries]));
-        }).catch(() => {});
-      }
-    } catch (error) {
-      console.error('[Places] Area search error:', error);
-    } finally {
-      setLoadingPlaces(false);
-    }
-  }, [placesLib, hasValidKey]);
-
-  const handleMapIdle = useCallback(() => {
-    // Solo buscar si el mapa estÃ¡ listo, Places API estÃ¡ cargada y no estamos ya cargando
-    // La condiciÃ³n clinics.length < 50 es un heurÃ­stico para evitar sobrecargar la API en el inicio
-    if (mapInstance && placesLib && hasValidKey && !loadingPlaces) {
-      searchPlacesInArea(mapInstance);
-    }
-  }, [mapInstance, placesLib, hasValidKey, loadingPlaces, searchPlacesInArea]);
-
+  }, []);
   const filteredClinics = clinics.filter(c => {
     if (filter === 'all') return true;
     // 'hospital' matches hospital-national, hospital-regional, hospital-primary and hospital
@@ -1079,65 +511,27 @@ export default function HealthMap() {
 
   const handleClinicSelect = (clinic: Clinic & { isOpen?: boolean }) => {
     setSelectedClinic(clinic);
-    if (mapInstance) {
-      mapInstance.panTo(clinic.location);
-      mapInstance.setZoom(16);
-    }
+    
   };
 
-  const handleCenterToUser = () => {
-    if (mapInstance) {
-      mapInstance.setCenter(userLocation);
-      mapInstance.setZoom(15);
-    }
-  };
+  const handleCenterToUser = () => {};
 
-  const handleZoomIn = () => {
-    if (mapInstance) mapInstance.setZoom((mapInstance.getZoom() || 14) + 1);
-  };
+  const handleZoomIn = () => {};
 
-  const handleZoomOut = () => {
-    if (mapInstance) mapInstance.setZoom((mapInstance.getZoom() || 14) - 1);
-  };
+  const handleZoomOut = () => {};
 
-  const handleRefreshSearch = () => {
-    if (mapInstance) {
-      searchPlacesInArea(mapInstance);
-    }
-  };
+  const handleRefreshSearch = () => {};
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
       <section className="absolute inset-0 z-0">
-        {hasValidKey ? (
-          <APIProvider apiKey={API_KEY}>
-            <GoogleMap 
-              defaultCenter={center} 
-              defaultZoom={12} 
-              mapId="DARK_MODE_MAP" 
-              className="w-full h-full" 
-              gestureHandling="greedy" 
-              disableDefaultUI
-              onIdle={handleMapIdle}
-            >
-              <MapContent 
-                clinics={filteredClinics} 
-                userLocation={userLocation}
-                onClinicSelect={handleClinicSelect}
-                onMapReady={setMapInstance}
-                reportSummaries={reportSummaries}
-              />
-            </GoogleMap>
-          </APIProvider>
-        ) : (
-          <LeafletMapContent
+        <LeafletMapContent
             clinics={filteredClinics}
             userLocation={userLocation}
             onClinicSelect={handleClinicSelect}
             reportSummaries={reportSummaries}
             selectedClinic={selectedClinic}
           />
-        )}
       </section>
 
         {loadingPlaces && (
@@ -1242,7 +636,7 @@ export default function HealthMap() {
                     {/* Directions button — opens Google Maps externally */}
                     {selectedClinic ? (
                       <a
-                        href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
+                        href={`https://www.openstreetmap.org/directions?engine=osrm_car&route=${userLocation.lat},${userLocation.lng};${selectedClinic.location.lat},${selectedClinic.location.lng}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Cómo llegar"
@@ -1347,66 +741,7 @@ export default function HealthMap() {
                           </div>
                         )}
 
-                        {/* Google Places predictions */}
-                        {suggestions.length > 0 && (
-                          <>
-                            {localSuggestions.length > 0 && (
-                              <div className="px-4 pt-2 pb-1 border-t border-outline-variant/10 bg-surface-container/30">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
-                                  Google Maps
-                                </span>
-                              </div>
-                            )}
-                            {suggestions.map((pred: any, idx: number) => {
-                              const main = pred.structured_formatting?.main_text || pred.description || '';
-                              const secondary = pred.structured_formatting?.secondary_text || '';
-                              const matchedParts = pred.structured_formatting?.main_text_matched_substrings || [];
-
-                              const renderHighlighted = () => {
-                                if (matchedParts.length === 0) return <span>{main}</span>;
-                                const parts: React.ReactNode[] = [];
-                                let cursor = 0;
-                                matchedParts.forEach((match: any, i: number) => {
-                                  if (cursor < match.offset) {
-                                    parts.push(<span key={`b${i}`}>{main.slice(cursor, match.offset)}</span>);
-                                  }
-                                  parts.push(
-                                    <span key={`m${i}`} className="font-black text-on-surface">
-                                      {main.slice(match.offset, match.offset + match.length)}
-                                    </span>
-                                  );
-                                  cursor = match.offset + match.length;
-                                });
-                                if (cursor < main.length) parts.push(<span key="t">{main.slice(cursor)}</span>);
-                                return <>{parts}</>;
-                              };
-
-                              return (
-                                <button
-                                  key={pred.place_id}
-                                  onMouseDown={() => handleSuggestionSelect(pred)}
-                                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left ${
-                                    idx < suggestions.length - 1 ? 'border-b border-outline-variant/10' : ''
-                                  }`}
-                                >
-                                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                    <MapPin className="w-4 h-4 text-primary" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-on-surface-variant leading-tight truncate">
-                                      {renderHighlighted()}
-                                    </p>
-                                    {secondary && (
-                                      <p className="text-[11px] text-on-surface-variant/60 truncate mt-0.5">{secondary}</p>
-                                    )}
-                                  </div>
-                                  <ChevronRight className="w-4 h-4 text-on-surface-variant/40 shrink-0" />
-                                </button>
-                              );
-                            })}
-                          </>
-                        )}
-                      </motion.div>
+                        </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
@@ -1505,7 +840,7 @@ export default function HealthMap() {
                             {/* Rapid directions button — opens Google Maps */}
                             <div className="shrink-0 flex items-center justify-center">
                               <a
-                                href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${clinic.location.lat},${clinic.location.lng}&travelmode=driving`}
+                                href={`https://www.openstreetmap.org/directions?engine=osrm_car&route=${userLocation.lat},${userLocation.lng};${clinic.location.lat},${clinic.location.lng}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
@@ -1659,7 +994,7 @@ export default function HealthMap() {
               <div className="flex justify-around px-3 py-4 border-b border-gray-100">
                 {/* Indicaciones — Abre Google Maps externo directamente */}
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
+                  href={`https://www.openstreetmap.org/directions?engine=osrm_car&route=${userLocation.lat},${userLocation.lng};${selectedClinic.location.lat},${selectedClinic.location.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center gap-1.5 group"
@@ -1836,7 +1171,7 @@ export default function HealthMap() {
           />
         )}
 
-        <MapControls onCenter={handleCenterToUser} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+
       </div>
   );
 }

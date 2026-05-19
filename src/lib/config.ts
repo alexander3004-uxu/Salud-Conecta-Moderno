@@ -43,7 +43,6 @@ const getApiKey = (envVars: string | string[], fallback: string, name: string): 
   return trimmed; //
 };
 
-export const GOOGLE_MAPS_KEY = getApiKey(['VITE_GOOGLE_MAPS_API_KEY', 'VITE_GOOGLE_MAPS_PLATFORM_KEY'], '', 'Google Maps');
 export const GEMINI_API_KEY = getApiKey('VITE_GEMINI_API_KEY', '', 'Gemini');
 
 export const APP_CONFIG = {

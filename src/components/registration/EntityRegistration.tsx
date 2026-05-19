@@ -29,8 +29,6 @@ import {
   FileSearch,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { APIProvider, Map as GoogleMap, AdvancedMarker } from '@vis.gl/react-google-maps';
-import { GOOGLE_MAPS_KEY } from '../../lib/config';
 import { saveClinic } from '../../services/clinicService';
 import { Clinic } from '../../types';
 
@@ -56,7 +54,6 @@ export default function EntityRegistration({ onBack, onFinish, initialType = 'la
   const [lat, setLat] = useState(12.1328);
   const [lng, setLng] = useState(-86.2504);
 
-  // --- Geolocation Auto-detection on Startup ---
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -69,6 +66,63 @@ export default function EntityRegistration({ onBack, onFinish, initialType = 'la
       );
     }
   }, []);
+
+  // --- Leaflet Map Init ---
+  const mapContainerRef = React.useRef<HTMLDivElement>(null);
+  const mapInstanceRef = React.useRef<any>(null);
+  const markerRef = React.useRef<any>(null);
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (!mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([lat, lng], 14);
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const tileUrl = isDark 
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+      L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
+
+      const icon = L.divIcon({
+        className: 'custom-leaflet-marker',
+        html: `<div class="w-8 h-8 rounded-full bg-primary border-4 border-white shadow-lg flex items-center justify-center"></div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      const marker = L.marker([lat, lng], { draggable: true, icon }).addTo(map);
+      
+      marker.on('dragend', (e: any) => {
+        const position = marker.getLatLng();
+        setLat(position.lat);
+        setLng(position.lng);
+      });
+
+      map.on('click', (e: any) => {
+        marker.setLatLng(e.latlng);
+        setLat(e.latlng.lat);
+        setLng(e.latlng.lng);
+      });
+
+      mapInstanceRef.current = map;
+      markerRef.current = marker;
+    }
+  }, []);
+
+  // Sync marker position when coords update from geo
+  useEffect(() => {
+    if (mapInstanceRef.current && markerRef.current) {
+      markerRef.current.setLatLng([lat, lng]);
+      mapInstanceRef.current.setView([lat, lng]);
+    }
+  }, [lat, lng]);
 
   // --- Sync Default Subtypes when Primary Category Changes ---
   useEffect(() => {
@@ -622,33 +676,7 @@ export default function EntityRegistration({ onBack, onFinish, initialType = 'la
               
               {/* Interactive Google Map coordinates selector */}
               <div className="w-full h-64 bg-surface-container-low rounded-2xl border border-outline-variant/20 relative overflow-hidden mb-2 shadow-inner">
-                <APIProvider apiKey={GOOGLE_MAPS_KEY}>
-                  <GoogleMap
-                    style={{ width: '100%', height: '100%' }}
-                    defaultCenter={{ lat: 12.1328, lng: -86.2504 }}
-                    center={{ lat, lng }}
-                    defaultZoom={14}
-                    gestureHandling="greedy"
-                    disableDefaultUI
-                    onClick={(e) => {
-                      if (e.detail.latLng) {
-                        setLat(e.detail.latLng.lat);
-                        setLng(e.detail.latLng.lng);
-                      }
-                    }}
-                  >
-                    <AdvancedMarker
-                      position={{ lat, lng }}
-                      draggable
-                      onDragEnd={(e) => {
-                        if (e.latLng) {
-                          setLat(e.latLng.lat());
-                          setLng(e.latLng.lng());
-                        }
-                      }}
-                    />
-                  </GoogleMap>
-                </APIProvider>
+                <div ref={mapContainerRef} className="w-full h-full z-0" />
                 
                 {/* Float Locate Button */}
                 <div className="absolute bottom-3 right-3 z-10">
