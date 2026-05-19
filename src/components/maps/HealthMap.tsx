@@ -971,7 +971,7 @@ export default function HealthMap() {
       // Run all type searches sequentially to avoid overloading the API
       for (const { term, type } of ALL_SEARCH_TERMS) {
         try {
-          const request: google.maps.places.TextSearchRequest = {
+          const request: any = {
             query: term,
             bounds,
             fields: [

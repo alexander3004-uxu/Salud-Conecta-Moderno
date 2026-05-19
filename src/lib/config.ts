@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * CENTRALIZED CONFIGURATION FOR API KEYS
  * 

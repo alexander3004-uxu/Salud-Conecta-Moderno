@@ -51,6 +51,8 @@ export interface Clinic {
   address: string;
   inStock?: boolean;
   open24h?: boolean;
+  isOpen?: boolean;
+  distance?: number;
   phone?: string;
   description?: string;
   rating?: number;

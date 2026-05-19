@@ -8,15 +8,15 @@ interface LocationResultDisplayProps {
   onReset: () => void;
 }
 
-const warningEmoji = {
-  critical: '🚑🔴',
+const warningEmoji: Record<string, string> = {
+  emergency: '🚑🔴',
   high: '⚠️🟠', 
   medium: '⚠️🟡',
   low: '💚🟢'
 };
 
-const severityLabels = {
-  critical: 'CRÍTICO - SALVAJES INMEDIATAMENTE',
+const severityLabels: Record<string, string> = {
+  emergency: 'EMERGENCIA - BUSQUE ATENCIÓN INMEDIATA',
   high: 'ALTA PRIORIDAD - ATENCIÓN URGENTE',
   medium: 'MEDIA PRIORIDAD',
   low: 'BAJA PRIORIDAD'
@@ -45,7 +45,7 @@ export default function LocationResultDisplay({result, memberId, onReset}: Locat
         {/* Urgency Badge */}
         <div className="flex items-center gap-3">
           <span className={`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${
-            result.severity === 'critical' ? 'bg-red-500 text-white animate-pulse' :
+            result.severity === 'emergency' ? 'bg-red-500 text-white animate-pulse' :
             result.severity === 'high' ? 'bg-orange-500 text-white' :
             result.severity === 'medium' ? 'bg-yellow-500 text-white' :
             'bg-green-500 text-white'

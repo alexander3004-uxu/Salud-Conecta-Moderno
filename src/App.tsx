@@ -8,18 +8,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Shell from './components/layout/Shell';
 import Hero from './components/home/Hero';
 import Assistant from './components/chat/Assistant';
-import HealthMap from './components/maps/HealthMap';
-import PremiumHealthMap from './components/maps/PremiumHealthMap';
 import Appointments from './components/appointments/Appointments';
 import History from './components/history/History';
-import TriageChecker from './components/triage/TriageChecker';
 import MessagingSimulation from './components/chat/MessagingSimulation';
 import { Profile } from './components/profile/Profile';
 import { Settings } from './components/profile/Settings';
+
+const HealthMap = lazy(() => import('./components/maps/HealthMap'));
+const PremiumHealthMap = lazy(() => import('./components/maps/PremiumHealthMap'));
+const TriageChecker = lazy(() => import('./components/triage/TriageChecker'));
 
 import Search from './components/search/Search';
 import EntityRegistration from './components/registration/EntityRegistration';
@@ -175,7 +176,16 @@ export default function App() {
         <Login onLogin={handleLogin} />
       ) : (
         <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
-          {renderContent()}
+          <Suspense fallback={
+            <div className="flex h-full w-full items-center justify-center p-8">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-on-surface-variant font-medium animate-pulse">Cargando módulo...</p>
+              </div>
+            </div>
+          }>
+            {renderContent()}
+          </Suspense>
           <PWAInstallPrompt />
         </Shell>
       )}

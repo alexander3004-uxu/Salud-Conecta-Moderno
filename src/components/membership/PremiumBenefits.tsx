@@ -19,7 +19,11 @@ import {
 } from 'lucide-react';
 import PharmacyDiscounts from './PharmacyDiscounts';
 
-export default function PremiumBenefits() {
+interface PremiumBenefitsProps {
+  onDowngrade?: () => void;
+}
+
+export default function PremiumBenefits({ onDowngrade }: PremiumBenefitsProps = {}) {
   const [currentView, setCurrentView] = useState<'benefits' | 'pharmacy'>('benefits');
 
   if (currentView === 'pharmacy') {

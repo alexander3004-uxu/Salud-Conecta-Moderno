@@ -23,6 +23,7 @@ import { saveTriageRecord } from '../../services/triageService';
 import { useUser } from '../../contexts/UserContext';
 import { auth } from '../../lib/firebase';
 import { TriageWithLocationResult } from '../../services/triageService';
+import { Clinic } from '../../types';
 
 interface Message { 
   id: string; 

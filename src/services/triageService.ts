@@ -166,15 +166,14 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
         const matchingMeds = buscarMultiplesMedicamentos(matchingSymptom.nombre);
         const med = matchingMeds.length > 0 ? matchingMeds[0] : null;
 
-        let localRecommendation = matchingSymptom.consejo;
+        let localRecommendation = matchingSymptom.descripcion + '\n\n**Cuidados en casa:**\n- ' + matchingSymptom.cuidados_casa.join('\n- ');
         if (med) {
-          localRecommendation += `\n\n🔹 **Medicamento Sugerido**: ${med.nombre_es} (${med.nombres_comerciales.join(', ')}) - ${med.presentacion}.`;
+          localRecommendation += `\n\n🔹 **Medicamento Sugerido**: ${med.nombre_es} (${med.nombres_comerciales.join(', ')}).`;
           localRecommendation += `\n- **Uso**: ${med.uso_principal}`;
-          localRecommendation += `\n- **Dosis recomendada**: ${med.dosis_adultos}`;
-          localRecommendation += `\n- **Precio estimado en Granada**: C$ ${med.precio_cordobas} Córdobas.`;
+          localRecommendation += `\n- **Dosis recomendada**: ${med.dosis_adulto}`;
           
           if (med.contraindicaciones && med.contraindicaciones.length > 0) {
-            localRecommendation += `\n- **Contraindicaciones**: ${med.contraindicaciones.join(', ')}`;
+            localRecommendation += `\n- **Contraindicaciones**: ${med.contraindicaciones}`;
           }
           if (med.embarazo) {
             const isCategoryDangerous = med.embarazo.includes('Categoría X') || med.embarazo.includes('Categoría D');
@@ -188,7 +187,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
           reasoning: `Heurística de consulta local activa (Coincidencia: ${matchingSymptom.nombre}).`,
           medication: med ? {
             name: med.nombre_es,
-            dosage: med.dosis_adultos || '',
+            dosage: med.dosis_adulto || '',
             frequency: 'Según indicación',
             duration: '3-5 días'
           } : undefined,
