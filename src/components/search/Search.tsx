@@ -235,7 +235,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
             </p>
           </motion.div>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-[2] group/search">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within/search:text-primary transition-colors w-5 h-5" />
               <input 
@@ -263,38 +263,39 @@ export default function Search({ onOpenRegistration }: SearchProps) {
               />
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => {
-              const isLocked = !cat.isPublic && !isPremium;
-              return (
-                <button 
-                  key={cat.id}
-                  onClick={() => {
-                    if (isLocked) {
-                      window.dispatchEvent(new CustomEvent('changeTab', { detail: 'membership' }));
-                      return;
-                    }
-                    setActiveCategory(activeCategory === cat.id ? null : cat.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-5 py-2.5 rounded-full flex items-center gap-2 font-display font-medium text-xs transition-all border ${
-                    activeCategory === cat.id 
-                      ? 'bg-primary text-on-primary border-primary shadow-lg shadow-primary/20 scale-105' 
-                      : isLocked 
-                        ? 'bg-surface-container-low text-on-surface-variant/50 border-outline-variant/20 opacity-80'
-                        : 'bg-surface-container-high text-on-surface-variant border-outline-variant/40 hover:border-primary/50'
-                  }`}
-                >
-                  <cat.icon className="w-4 h-4" />
-                  {cat.label}
-                  {isLocked && <Lock className="w-3 h-3 ml-1" />}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </section>
+
+      {/* Sticky Categories Bar */}
+      <div className="sticky top-[72px] md:top-[104px] z-30 bg-surface-container/90 backdrop-blur-xl border border-outline-variant/30 rounded-[28px] p-5 shadow-lg flex flex-wrap gap-2">
+        {categories.map((cat) => {
+          const isLocked = !cat.isPublic && !isPremium;
+          return (
+            <button 
+              key={cat.id}
+              onClick={() => {
+                if (isLocked) {
+                  window.dispatchEvent(new CustomEvent('changeTab', { detail: 'membership' }));
+                  return;
+                }
+                setActiveCategory(activeCategory === cat.id ? null : cat.id);
+                setCurrentPage(1);
+              }}
+              className={`px-5 py-2.5 rounded-full flex items-center gap-2 font-display font-medium text-xs transition-all border ${
+                activeCategory === cat.id 
+                  ? 'bg-primary text-on-primary border-primary shadow-lg shadow-primary/20 scale-105' 
+                  : isLocked 
+                    ? 'bg-surface-container-low text-on-surface-variant/50 border-outline-variant/20 opacity-80'
+                    : 'bg-surface-container-high text-on-surface-variant border-outline-variant/40 hover:border-primary/50'
+              }`}
+            >
+              <cat.icon className="w-4 h-4" />
+              {cat.label}
+              {isLocked && <Lock className="w-3 h-3 ml-1" />}
+            </button>
+          );
+        })}
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left column: Results */}
@@ -461,7 +462,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
         </div>
 
         {/* Right column: Dynamic & Premium Image Carousel */}
-        <aside className="w-full lg:w-[400px] shrink-0 h-[500px] lg:h-[calc(100vh-140px)] lg:sticky lg:top-[100px] rounded-[32px] overflow-hidden border border-outline-variant/30 bg-surface-container relative shadow-2xl flex flex-col group/aside">
+        <aside className="w-full lg:w-[400px] shrink-0 h-[500px] lg:h-[calc(100vh-230px)] lg:sticky lg:top-[210px] rounded-[32px] overflow-hidden border border-outline-variant/30 bg-surface-container relative shadow-2xl flex flex-col group/aside">
           {topFeaturedItems.length > 0 && (
             <div className="absolute inset-0 z-0">
               <AnimatePresence mode="wait">
