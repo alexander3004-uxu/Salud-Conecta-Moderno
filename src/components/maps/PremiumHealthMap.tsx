@@ -15,6 +15,7 @@ import {
   Activity,
   Pill,
   ChevronRight,
+  ChevronLeft,
   Loader2,
   ExternalLink,
   Heart,
@@ -46,6 +47,8 @@ export default function PremiumHealthMap() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedFacility, setSelectedFacility] = useState<Clinic | null>(null);
   const [privateFacilities, setPrivateFacilities] = useState<Clinic[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [likedFacilities, setLikedFacilities] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('premium_liked_facilities');
@@ -81,6 +84,11 @@ export default function PremiumHealthMap() {
     }
   }, []);
 
+  // Reset to page 1 on query or filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeFilter]);
+
   // Load private facilities from both datasets
   useEffect(() => {
     const allClinics: Clinic[] = [
@@ -114,6 +122,13 @@ export default function PremiumHealthMap() {
       return matchesFilter && matchesSearch;
     });
   }, [facilitiesWithDistance, activeFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filteredFacilities.length / itemsPerPage);
+  
+  const paginatedFacilities = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredFacilities.slice(start, start + itemsPerPage);
+  }, [filteredFacilities, currentPage]);
 
   const getNavigationUrl = (facility: Clinic) => {
     if (!userLocation) return `https://www.google.com/maps/dir/?api=1&destination=${facility.location.lat},${facility.location.lng}&travelmode=driving`;
@@ -267,7 +282,7 @@ export default function PremiumHealthMap() {
       </div>
 
       {/* Facilities Bento List */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {filteredFacilities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px]">
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
@@ -279,13 +294,14 @@ export default function PremiumHealthMap() {
             </p>
           </div>
         ) : (
-          filteredFacilities.map((facility) => (
-            <motion.div
-              key={facility.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all duration-300 overflow-hidden flex flex-col md:flex-row group"
-            >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+            {paginatedFacilities.map((facility) => (
+              <motion.div
+                key={facility.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all duration-300 overflow-hidden flex flex-col sm:flex-row group"
+              >
               {/* Cover Photo */}
               <div className="w-full md:w-56 h-48 md:h-auto shrink-0 relative bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                 {facility.imageUrl ? (
@@ -382,10 +398,36 @@ export default function PremiumHealthMap() {
                   </a>
                 </div>
               </div>
-            </motion.div>
-          ))
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
+
+      {/* Golden Premium Pagination */}
+      {totalPages > 1 && (
+        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200/50 dark:border-slate-800/40 shrink-0 flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-slate-700 dark:text-slate-300 flex items-center gap-1 active:scale-95"
+          >
+            <ChevronLeft className="w-4 h-4" /> Anterior
+          </button>
+          
+          <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            Página <strong className="text-amber-500">{currentPage}</strong> de {totalPages}
+          </span>
+          
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-slate-700 dark:text-slate-300 flex items-center gap-1 active:scale-95"
+          >
+            Siguiente <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Premium Detail Modal Overlay */}
       <AnimatePresence>
