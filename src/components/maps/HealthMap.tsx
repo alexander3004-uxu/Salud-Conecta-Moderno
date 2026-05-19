@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { 
   MapPin, Phone, Navigation, Search, Clock,
   Target, Plus, Minus, X, ShieldAlert, ChevronRight,
-  Loader2, Flag, Star, Globe2, Accessibility
+  Loader2, Flag, Star, Globe2, Accessibility, Menu
 } from 'lucide-react';
 import { Clinic } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -881,11 +881,20 @@ export default function HealthMap() {
           )}
         </AnimatePresence>
 
-        {/* --- Google Maps-Style Search / Navigation: Left compact panel ---------------------------- */}
-        <div className="absolute top-3 left-3 z-40 flex flex-col gap-2" style={{ width: 'min(360px, calc(100vw - 1.5rem))' }}>
+        {/* --- Hamburger Menu Button (visible when not navigating) --- */}
+        {!isNavigating && (
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="absolute top-3 left-3 z-40 w-12 h-12 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl shadow-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all duration-200"
+            title="Abrir menú de búsqueda"
+          >
+            <Menu className="w-5 h-5 text-gray-700 hover:text-primary transition-colors" />
+          </button>
+        )}
 
-          {isNavigating && selectedClinic ? (
-            /* --- Premium Navigation Panel (Google Maps Style) --- */
+        {/* --- Premium Navigation Panel (Google Maps Style) --- */}
+        {isNavigating && selectedClinic && (
+          <div className="absolute top-3 left-3 z-40 flex flex-col gap-2" style={{ width: 'min(360px, calc(100vw - 1.5rem))' }}>
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -961,231 +970,347 @@ export default function HealthMap() {
                 </a>
               </div>
             </motion.div>
-          ) : (
-            /* --- Normal search bar --- */
-            <div className="relative">
-              <div className={`flex items-center bg-white rounded-3xl shadow-xl border transition-all duration-200 ${
-                searchFocused ? 'border-blue-400' : 'border-gray-200'
-              }`} style={{ height: '46px' }}>
-                {/* Search icon */}
-                <div className="pl-4 pr-3 shrink-0">
-                  {autocompleteLoading
-                    ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-                    : <Search className="w-4 h-4 text-gray-500" />
-                  }
+          </div>
+        )}
+
+        {/* --- Sliding Search Drawer (Left Panel) --- */}
+        <AnimatePresence>
+          {isMenuOpen && !isNavigating && (
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute top-0 left-0 bottom-0 z-50 w-[360px] max-w-full h-full bg-white shadow-2xl flex flex-col border-r border-gray-200"
+            >
+              {/* Drawer Header */}
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
+                    <MapPin className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-sm font-display font-black uppercase tracking-wider text-primary">Buscar Centros</span>
                 </div>
-
-                {/* Text input */}
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
-                  placeholder="Buscar en Google Maps"
-                  className="flex-1 bg-transparent text-[14px] text-gray-800 placeholder:text-gray-400 focus:outline-none font-normal"
-                />
-
-                {searchQuery && (
-                  <button
-                    onClick={() => { setSearchQuery(''); setSuggestions([]); setLocalSuggestions([]); searchInputRef.current?.focus(); }}
-                    className="p-1.5 mr-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-
-                {/* Divider */}
-                <div className="w-px h-5 bg-gray-200 shrink-0" />
-
-                {/* Directions button --- Google Maps blue hexagon style */}
                 <button
-                  onClick={() => { if (selectedClinic) setIsNavigating(true); }}
-                  title="Cómo llegar"
-                  className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0 transition-all"
-                  style={{ background: selectedClinic ? '#1a73e8' : '#e8f0fe' }}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1.5 hover:bg-gray-200 rounded-full transition-all text-gray-500 hover:text-gray-800"
+                  title="Cerrar panel"
                 >
-                  <Navigation className="w-4 h-4" style={{ color: selectedClinic ? 'white' : '#1a73e8' }} />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* --- Suggestions Dropdown: Local + Google Places ---------------------- */}
-              <AnimatePresence>
-                {searchFocused && (suggestions.length > 0 || localSuggestions.length > 0) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                    transition={{ duration: 0.15 }}
-                className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50"
-                style={{ maxHeight: '65vh', overflowY: 'auto' }}
-                  >
-                    {/* Local results */}
-                    {localSuggestions.length > 0 && (
-                      <>
-                        {suggestions.length === 0 && (
-                          <div className="px-4 pt-3 pb-1">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
-                              Centros encontrados
-                            </span>
-                          </div>
-                        )}
-                        {localSuggestions.map((clinic, idx) => {
-                          const details = getClinicTypeDetails(clinic.type);
-                          const q = normalizeString(searchQuery);
-                          const name = clinic.name;
-                          const lowerName = normalizeString(name);
-                          const matchStart = lowerName.indexOf(q);
+              {/* Scrollable Content Container */}
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-4 gap-4">
+                {/* Search input UI */}
+                <div className="relative shrink-0">
+                  <div className={`flex items-center bg-white rounded-3xl shadow-md border transition-all duration-200 ${
+                    searchFocused ? 'border-blue-400' : 'border-gray-200'
+                  }`} style={{ height: '46px' }}>
+                    {/* Search icon */}
+                    <div className="pl-4 pr-3 shrink-0">
+                      {autocompleteLoading
+                        ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                        : <Search className="w-4 h-4 text-gray-500" />
+                      }
+                    </div>
 
-                          const renderName = () => {
-                            if (matchStart === -1) return <span>{name}</span>;
-                            return (
-                              <>
-                                <span>{name.slice(0, matchStart)}</span>
-                                <span className="font-black text-on-surface">{name.slice(matchStart, matchStart + searchQuery.length)}</span>
-                                <span>{name.slice(matchStart + searchQuery.length)}</span>
-                              </>
-                            );
-                          };
+                    {/* Text input */}
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
+                      placeholder="Buscar hospitales, clínicas..."
+                      className="flex-1 bg-transparent text-[14px] text-gray-800 placeholder:text-gray-400 focus:outline-none font-normal"
+                    />
 
-                          const isLast = idx === localSuggestions.length - 1 && suggestions.length === 0;
-                          return (
-                            <button
-                              key={clinic.id}
-                              onMouseDown={() => {
-                                setSearchQuery(clinic.name);
-                                setLocalSuggestions([]);
-                                setSuggestions([]);
-                                setSearchFocused(false);
-                                handleClinicSelect(clinic);
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left ${
-                                !isLast ? 'border-b border-outline-variant/10' : ''
-                              }`}
-                            >
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${details.colorClasses}`}>
-                                {React.createElement(details.icon, { className: 'w-4 h-4' })}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-on-surface-variant leading-tight truncate">
-                                  {renderName()}
-                                </p>
-                                <p className="text-[11px] text-on-surface-variant/60 truncate mt-0.5">
-                                  {clinic.address || details.label}
-                                </p>
-                              </div>
-                              <div className="shrink-0 flex flex-col items-end gap-0.5">
-                                {clinic.rating && (
-                                  <span className="text-[9px] text-amber-500 font-bold">★ {clinic.rating.toFixed(1)}</span>
-                                )}
-                                {(clinic.isOpen || clinic.open24h) ? (
-                                  <span className="text-[8px] font-bold text-emerald-500">Abierto</span>
-                                ) : (
-                                  <span className="text-[8px] font-bold text-red-400">Cerrado</span>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </>
+                    {searchQuery && (
+                      <button
+                        onClick={() => { setSearchQuery(''); setSuggestions([]); setLocalSuggestions([]); searchInputRef.current?.focus(); }}
+                        className="p-1.5 mr-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     )}
 
-                    {/* Google Places predictions */}
-                    {suggestions.length > 0 && (
-                      <>
+                    {/* Divider */}
+                    <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                    {/* Directions button */}
+                    <button
+                      onClick={() => { if (selectedClinic) { setIsNavigating(true); setIsMenuOpen(false); } }}
+                      title="Cómo llegar"
+                      className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0 transition-all"
+                      style={{ background: selectedClinic ? '#1a73e8' : '#e8f0fe' }}
+                    >
+                      <Navigation className="w-4 h-4" style={{ color: selectedClinic ? 'white' : '#1a73e8' }} />
+                    </button>
+                  </div>
+
+                  {/* Suggestions dropdown inside Drawer */}
+                  <AnimatePresence>
+                    {searchFocused && (suggestions.length > 0 || localSuggestions.length > 0) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50"
+                        style={{ maxHeight: '40vh', overflowY: 'auto' }}
+                      >
+                        {/* Local results */}
                         {localSuggestions.length > 0 && (
-                          <div className="px-4 pt-2 pb-1 border-t border-outline-variant/10 bg-surface-container/30">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
-                              Google Maps
-                            </span>
-                          </div>
-                        )}
-                        {suggestions.map((pred: any, idx: number) => {
-                          const main = pred.structured_formatting?.main_text || pred.description || '';
-                          const secondary = pred.structured_formatting?.secondary_text || '';
-                          const matchedParts = pred.structured_formatting?.main_text_matched_substrings || [];
-
-                          const renderHighlighted = () => {
-                            if (matchedParts.length === 0) return <span>{main}</span>;
-                            const parts: React.ReactNode[] = [];
-                            let cursor = 0;
-                            matchedParts.forEach((match: any, i: number) => {
-                              if (cursor < match.offset) {
-                                parts.push(<span key={`b${i}`}>{main.slice(cursor, match.offset)}</span>);
-                              }
-                              parts.push(
-                                <span key={`m${i}`} className="font-black text-on-surface">
-                                  {main.slice(match.offset, match.offset + match.length)}
+                          <>
+                            {suggestions.length === 0 && (
+                              <div className="px-4 pt-3 pb-1">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
+                                  Centros encontrados
                                 </span>
-                              );
-                              cursor = match.offset + match.length;
-                            });
-                            if (cursor < main.length) parts.push(<span key="t">{main.slice(cursor)}</span>);
-                            return <>{parts}</>;
-                          };
-
-                          return (
-                            <button
-                              key={pred.place_id}
-                              onMouseDown={() => handleSuggestionSelect(pred)}
-                              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left ${
-                                idx < suggestions.length - 1 ? 'border-b border-outline-variant/10' : ''
-                              }`}
-                            >
-                              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                <MapPin className="w-4 h-4 text-primary" />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-on-surface-variant leading-tight truncate">
-                                  {renderHighlighted()}
-                                </p>
-                                {secondary && (
-                                  <p className="text-[11px] text-on-surface-variant/60 truncate mt-0.5">{secondary}</p>
+                            )}
+                            {localSuggestions.map((clinic, idx) => {
+                              const details = getClinicTypeDetails(clinic.type);
+                              const q = normalizeString(searchQuery);
+                              const name = clinic.name;
+                              const lowerName = normalizeString(name);
+                              const matchStart = lowerName.indexOf(q);
+
+                              const renderName = () => {
+                                if (matchStart === -1) return <span>{name}</span>;
+                                return (
+                                  <>
+                                    <span>{name.slice(0, matchStart)}</span>
+                                    <span className="font-black text-on-surface">{name.slice(matchStart, matchStart + searchQuery.length)}</span>
+                                    <span>{name.slice(matchStart + searchQuery.length)}</span>
+                                  </>
+                                );
+                              };
+
+                              const isLast = idx === localSuggestions.length - 1 && suggestions.length === 0;
+                              return (
+                                <button
+                                  key={clinic.id}
+                                  onMouseDown={() => {
+                                    setSearchQuery(clinic.name);
+                                    setLocalSuggestions([]);
+                                    setSuggestions([]);
+                                    setSearchFocused(false);
+                                    handleClinicSelect(clinic);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left ${
+                                    !isLast ? 'border-b border-outline-variant/10' : ''
+                                  }`}
+                                >
+                                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${details.colorClasses}`}>
+                                    {React.createElement(details.icon, { className: 'w-4 h-4' })}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-on-surface-variant leading-tight truncate">
+                                      {renderName()}
+                                    </p>
+                                    <p className="text-[11px] text-on-surface-variant/60 truncate mt-0.5">
+                                      {clinic.address || details.label}
+                                    </p>
+                                  </div>
+                                  <div className="shrink-0 flex flex-col items-end gap-0.5">
+                                    {clinic.rating && (
+                                      <span className="text-[9px] text-amber-500 font-bold">★ {clinic.rating.toFixed(1)}</span>
+                                    )}
+                                    {(clinic.isOpen || clinic.open24h) ? (
+                                      <span className="text-[8px] font-bold text-emerald-500">Abierto</span>
+                                    ) : (
+                                      <span className="text-[8px] font-bold text-red-400">Cerrado</span>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </>
+                        )}
+
+                        {/* Google Places predictions */}
+                        {suggestions.length > 0 && (
+                          <>
+                            {localSuggestions.length > 0 && (
+                              <div className="px-4 pt-2 pb-1 border-t border-outline-variant/10 bg-surface-container/30">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
+                                  Google Maps
+                                </span>
+                              </div>
+                            )}
+                            {suggestions.map((pred: any, idx: number) => {
+                              const main = pred.structured_formatting?.main_text || pred.description || '';
+                              const secondary = pred.structured_formatting?.secondary_text || '';
+                              const matchedParts = pred.structured_formatting?.main_text_matched_substrings || [];
+
+                              const renderHighlighted = () => {
+                                if (matchedParts.length === 0) return <span>{main}</span>;
+                                const parts: React.ReactNode[] = [];
+                                let cursor = 0;
+                                matchedParts.forEach((match: any, i: number) => {
+                                  if (cursor < match.offset) {
+                                    parts.push(<span key={`b${i}`}>{main.slice(cursor, match.offset)}</span>);
+                                  }
+                                  parts.push(
+                                    <span key={`m${i}`} className="font-black text-on-surface">
+                                      {main.slice(match.offset, match.offset + match.length)}
+                                    </span>
+                                  );
+                                  cursor = match.offset + match.length;
+                                });
+                                if (cursor < main.length) parts.push(<span key="t">{main.slice(cursor)}</span>);
+                                return <>{parts}</>;
+                              };
+
+                              return (
+                                <button
+                                  key={pred.place_id}
+                                  onMouseDown={() => handleSuggestionSelect(pred)}
+                                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left ${
+                                    idx < suggestions.length - 1 ? 'border-b border-outline-variant/10' : ''
+                                  }`}
+                                >
+                                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                    <MapPin className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-on-surface-variant leading-tight truncate">
+                                      {renderHighlighted()}
+                                    </p>
+                                    {secondary && (
+                                      <p className="text-[11px] text-on-surface-variant/60 truncate mt-0.5">{secondary}</p>
+                                    )}
+                                  </div>
+                                  <ChevronRight className="w-4 h-4 text-on-surface-variant/40 shrink-0" />
+                                </button>
+                              );
+                            })}
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Category chips (filters) inside Drawer */}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 shrink-0" style={{ scrollbarWidth: 'none' }}>
+                  {FILTER_OPTIONS.map(({ value, label, labelShort }) => {
+                    const details = value !== 'all' ? getClinicTypeDetails(value) : null;
+                    const isActive = filter === value;
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setFilter(value)}
+                        title={label}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-all shrink-0"
+                        style={{
+                          background: isActive ? '#1a73e8' : 'white',
+                          color: isActive ? 'white' : '#444',
+                          border: isActive ? 'none' : '1px solid #dadce0',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        {details && React.createElement(details.icon, {
+                          className: 'w-3 h-3',
+                          style: { color: isActive ? 'white' : details.markerColors.bg }
+                        })}
+                        <span>{labelShort}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Clinic directory list inside Drawer */}
+                <div className="flex-grow flex flex-col min-h-0 gap-2 mt-1">
+                  <div className="flex items-center justify-between px-1 mb-1 shrink-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      Centros Médicos ({filteredClinics.length})
+                    </span>
+                    {loadingPlaces && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />}
+                  </div>
+
+                  <div className="flex-grow overflow-y-auto pr-1 flex flex-col gap-2 min-h-0 no-scrollbar">
+                    {filteredClinics.length === 0 ? (
+                      <div className="py-12 text-center text-gray-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-gray-100">
+                        No se encontraron centros médicos en esta zona.
+                      </div>
+                    ) : (
+                      filteredClinics.map((clinic) => {
+                        const details = getClinicTypeDetails(clinic.type);
+                        const isOpen = clinic.isOpen !== undefined ? clinic.isOpen : clinic.open24h;
+                        const isSelected = selectedClinic?.id === clinic.id;
+                        return (
+                          <div
+                            key={clinic.id}
+                            onClick={() => {
+                              handleClinicSelect(clinic);
+                              if (window.innerWidth < 1024) {
+                                setIsMenuOpen(false);
+                              }
+                            }}
+                            className={`w-full p-3 rounded-2xl border text-left flex gap-3 cursor-pointer hover:bg-slate-50 transition-all duration-200 ${
+                              isSelected 
+                                ? 'border-primary bg-primary/[0.02] shadow-sm' 
+                                : 'border-gray-100 bg-white hover:border-gray-300'
+                            }`}
+                          >
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${details.colorClasses}`}>
+                              {React.createElement(details.icon, { className: 'w-5 h-5' })}
+                            </div>
+                            
+                            <div className="flex-grow min-w-0 flex flex-col">
+                              <h4 className="text-sm font-bold text-gray-800 leading-tight truncate">
+                                {clinic.name}
+                              </h4>
+                              <span className="text-[11px] text-gray-400 truncate mt-0.5">
+                                {clinic.address || details.label}
+                              </span>
+                              
+                              <div className="flex items-center gap-2 mt-2 shrink-0">
+                                {clinic.rating && (
+                                  <span className="text-[10px] font-bold text-amber-500 flex items-center gap-0.5">
+                                    ★ {clinic.rating.toFixed(1)}
+                                  </span>
+                                )}
+                                <span className={`text-[10px] font-bold ${isOpen ? 'text-emerald-600' : 'text-red-500'}`}>
+                                  {isOpen ? 'Abierto' : 'Cerrado'}
+                                </span>
+                                {clinic.sector === 'public' && (
+                                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md">
+                                    Público
+                                  </span>
                                 )}
                               </div>
-                              <ChevronRight className="w-4 h-4 text-on-surface-variant/40 shrink-0" />
-                            </button>
-                          );
-                        })}
-                      </>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+                            </div>
 
-          {/* --- Category chips --- Google Maps style white pills ---- */}
-          {!isNavigating && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none' }}>
-              {FILTER_OPTIONS.map(({ value, label, labelShort }) => {
-                const details = value !== 'all' ? getClinicTypeDetails(value) : null;
-                const isActive = filter === value;
-                return (
-                  <button
-                    key={value}
-                    onClick={() => setFilter(value)}
-                    title={label}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-all shrink-0"
-                    style={{
-                      background: isActive ? '#1a73e8' : 'white',
-                      color: isActive ? 'white' : '#444',
-                      border: isActive ? 'none' : '1px solid #dadce0',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                    }}
-                  >
-                    {details && React.createElement(details.icon, {
-                      className: 'w-3 h-3',
-                      style: { color: isActive ? 'white' : details.markerColors.bg }
-                    })}
-                    <span>{labelShort}</span>
-                  </button>
-                );
-              })}
-            </div>
+                            {/* Rapid directions button */}
+                            <div className="shrink-0 flex items-center justify-center">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClinicSelect(clinic);
+                                  setIsNavigating(true);
+                                  setIsMenuOpen(false);
+                                }}
+                                className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200"
+                                title="Cómo llegar"
+                              >
+                                <Navigation className="w-3.5 h-3.5 text-blue-700" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
 
         {selectedClinic && !isNavigating && (
           <motion.div
@@ -1194,7 +1319,9 @@ export default function HealthMap() {
             animate={{ opacity: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, y: 100, x: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed lg:absolute bottom-0 lg:top-0 lg:left-0 lg:bottom-0 left-0 right-0 lg:right-auto z-45 flex flex-col lg:flex-row h-[60vh] lg:h-full w-full lg:w-auto"
+            className={`fixed lg:absolute bottom-0 lg:top-0 lg:bottom-0 left-0 right-0 lg:right-auto z-45 flex flex-col lg:flex-row h-[60vh] lg:h-full w-full lg:w-auto transition-all duration-300 ${
+              isMenuOpen && !isNavigating ? 'lg:left-[360px]' : 'lg:left-0'
+            }`}
             style={{ zIndex: 45 }}
           >
             {/* --- Narrow left strip (like Google Maps sidebar) --- hidden on mobile */}
