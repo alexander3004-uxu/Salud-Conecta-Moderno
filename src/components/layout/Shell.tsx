@@ -19,7 +19,8 @@ import {
   Zap,
   Trophy,
   Flame,
-  Bell
+  Bell,
+  Crown
 } from 'lucide-react';
 import { auth, signInWithGoogle, handleRedirectResult } from '../../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
@@ -133,6 +134,15 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
             title={t('header.map')}
           >
             <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          <button 
+            onClick={() => setActiveTab('premium-health')}
+            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all ${
+              activeTab === 'premium-health' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'text-on-surface-variant hover:bg-surface-container'
+            }`}
+            title="Red Premium"
+          >
+            <Crown className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button 
             onClick={() => setActiveTab('activity')}

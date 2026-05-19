@@ -308,78 +308,7 @@ function MapControls({ onCenter, onZoomIn, onZoomOut }: { onCenter: () => void; 
   );
 }
 
-// --- Live Google Maps routing subcomponent -----------------------------------
-function Directions({ 
-  routesLib, 
-  userLocation, 
-  destination, 
-  onRouteInfo,
-  setRouteStatus
-}: { 
-  routesLib: any; 
-  userLocation: { lat: number; lng: number }; 
-  destination: { lat: number; lng: number };
-  onRouteInfo: (info: { distance: string; duration: string } | null) => void;
-  setRouteStatus: (status: 'idle' | 'loading' | 'success' | 'error') => void;
-}) {
-  const map = useMap();
-  const [directionsRenderer, setDirectionsRenderer] = useState<any>(null);
 
-  useEffect(() => {
-    if (!map || !routesLib) return;
-    const renderer = new routesLib.DirectionsRenderer({
-      map,
-      suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: '#1a73e8', // Google Maps active route blue
-        strokeWeight: 6,
-        strokeOpacity: 0.8
-      }
-    });
-    setDirectionsRenderer(renderer);
-    return () => {
-      renderer.setMap(null);
-    };
-  }, [map, routesLib]);
-
-  useEffect(() => {
-    if (!routesLib || !directionsRenderer || !userLocation || !destination) return;
-
-    setRouteStatus('loading');
-    const service = new routesLib.DirectionsService();
-    service.route(
-      {
-        origin: userLocation,
-        destination: destination,
-        travelMode: routesLib.TravelMode.DRIVING
-      },
-      (result: any, status: string) => {
-        if (status === 'OK' && result) {
-          directionsRenderer.setDirections(result);
-          const route = result.routes[0];
-          if (route && route.legs[0]) {
-            onRouteInfo({
-              distance: route.legs[0].distance?.text || '',
-              duration: route.legs[0].duration?.text || ''
-            });
-            setRouteStatus('success');
-            if (route.bounds) {
-              map.fitBounds(route.bounds);
-            }
-          } else {
-            setRouteStatus('error');
-          }
-        } else {
-          console.error("Directions request failed: " + status);
-          onRouteInfo(null);
-          setRouteStatus('error');
-        }
-      }
-    );
-  }, [routesLib, directionsRenderer, userLocation, destination, map, onRouteInfo, setRouteStatus]);
-
-  return null;
-}
 
 export default function HealthMap() {
   const { t } = useLanguage();
@@ -392,9 +321,6 @@ export default function HealthMap() {
   const [reportSummaries, setReportSummaries] = useState<Map<string, ReportSummary>>(new Map());
   const [center, setCenter] = useState(NICARAGUA_CENTER);
   const [userLocation, setUserLocation] = useState(NICARAGUA_CENTER);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
-  const [routeStatus, setRouteStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [filter, setFilter] = useState<FilterType>('all');
   const [isEmergencyMode, setIsEmergencyMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -427,7 +353,6 @@ export default function HealthMap() {
   const autocompleteSessionRef = useRef<any>(null);
 
   const placesLibrary = useMapsLibrary('places');
-  const routesLibrary = useMapsLibrary('routes');
 
   const normalizeString = (str: string) => 
     str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -600,7 +525,7 @@ export default function HealthMap() {
           return Array.from(merged.values());
         });
         setSelectedClinic(clinic);
-        setIsNavigating(false);
+
       }
     );
   }, [placesLib, mapInstance]);
@@ -668,8 +593,15 @@ export default function HealthMap() {
           mapInstance.setZoom(16);
         }
 
-        if (customEvent.detail.startNavigation) {
-          setIsNavigating(true);
+        // If startNavigation was requested, open Google Maps externally
+        if (customEvent.detail.startNavigation && targetClinic.location) {
+          navigator.geolocation?.getCurrentPosition((pos) => {
+            const url = `https://www.google.com/maps/dir/?api=1&origin=${pos.coords.latitude},${pos.coords.longitude}&destination=${targetClinic.location.lat},${targetClinic.location.lng}&travelmode=driving`;
+            window.open(url, '_blank');
+          }, () => {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${targetClinic.location.lat},${targetClinic.location.lng}&travelmode=driving`;
+            window.open(url, '_blank');
+          });
         }
       }
     };
@@ -817,7 +749,6 @@ export default function HealthMap() {
 
   const handleClinicSelect = (clinic: Clinic & { isOpen?: boolean }) => {
     setSelectedClinic(clinic);
-    setIsNavigating(false);
     if (mapInstance) {
       mapInstance.panTo(clinic.location);
       mapInstance.setZoom(16);
@@ -882,15 +813,7 @@ export default function HealthMap() {
               onMapReady={setMapInstance}
               reportSummaries={reportSummaries}
             />
-            {isNavigating && selectedClinic && routesLibrary && (
-              <Directions 
-                routesLib={routesLibrary}
-                userLocation={userLocation}
-                destination={selectedClinic.location}
-                onRouteInfo={setRouteInfo}
-                setRouteStatus={setRouteStatus}
-              />
-            )}
+
           </GoogleMap>
         </section>
 
@@ -918,148 +841,18 @@ export default function HealthMap() {
           )}
         </AnimatePresence>
 
-        {/* --- Hamburger Menu Button (visible when not navigating) --- */}
-        {!isNavigating && (
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="absolute top-3 left-3 z-40 w-12 h-12 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl shadow-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all duration-200"
-            title="Abrir menú de búsqueda"
-          >
-            <Menu className="w-5 h-5 text-gray-700 hover:text-primary transition-colors" />
-          </button>
-        )}
-
-        {/* --- Premium Navigation Panel (Google Maps Style) --- */}
-        {isNavigating && selectedClinic && (
-          <div className="absolute top-3 left-3 z-40 flex flex-col gap-2" style={{ width: 'min(360px, calc(100vw - 1.5rem))' }}>
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col"
-            >
-              {/* Header: Navigation Title and Exit */}
-              <div className="bg-[#1a73e8] text-white px-5 py-4 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2">
-                  <Navigation className="w-5 h-5 animate-pulse" />
-                  <span className="text-sm font-display font-black uppercase tracking-wider">Cómo llegar</span>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsNavigating(false);
-                    setRouteInfo(null);
-                    setRouteStatus('idle');
-                  }}
-                  className="p-1.5 hover:bg-white/10 rounded-full transition-all"
-                  title="Salir de navegación"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
-
-              {/* Waypoints block */}
-              <div className="p-5 flex flex-col gap-3 bg-slate-50 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tu ubicación</p>
-                    <p className="text-xs font-semibold text-gray-700 truncate">Ubicación detectada por GPS</p>
-                  </div>
-                </div>
-                
-                <div className="w-0.5 h-3 border-l-2 border-dashed border-gray-300 ml-1.5 -my-1" />
-
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-red-500 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Destino recomendado</p>
-                    <p className="text-xs font-semibold text-gray-800 truncate">{selectedClinic.name}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Travel Time & Distance info */}
-              <div className="p-5 flex items-center justify-between bg-white shrink-0 border-b border-gray-100">
-                <div className="flex flex-col flex-grow min-w-0">
-                  {routeStatus === 'loading' && (
-                    <>
-                      <span className="text-xl font-display font-black text-gray-400 animate-pulse">
-                        Calculando...
-                      </span>
-                      <span className="text-xs text-gray-400 font-bold mt-0.5">
-                        Obteniendo mejor ruta...
-                      </span>
-                    </>
-                  )}
-                  {routeStatus === 'error' && (
-                    <>
-                      <span className="text-sm font-bold text-red-500 leading-snug">
-                        Fallo al calcular ruta local
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-medium mt-0.5 leading-tight">
-                        Por favor, usa el botón de abajo para abrir la app oficial.
-                      </span>
-                    </>
-                  )}
-                  {routeStatus === 'success' && routeInfo && (
-                    <>
-                      <span className="text-2xl font-display font-black text-emerald-600">
-                        {routeInfo.duration}
-                      </span>
-                      <span className="text-xs text-gray-500 font-bold mt-0.5">
-                        Distancia: {routeInfo.distance}
-                      </span>
-                    </>
-                  )}
-                  {routeStatus === 'idle' && (
-                    <>
-                      <span className="text-2xl font-display font-black text-gray-400">
-                        --:--
-                      </span>
-                      <span className="text-xs text-gray-400 font-bold mt-0.5">
-                        Iniciando...
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${
-                    routeStatus === 'error' 
-                      ? 'bg-red-50 border-red-100 text-red-500' 
-                      : routeStatus === 'loading' 
-                      ? 'bg-blue-50 border-blue-100 text-blue-500'
-                      : 'bg-emerald-50 border-emerald-100 text-emerald-600'
-                  }`}>
-                    {routeStatus === 'loading' ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                    ) : routeStatus === 'error' ? (
-                      <ShieldAlert className="w-5 h-5 text-red-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-emerald-600" />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* External Google Maps redirection */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100 shrink-0">
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-11 bg-[#1a73e8] text-white text-xs font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
-                >
-                  <Navigation className="w-4 h-4 text-white" />
-                  Abrir en Google Maps App
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        {/* --- Hamburger Menu Button --- */}
+        <button
+          onClick={() => setIsMenuOpen(true)}
+          className="absolute top-3 left-3 z-40 w-12 h-12 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl shadow-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all duration-200"
+          title="Abrir menú de búsqueda"
+        >
+          <Menu className="w-5 h-5 text-gray-700 hover:text-primary transition-colors" />
+        </button>
 
         {/* --- Sliding Search Drawer (Left Panel) --- */}
         <AnimatePresence>
-          {isMenuOpen && !isNavigating && (
+          {isMenuOpen && (
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
@@ -1123,15 +916,26 @@ export default function HealthMap() {
                     {/* Divider */}
                     <div className="w-px h-5 bg-gray-200 shrink-0" />
 
-                    {/* Directions button */}
-                    <button
-                      onClick={() => { if (selectedClinic) { setIsNavigating(true); setIsMenuOpen(false); } }}
-                      title="Cómo llegar"
-                      className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0 transition-all"
-                      style={{ background: selectedClinic ? '#1a73e8' : '#e8f0fe' }}
-                    >
-                      <Navigation className="w-4 h-4" style={{ color: selectedClinic ? 'white' : '#1a73e8' }} />
-                    </button>
+                    {/* Directions button — opens Google Maps externally */}
+                    {selectedClinic ? (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Cómo llegar"
+                        className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0 transition-all"
+                        style={{ background: '#1a73e8' }}
+                      >
+                        <Navigation className="w-4 h-4 text-white" />
+                      </a>
+                    ) : (
+                      <div
+                        className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: '#e8f0fe' }}
+                      >
+                        <Navigation className="w-4 h-4" style={{ color: '#1a73e8' }} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Suggestions dropdown inside Drawer */}
@@ -1375,20 +1179,18 @@ export default function HealthMap() {
                               </div>
                             </div>
 
-                            {/* Rapid directions button */}
+                            {/* Rapid directions button — opens Google Maps */}
                             <div className="shrink-0 flex items-center justify-center">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleClinicSelect(clinic);
-                                  setIsNavigating(true);
-                                  setIsMenuOpen(false);
-                                }}
+                              <a
+                                href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${clinic.location.lat},${clinic.location.lng}&travelmode=driving`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
                                 className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200"
                                 title="Cómo llegar"
                               >
                                 <Navigation className="w-3.5 h-3.5 text-blue-700" />
-                              </button>
+                              </a>
                             </div>
                           </div>
                         );
@@ -1401,7 +1203,7 @@ export default function HealthMap() {
           )}
         </AnimatePresence>
 
-        {selectedClinic && !isNavigating && (
+        {selectedClinic && (
           <motion.div
             key={selectedClinic.id}
             initial={{ opacity: 0, y: 100, x: 0 }}
@@ -1409,7 +1211,7 @@ export default function HealthMap() {
             exit={{ opacity: 0, y: 100, x: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className={`fixed lg:absolute bottom-0 lg:top-0 lg:bottom-0 left-0 right-0 lg:right-auto z-45 flex flex-col lg:flex-row h-[60vh] lg:h-full w-full lg:w-auto transition-all duration-300 ${
-              isMenuOpen && !isNavigating ? 'lg:left-[360px]' : 'lg:left-0'
+              isMenuOpen ? 'lg:left-[360px]' : 'lg:left-0'
             }`}
             style={{ zIndex: 45 }}
           >
@@ -1532,9 +1334,11 @@ export default function HealthMap() {
 
               {/* --- Circular Action Buttons --- exactly like Google Maps --- */}
               <div className="flex justify-around px-3 py-4 border-b border-gray-100">
-                {/* Indicaciones */}
-                <button
-                  onClick={() => setIsNavigating(true)}
+                {/* Indicaciones — Abre Google Maps externo directamente */}
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex flex-col items-center gap-1.5 group"
                 >
                   <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
@@ -1543,7 +1347,7 @@ export default function HealthMap() {
                   <span className="text-[11px] text-blue-700 font-medium text-center leading-tight" style={{ maxWidth: '56px' }}>
                     Indicaciones
                   </span>
-                </button>
+                </a>
 
                 {/* Guardar */}
                 <button className="flex flex-col items-center gap-1.5 group">

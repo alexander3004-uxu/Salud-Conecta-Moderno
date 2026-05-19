@@ -174,13 +174,19 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     const isUrgent = severity === 'emergency' || severity === 'high';
     let recommendation = aiTriage.recommendation || '';
 
-    // 6. Aplicar la frase exacta exigida si es de urgencia, de lo contrario concatenar el centro más cercano
-    if (isUrgent && closestClinic) {
-      const sectorTag = closestClinic.sector === 'private' ? 'Centro Privado Premium' : 'Red Pública (MINSA)';
-      recommendation = `Estás experimentando un síntoma de urgencia, debes acudir a un centro de salud de inmediato. De acuerdo a tu ubicación, el centro más cercano es: "${closestClinic.name}" (${sectorTag}).`;
-    } else if (closestClinic) {
-      const sectorTag = closestClinic.sector === 'private' ? 'Centro Privado Premium' : 'Red Pública (MINSA)';
-      recommendation = `${recommendation} De acuerdo a tu ubicación, el centro de salud más cercano es: "${closestClinic.name}" (${sectorTag}).`;
+    // 6. Seleccionar el centro principal según la gravedad:
+    //    - emergency/high → priorizar hospital (tiene urgencias 24h)
+    //    - medium/low → priorizar centro de salud (consulta general)
+    const primaryFacility = isUrgent
+      ? (closestHospital || closestCenter || closestClinic)
+      : (closestCenter || closestHospital || closestClinic);
+
+    if (isUrgent && primaryFacility) {
+      const sectorTag = primaryFacility.sector === 'private' ? 'Centro Privado Premium' : 'Red Pública (MINSA)';
+      recommendation = `Estás experimentando un síntoma de urgencia, debes acudir a un hospital de inmediato. De acuerdo a tu ubicación GPS, el hospital más cercano es: "${primaryFacility.name}" (${sectorTag}).`;
+    } else if (primaryFacility) {
+      const sectorTag = primaryFacility.sector === 'private' ? 'Centro Privado Premium' : 'Red Pública (MINSA)';
+      recommendation = `${recommendation} De acuerdo a tu ubicación, el centro de salud más cercano es: "${primaryFacility.name}" (${sectorTag}).`;
     }
 
     const finalDistance = minDistance === Infinity ? 0 : minDistance;

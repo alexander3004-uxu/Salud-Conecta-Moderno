@@ -13,6 +13,7 @@ import Shell from './components/layout/Shell';
 import Hero from './components/home/Hero';
 import Assistant from './components/chat/Assistant';
 import HealthMap from './components/maps/HealthMap';
+import PremiumHealthMap from './components/maps/PremiumHealthMap';
 import Appointments from './components/appointments/Appointments';
 import History from './components/history/History';
 import TriageChecker from './components/triage/TriageChecker';
@@ -114,6 +115,8 @@ export default function App() {
         return <Search onOpenRegistration={(type) => openRegistration(type)} />;
       case 'map':
         return <HealthMap />;
+      case 'premium-health':
+        return <PremiumHealthMap />;
       case 'appointments':
         return <Appointments />;
       case 'pharmacy':
