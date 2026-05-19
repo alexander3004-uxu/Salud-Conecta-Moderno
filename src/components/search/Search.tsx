@@ -267,7 +267,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       </section>
 
       {/* Sticky Categories Bar */}
-      <div className="sticky top-[72px] md:top-[104px] z-30 bg-surface-container/90 backdrop-blur-xl border border-outline-variant/30 rounded-[28px] p-5 shadow-lg flex flex-wrap gap-2">
+      <div className="sticky top-[72px] md:top-[116px] z-30 bg-surface-container/90 backdrop-blur-xl border border-outline-variant/30 rounded-[28px] p-5 shadow-lg flex flex-wrap gap-2">
         {categories.map((cat) => {
           const isLocked = !cat.isPublic && !isPremium;
           return (
@@ -462,7 +462,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
         </div>
 
         {/* Right column: Dynamic & Premium Image Carousel */}
-        <aside className="w-full lg:w-[400px] shrink-0 h-[500px] lg:h-[calc(100vh-230px)] lg:sticky lg:top-[210px] rounded-[32px] overflow-hidden border border-outline-variant/30 bg-surface-container relative shadow-2xl flex flex-col group/aside">
+        <aside className="w-full lg:w-[400px] shrink-0 h-[500px] lg:h-[calc(100vh-242px)] lg:sticky lg:top-[222px] rounded-[32px] overflow-hidden border border-outline-variant/30 bg-surface-container relative shadow-2xl flex flex-col group/aside">
           {topFeaturedItems.length > 0 && (
             <div className="absolute inset-0 z-0">
               <AnimatePresence mode="wait">

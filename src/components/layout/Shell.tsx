@@ -201,7 +201,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
       </div>
 
       {/* Main Content Area */}
-      <main className={`flex-grow ${activeTab === 'map' ? 'pt-16 pb-20 md:pt-16 md:pb-0' : 'pt-16 pb-20 md:pt-[104px] md:pb-0'} flex flex-col items-center w-full ${activeTab === 'map' ? 'max-w-none' : 'max-w-7xl mx-auto'}`}>
+      <main className={`flex-grow ${activeTab === 'map' ? 'pt-16 pb-20 md:pt-16 md:pb-0' : 'pt-16 pb-20 md:pt-[132px] md:pb-0'} flex flex-col items-center w-full ${activeTab === 'map' ? 'max-w-none' : 'max-w-7xl mx-auto'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
