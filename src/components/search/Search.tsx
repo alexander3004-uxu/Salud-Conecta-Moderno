@@ -28,6 +28,8 @@ interface SearchProps {
 
 export default function Search({ onOpenRegistration }: SearchProps) {
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
   const { isPremium } = useUser();
 
   const categories = [
@@ -51,7 +53,8 @@ export default function Search({ onOpenRegistration }: SearchProps) {
         rating: item.rating || 4.0,
         distance: 'Centro MINSA',
         status: item.open24h ? 'Abierto 24h' : 'Horario Regular',
-        statusType: 'available'
+        statusType: 'available',
+        services: item.services || ['Atención General', 'Emergencias']
       }));
   }, []);
 
@@ -66,7 +69,8 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       rating: 4.9,
       distance: '2.4 km',
       status: 'Disponible Ahora',
-      statusType: 'available'
+      statusType: 'available',
+      services: ['Ecocardiograma', 'Holter', 'Prueba de Esfuerzo']
     },
     {
       id: '2',
@@ -77,7 +81,8 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       rating: 4.8,
       distance: '3.1 km',
       status: 'Mañana, 09:00',
-      statusType: 'scheduled'
+      statusType: 'scheduled',
+      services: ['Electroencefalograma', 'Mapeo Cerebral']
     },
     {
       id: '3',
@@ -88,7 +93,8 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       rating: 4.7,
       distance: '1.2 km',
       status: 'Abierto 24h',
-      statusType: 'available'
+      statusType: 'available',
+      services: ['Rayos X', 'Laboratorio', 'Farmacia 24/7']
     },
     {
       id: '4',
@@ -99,7 +105,8 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       rating: 4.5,
       distance: '0.5 km',
       status: 'Cierra a las 22:00',
-      statusType: 'limited'
+      statusType: 'limited',
+      services: ['Recetario', 'Cosmética', 'Inyectables']
     },
     {
       id: '5',
@@ -110,13 +117,20 @@ export default function Search({ onOpenRegistration }: SearchProps) {
       rating: 4.6,
       distance: '4.2 km',
       status: 'Resultados en 24h',
-      statusType: 'available'
+      statusType: 'available',
+      services: ['Hematología', 'Química Sanguínea', 'Uroanálisis']
     }
   ];
 
   const filteredItems = activeCategory 
     ? allItems.filter(item => item.category === activeCategory)
     : allItems;
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="flex flex-col gap-8 pb-20 md:pb-0">
@@ -167,6 +181,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                       return;
                     }
                     setActiveCategory(activeCategory === cat.id ? null : cat.id);
+                    setCurrentPage(1);
                   }}
                   className={`px-5 py-2.5 rounded-full flex items-center gap-2 font-display font-medium text-xs transition-all border ${
                     activeCategory === cat.id 
@@ -208,53 +223,100 @@ export default function Search({ onOpenRegistration }: SearchProps) {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredItems.map((item) => (
+            <div className="flex flex-col gap-6">
+              {paginatedItems.map((item) => (
                 <motion.div 
                   key={item.id}
                   layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ y: -4 }}
-                  className="bg-surface-container border border-outline-variant/30 rounded-2xl p-6 flex flex-col gap-6 shadow-xl relative overflow-hidden"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ x: 4 }}
+                  className="bg-surface-container border border-outline-variant/30 rounded-2xl flex flex-col sm:flex-row overflow-hidden shadow-lg hover:shadow-xl transition-shadow relative"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-surface-bright overflow-hidden shrink-0 border-2 border-surface-container-high shadow-lg">
-                      <img 
-                        src={item.image} 
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-grow pt-1">
-                      <h3 className="text-lg font-display font-bold text-on-surface">{item.name}</h3>
-                      <p className="text-primary text-sm font-medium mb-1">{item.description}</p>
-                      <div className="flex items-center gap-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
-                        <span className="flex items-center text-secondary gap-1">
-                          <Star className="w-3.5 h-3.5 fill-secondary" /> {item.rating}
-                        </span>
-                        <span className="flex items-center gap-1 opacity-70">
-                          <MapPin className="w-3.5 h-3.5" /> {item.distance}
-                        </span>
-                      </div>
+                  <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 relative bg-surface-bright">
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                       <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md backdrop-blur-md ${
+                        item.statusType === 'available' 
+                          ? 'bg-secondary/90 text-on-secondary' 
+                          : 'bg-surface-container-highest/90 text-on-surface-variant'
+                       }`}>
+                         {item.statusType === 'available' && <span className="w-1.5 h-1.5 rounded-full bg-on-secondary animate-pulse"></span>}
+                         {item.status}
+                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-outline-variant/10">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
-                      item.statusType === 'available' 
-                        ? 'bg-secondary/15 text-secondary' 
-                        : 'bg-surface-container-highest text-on-surface-variant'
-                    }`}>
-                      {item.statusType === 'available' && <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>}
-                      {item.status}
-                    </span>
-                    <button className="bg-primary text-on-primary hover:brightness-110 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
-                      {item.category === 'doctor' ? 'Agendar' : 'Ver Detalles'}
-                    </button>
+                  <div className="p-5 flex flex-col flex-grow justify-between gap-4">
+                    <div>
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <h3 className="text-xl font-display font-bold text-on-surface leading-tight mb-1">{item.name}</h3>
+                          <p className="text-on-surface-variant text-sm line-clamp-2">{item.description}</p>
+                        </div>
+                        <div className="flex flex-col items-end shrink-0">
+                          <span className="flex items-center text-secondary gap-1 text-sm font-bold bg-secondary/10 px-2 py-1 rounded-lg">
+                            <Star className="w-4 h-4 fill-secondary" /> {item.rating}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {item.services && item.services.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {item.services.slice(0, 3).map((service: string, idx: number) => (
+                            <span key={idx} className="text-[10px] font-bold text-primary bg-primary/5 border border-primary/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+                              {service}
+                            </span>
+                          ))}
+                          {item.services.length > 3 && (
+                            <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-2.5 py-1 rounded-md">
+                              +{item.services.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/20 mt-auto">
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
+                        <MapPin className="w-4 h-4 text-primary" /> {item.distance}
+                      </span>
+                      <button className="bg-primary text-on-primary hover:brightness-110 px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95">
+                        {item.category === 'doctor' ? 'Agendar Cita' : 'Ver Perfil'}
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-xl font-bold text-sm bg-surface-container-high hover:bg-surface-bright disabled:opacity-50 disabled:cursor-not-allowed transition-all text-on-surface flex items-center gap-2"
+                >
+                  <ChevronRight className="w-4 h-4 rotate-180" /> Anterior
+                </button>
+                <div className="flex gap-2">
+                   <span className="text-sm font-medium text-on-surface-variant">
+                     Página <strong className="text-on-surface">{currentPage}</strong> de {totalPages}
+                   </span>
+                </div>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-xl font-bold text-sm bg-surface-container-high hover:bg-surface-bright disabled:opacity-50 disabled:cursor-not-allowed transition-all text-on-surface flex items-center gap-2"
+                >
+                  Siguiente <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {filteredItems.length === 0 && (
               <div className="p-12 text-center bg-surface-container border border-outline-variant/30 rounded-3xl">
@@ -293,7 +355,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
         </div>
 
         {/* Right column: Map */}
-        <aside className="w-full lg:w-96 shrink-0 h-[400px] lg:h-auto min-h-[500px] rounded-[32px] overflow-hidden border border-outline-variant bg-surface-container relative group shadow-2xl">
+        <aside className="w-full lg:w-[400px] shrink-0 h-[400px] lg:h-[calc(100vh-140px)] lg:sticky lg:top-[100px] rounded-[32px] overflow-hidden border border-outline-variant bg-surface-container relative group shadow-2xl">
           <div className="absolute inset-0 bg-surface-container-lowest">
             <img 
               src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=1000" 
