@@ -55,20 +55,20 @@ export function PWAInstallPrompt() {
           exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-20 left-4 right-4 z-50 md:left-auto md:right-8 md:bottom-8 md:w-96"
         >
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-primary/20 p-5 flex flex-col gap-4">
+          <div className="bg-surface rounded-2xl shadow-2xl border border-primary/20 p-5 flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
                   <Download className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white">Instalar Salud Conecta IA</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Accede más rápido desde tu pantalla de inicio.</p>
+                  <h3 className="font-bold text-on-surface">Instalar Salud Conecta IA</h3>
+                  <p className="text-sm text-on-surface-variant">Accede más rápido desde tu pantalla de inicio.</p>
                 </div>
               </div>
               <button 
                 onClick={handleDismiss}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400"
+                className="p-1 hover:bg-surface-container-high rounded-lg text-on-surface-variant"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -77,13 +77,13 @@ export function PWAInstallPrompt() {
             <div className="flex gap-3">
               <button
                 onClick={handleDismiss}
-                className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                className="flex-1 px-4 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors"
               >
                 Ahora no
               </button>
               <button
                 onClick={handleInstall}
-                className="flex-[2] bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform active:scale-95"
+                className="flex-[2] bg-primary text-on-primary px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform active:scale-95"
               >
                 Instalar App
               </button>

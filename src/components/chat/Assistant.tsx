@@ -35,14 +35,14 @@ export default function Assistant() {
   };
 
   return (
-    <div className="flex-1 max-w-6xl mx-auto w-full flex flex-col p-4 md:p-6 bg-white shadow-sm">
+    <div className="flex-1 max-w-6xl mx-auto w-full flex flex-col p-4 md:p-6 bg-surface shadow-sm">
       <div className="flex items-center gap-3 mb-6 p-4 bg-primary/5 rounded-xl border border-primary/10">
-        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
+        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-on-primary">
           <Bot className="w-7 h-7" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-primary">Asistente de Salur Conecta IA</h2>
-          <p className="text-sm text-slate-500">Empático y Eficiente • Disponible 24/7</p>
+          <p className="text-sm text-on-surface-variant">Empático y Eficiente • Disponible 24/7</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export default function Assistant() {
         <AnimatePresence initial={false}>
           {messages.map((message, index) => (
             <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[85%] p-4 rounded-xl shadow-sm border ${message.role === 'assistant' ? 'bg-primary/5 border-primary/10 text-on-surface' : 'bg-white border-gray-200 text-on-surface'}`}>
+              <div className={`max-w-[85%] p-4 rounded-xl shadow-sm border ${message.role === 'assistant' ? 'bg-primary/5 border-primary/10 text-on-surface' : 'bg-surface-container-low border-outline-variant/20 text-on-surface'}`}>
                 <div className="flex items-center gap-2 mb-2">
                   {message.role === 'assistant' ? <Bot className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-on-surface-variant" />}
                   <span className="text-xs font-bold uppercase">{message.role === 'assistant' ? 'Asistente IA' : 'T\u00fa'}</span>
@@ -70,14 +70,14 @@ export default function Assistant() {
         )}
       </div>
 
-      <div className="flex gap-2 p-2 bg-slate-50 rounded-xl border border-gray-200">
-        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Escribe tu consulta aqu\u00ed..." className="flex-1 p-3 bg-transparent resize-none focus:outline-none text-sm" rows={1} />
-        <button onClick={handleSend} disabled={isLoading || !input.trim()} className={`p-3 rounded-lg transition-all ${input.trim() && !isLoading ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+      <div className="flex gap-2 p-2 bg-surface-container-low rounded-xl border border-outline-variant/20">
+        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Escribe tu consulta aqu\u00ed..." className="flex-1 p-3 bg-transparent resize-none focus:outline-none text-sm text-on-surface placeholder:text-on-surface-variant/50" rows={1} />
+        <button onClick={handleSend} disabled={isLoading || !input.trim()} className={`p-3 rounded-lg transition-all ${input.trim() && !isLoading ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface-variant/40 cursor-not-allowed'}`}>
           <Send className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="mt-4 text-center text-xs text-slate-400">La IA puede cometer errores. Verifica la informaci\u00f3n importante.</div>
+      <div className="mt-4 text-center text-xs text-on-surface-variant/60">La IA puede cometer errores. Verifica la informaci\u00f3n importante.</div>
     </div>
   );
 }

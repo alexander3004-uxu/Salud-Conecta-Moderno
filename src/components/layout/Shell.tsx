@@ -140,7 +140,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
           <button 
             onClick={() => setActiveTab('premium-health')}
             className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all ${
-              activeTab === 'premium-health' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'text-on-surface-variant hover:bg-surface-container'
+              activeTab === 'premium-health' ? 'bg-amber-500/10 text-amber-600' : 'text-on-surface-variant hover:bg-surface-container'
             }`}
             title="Red Premium"
           >

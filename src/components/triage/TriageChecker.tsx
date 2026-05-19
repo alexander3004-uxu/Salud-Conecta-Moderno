@@ -228,18 +228,18 @@ export default function TriageChecker() {
   const getSeverityBadgeStyles = (severity: string) => {
     switch (severity) {
       case 'emergency': 
-        return 'bg-red-500/10 border-red-500/20 text-red-500';
+        return 'bg-error/10 border-error/20 text-error';
       case 'high': 
-        return 'bg-orange-500/10 border-orange-500/20 text-orange-500';
+        return 'bg-amber-500/10 border-amber-500/20 text-amber-500';
       case 'medium': 
         return 'bg-amber-500/10 border-amber-500/20 text-amber-500';
       default: 
-        return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500';
+        return 'bg-secondary/10 border-secondary/20 text-secondary';
     }
   };
 
   return (
-    <div className="flex-1 w-full bg-gradient-to-b from-sky-50/50 to-white dark:from-slate-950 dark:to-slate-900 flex flex-col font-sans relative overflow-hidden">
+    <div className="flex-1 w-full bg-background flex flex-col font-sans relative overflow-hidden">
       
       {/* Toast Notification */}
       <AnimatePresence>
@@ -250,8 +250,8 @@ export default function TriageChecker() {
             exit={{ opacity: 0, y: -50, x: '-50%' }}
             className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 border text-xs font-bold uppercase tracking-wider backdrop-blur-md ${
               toastType === 'success' 
-                ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-600 dark:text-emerald-400' 
-                : 'bg-red-500/15 border-red-500/35 text-red-600 dark:text-red-400'
+                ? 'bg-secondary/15 border-secondary/35 text-secondary' 
+                : 'bg-error/15 border-error/35 text-error'
             }`}
           >
             {toastType === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
@@ -263,16 +263,16 @@ export default function TriageChecker() {
       <div className="max-w-[1300px] mx-auto w-full flex-1 flex flex-col p-4 md:p-6 lg:p-8 relative">
         
         {/* Header Block */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-[24px] p-4 mb-6 flex items-center justify-between shadow-sm shrink-0">
+        <div className="bg-surface-container/80 backdrop-blur-md border border-outline-variant/30 rounded-[24px] p-4 mb-6 flex items-center justify-between shadow-sm shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <Activity className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <span className="font-display font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+              <span className="font-display font-black text-on-surface flex items-center gap-1.5">
                 Triaje Médico con Inteligencia Artificial
               </span>
-              <p className="text-[10px] uppercase tracking-widest font-black text-slate-400">
+              <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
                 Interoperable • Georeferenciado ({membership.toUpperCase()})
               </p>
             </div>
@@ -280,7 +280,7 @@ export default function TriageChecker() {
           {triageResult && (
             <button 
               onClick={handleReset}
-              className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              className="w-8 h-8 rounded-lg hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
               title="Reiniciar consulta"
             >
               <RotateCcw className="w-4 h-4"/>
@@ -292,7 +292,7 @@ export default function TriageChecker() {
         <div className="flex-1 flex flex-col lg:flex-row gap-6 relative overflow-hidden min-h-0">
           
           {/* Left Column: Conversational Chat */}
-          <div className="flex-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-[32px] overflow-hidden flex flex-col shadow-sm relative min-h-[450px]">
+          <div className="flex-1 bg-surface-container-low/40 backdrop-blur-sm border border-outline-variant/30 rounded-[32px] overflow-hidden flex flex-col shadow-sm relative min-h-[450px]">
             
             {/* Chat message space */}
             <div className="flex-grow overflow-y-auto p-5 md:p-6 space-y-5 scrollbar-none">
@@ -304,8 +304,8 @@ export default function TriageChecker() {
                   <div className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                     <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 shadow-sm ${
                       m.role === 'assistant' 
-                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' 
-                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                        ? 'bg-primary/10 border-primary/20 text-primary' 
+                        : 'bg-surface-container-high border-outline-variant/30 text-on-surface-variant'
                     }`}>
                       {m.role === 'assistant' ? <Bot size={16} /> : <User size={16} />}
                     </div>
@@ -313,12 +313,12 @@ export default function TriageChecker() {
                     <div className="flex flex-col gap-1">
                       <div className={`px-4.5 py-3 rounded-2xl text-xs md:text-sm leading-relaxed whitespace-pre-wrap shadow-sm border ${
                         m.role === 'assistant'
-                          ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-100 dark:border-slate-800 rounded-tl-none'
-                          : 'bg-blue-500 text-white border-blue-600 rounded-tr-none'
+                          ? 'bg-surface border-outline-variant/20 text-on-surface rounded-tl-none'
+                          : 'bg-primary text-on-primary border-primary rounded-tr-none'
                       }`}>
                         {m.content}
                       </div>
-                      <span className="text-[8px] font-bold text-slate-400 px-1 uppercase tracking-wider self-end mt-0.5">
+                      <span className="text-[8px] font-bold text-on-surface-variant/60 px-1 uppercase tracking-wider self-end mt-0.5">
                         {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -336,14 +336,14 @@ export default function TriageChecker() {
                     className="flex justify-start"
                   >
                     <div className="flex gap-3 max-w-[80%]">
-                      <div className="w-8 h-8 rounded-lg border bg-blue-500/10 border-blue-500/20 text-blue-500 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg border bg-primary/10 border-primary/20 text-primary flex items-center justify-center shrink-0">
                         <Bot size={16} className="animate-pulse" />
                       </div>
-                      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1.5 shadow-sm">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-2 animate-pulse">Analizando...</span>
+                      <div className="bg-surface border border-outline-variant/20 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1.5 shadow-sm">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <span className="text-[9px] font-black text-primary uppercase tracking-widest ml-2 animate-pulse">Analizando...</span>
                       </div>
                     </div>
                   </motion.div>
@@ -353,11 +353,11 @@ export default function TriageChecker() {
             </div>
 
             {/* Input Form Box */}
-            <div className="p-4 md:p-5 bg-white dark:bg-slate-900 border-t border-slate-200/60 dark:border-slate-800 shrink-0">
+            <div className="p-4 md:p-5 bg-surface border-t border-outline-variant/20 shrink-0">
               <div className="flex gap-2 max-w-3xl mx-auto items-center">
                 <div className="flex-1 relative">
                   <input 
-                    className="w-full h-12 pl-4 pr-12 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs md:text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:focus:ring-blue-500/20 transition-all disabled:opacity-50" 
+                    className="w-full h-12 pl-4 pr-12 rounded-xl border border-outline-variant/30 bg-surface-container-low text-xs md:text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all disabled:opacity-50" 
                     placeholder="Escribe tus síntomas aquí (ej: dolor de garganta y fiebre)..." 
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
@@ -369,8 +369,8 @@ export default function TriageChecker() {
                     disabled={isTyping}
                     className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                       isListening 
-                        ? 'bg-red-500 text-white animate-pulse' 
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                        ? 'bg-error text-on-error animate-pulse' 
+                        : 'text-on-surface-variant hover:text-on-surface'
                     }`}
                   >
                     <Mic size={16} />
@@ -379,7 +379,7 @@ export default function TriageChecker() {
                 <button 
                   onClick={() => handleSend()} 
                   disabled={!input.trim() || isTyping}
-                  className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  className="w-12 h-12 bg-primary hover:brightness-110 text-on-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/15 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -393,11 +393,11 @@ export default function TriageChecker() {
               <motion.div 
                 initial={{ opacity: 0, x: 25 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] overflow-hidden flex flex-col shadow-lg flex-1 min-h-[450px]"
+                className="bg-surface border border-outline-variant/30 rounded-[32px] overflow-hidden flex flex-col shadow-lg flex-1 min-h-[450px]"
               >
                 {/* Result header showing severity */}
-                <div className={`p-5 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/60 ${getSeverityBadgeStyles(triageResult.severity)}`}>
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+                <div className={`p-5 flex items-center gap-3 border-b border-outline-variant/20 ${getSeverityBadgeStyles(triageResult.severity)}`}>
+                  <div className="w-10 h-10 rounded-xl bg-surface/20 flex items-center justify-center border border-surface/30">
                     <HeartPulse size={20} />
                   </div>
                   <div>
@@ -412,7 +412,7 @@ export default function TriageChecker() {
                     </h4>
                   </div>
                   {triageResult.severity === 'emergency' && (
-                    <Zap className="w-5 h-5 text-red-500 ml-auto animate-bounce shrink-0" />
+                    <Zap className="w-5 h-5 text-error ml-auto animate-bounce shrink-0" />
                   )}
                 </div>
 
@@ -421,45 +421,45 @@ export default function TriageChecker() {
                   
                   {/* AI Recommendation */}
                   <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-blue-500">
+                    <div className="flex items-center gap-1.5 text-primary">
                       <Bot size={16} />
                       <span className="text-[10px] font-black uppercase tracking-widest">Recomendación IA</span>
                     </div>
-                    <p className="text-xs md:text-sm font-semibold leading-relaxed text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <p className="text-xs md:text-sm font-semibold leading-relaxed text-on-surface bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20">
                       {triageResult.recommendation}
                     </p>
                   </div>
 
                   {/* Clinical Reasoning */}
                   <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-slate-500">
+                    <div className="flex items-center gap-1.5 text-on-surface-variant">
                       <AlertTriangle size={16} />
                       <span className="text-[10px] font-black uppercase tracking-widest">Justificación Médica</span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1 whitespace-pre-wrap">
+                    <p className="text-xs text-on-surface-variant leading-relaxed pl-1 whitespace-pre-wrap">
                       {triageResult.reasoning}
                     </p>
                   </div>
 
                   {/* Over-the-counter Medication if suggested */}
                   {triageResult.medication?.name && (
-                    <div className="space-y-2 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
-                      <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                    <div className="space-y-2 p-4 bg-secondary/5 rounded-2xl border border-secondary/10">
+                      <div className="flex items-center gap-1.5 text-secondary">
                         <Pill size={16} />
                         <span className="text-[10px] font-black uppercase tracking-widest">Sugerencia Farmacéutica (Venta Libre)</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 pt-1.5">
                         <div className="flex flex-col">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase">Medicamento</span>
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-350">{triageResult.medication.name}</span>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Medicamento</span>
+                          <span className="text-xs font-bold text-on-surface">{triageResult.medication.name}</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase">Dosis</span>
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-350">{triageResult.medication.dosage}</span>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Dosis</span>
+                          <span className="text-xs font-bold text-on-surface">{triageResult.medication.dosage}</span>
                         </div>
                         <div className="flex flex-col col-span-2">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase">Toma</span>
-                          <span className="text-xs text-slate-600 dark:text-slate-400">{triageResult.medication.frequency} • {triageResult.medication.duration}</span>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Toma</span>
+                          <span className="text-xs text-on-surface-variant">{triageResult.medication.frequency} • {triageResult.medication.duration}</span>
                         </div>
                       </div>
                     </div>
@@ -468,37 +468,37 @@ export default function TriageChecker() {
                   {/* Proximity facility geolocation cards */}
                   {triageResult.locationInfo && (
                     <div className="space-y-3">
-                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant mb-1">
                         Centros Asistenciales Recomendados 📍
                       </div>
                       
                       {/* Nearest Hospital Card */}
                       {triageResult.locationInfo.closestHospital && (
-                        <div className="p-4 bg-red-500/5 rounded-2xl border border-red-500/10 space-y-3">
+                        <div className="p-4 bg-error/5 rounded-2xl border border-error/10 space-y-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-red-505 dark:text-red-400">
-                              <MapPin size={16} className="text-red-500" />
+                            <div className="flex items-center gap-1.5 text-error">
+                              <MapPin size={16} />
                               <span className="text-[10px] font-black uppercase tracking-widest">Hospital Más Cercano</span>
                             </div>
-                            <span className="text-[9px] font-black bg-red-500/10 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-lg border border-red-500/20">
+                            <span className="text-[9px] font-black bg-error/10 text-error px-2 py-0.5 rounded-lg border border-error/20">
                               {triageResult.locationInfo.closestHospitalDistanceKm?.toFixed(1)} KM
                             </span>
                           </div>
                           <div>
-                            <h5 className="text-xs font-black text-slate-800 dark:text-white leading-tight">
+                            <h5 className="text-xs font-black text-on-surface leading-tight">
                               {triageResult.locationInfo.closestHospital.name}
                             </h5>
                             <div className="flex items-center gap-2 mt-1.5">
-                              <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
-                                <Clock size={12} className="text-red-500" /> {triageResult.locationInfo.closestHospitalTravelTime}
+                              <div className="flex items-center gap-1 text-[10px] font-bold text-on-surface-variant">
+                                <Clock size={12} className="text-error" /> {triageResult.locationInfo.closestHospitalTravelTime}
                               </div>
-                              <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Urgencias 24h</span>
+                              <div className="w-1 h-1 rounded-full bg-outline-variant" />
+                              <span className="text-[10px] font-bold text-secondary">Urgencias 24h</span>
                             </div>
                           </div>
                           <button 
                             onClick={() => handleViewOnMap(triageResult.locationInfo?.closestHospital)}
-                            className="w-full h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md shadow-red-500/10 hover:shadow-red-500/20"
+                            className="w-full h-10 bg-error hover:brightness-110 text-on-error rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md shadow-error/10"
                           >
                             <Compass className="w-3.5 h-3.5" />
                             Ruta al Hospital en Google Maps
@@ -508,31 +508,31 @@ export default function TriageChecker() {
 
                       {/* Nearest Health Center Card */}
                       {triageResult.locationInfo.closestCenter && (
-                        <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 space-y-3">
+                        <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-blue-505 dark:text-blue-400">
-                              <MapPin size={16} className="text-blue-500" />
+                            <div className="flex items-center gap-1.5 text-primary">
+                              <MapPin size={16} />
                               <span className="text-[10px] font-black uppercase tracking-widest">Centro de Salud Más Cercano</span>
                             </div>
-                            <span className="text-[9px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-500/20">
+                            <span className="text-[9px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-lg border border-primary/20">
                               {triageResult.locationInfo.closestCenterDistanceKm?.toFixed(1)} KM
                             </span>
                           </div>
                           <div>
-                            <h5 className="text-xs font-black text-slate-800 dark:text-white leading-tight">
+                            <h5 className="text-xs font-black text-on-surface leading-tight">
                               {triageResult.locationInfo.closestCenter.name}
                             </h5>
                             <div className="flex items-center gap-2 mt-1.5">
-                              <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
-                                <Clock size={12} className="text-blue-500" /> {triageResult.locationInfo.closestCenterTravelTime}
+                              <div className="flex items-center gap-1 text-[10px] font-bold text-on-surface-variant">
+                                <Clock size={12} className="text-primary" /> {triageResult.locationInfo.closestCenterTravelTime}
                               </div>
-                              <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Disponible</span>
+                              <div className="w-1 h-1 rounded-full bg-outline-variant" />
+                              <span className="text-[10px] font-bold text-secondary">Disponible</span>
                             </div>
                           </div>
                           <button 
                             onClick={() => handleViewOnMap(triageResult.locationInfo?.closestCenter)}
-                            className="w-full h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 hover:shadow-blue-500/20"
+                            className="w-full h-10 bg-primary hover:brightness-110 text-on-primary rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md shadow-primary/10"
                           >
                             <Compass className="w-3.5 h-3.5" />
                             Ruta al Centro en Google Maps
@@ -545,18 +545,18 @@ export default function TriageChecker() {
                 </div>
 
                 {/* Bottom Card Actions */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800/80 flex gap-2 shrink-0">
+                <div className="p-4 bg-surface-container-low border-t border-outline-variant/20 flex gap-2 shrink-0">
                   <button 
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex-1 h-11 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
+                    className="flex-1 h-11 bg-surface hover:bg-surface-container-high border border-outline-variant/30 text-on-surface-variant rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
                   >
-                    {isSaving ? <Loader2 size={14} className="animate-spin text-blue-500" /> : <Save size={14} />}
+                    {isSaving ? <Loader2 size={14} className="animate-spin text-primary" /> : <Save size={14} />}
                     Guardar
                   </button>
                   <button 
                     onClick={handleReset}
-                    className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
+                    className="flex-1 h-11 bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     <RotateCcw size={14} />
                     Nuevo
@@ -564,12 +564,12 @@ export default function TriageChecker() {
                 </div>
               </motion.div>
             ) : (
-              <div className="flex-1 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] flex flex-col items-center justify-center p-8 text-center bg-slate-50/20 dark:bg-slate-900/10 min-h-[450px]">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-700 mb-4 shadow-sm">
+              <div className="flex-1 border-2 border-dashed border-outline-variant/30 rounded-[32px] flex flex-col items-center justify-center p-8 text-center bg-surface-container-low/20 min-h-[450px]">
+                <div className="w-14 h-14 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-center text-on-surface-variant/40 mb-4 shadow-sm">
                   <Bot size={28} />
                 </div>
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Esperando Síntomas</h4>
-                <p className="text-[11px] text-slate-400 mt-2 max-w-[280px] leading-relaxed">
+                <h4 className="text-xs font-black text-on-surface-variant uppercase tracking-widest">Esperando Síntomas</h4>
+                <p className="text-[11px] text-on-surface-variant/60 mt-2 max-w-[280px] leading-relaxed">
                   Describa lo que siente en el chat de la izquierda para recibir un análisis de urgencia, recomendaciones de autocuidado y mapas de centros de salud.
                 </p>
               </div>

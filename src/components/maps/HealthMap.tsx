@@ -294,7 +294,7 @@ function LeafletMapContent({
               mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 15, { animate: true });
             }
           }}
-          className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 active:scale-95 transition-all duration-200"
+          className="w-12 h-12 bg-surface border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant active:scale-95 transition-all duration-200"
           title="Mi ubicación"
         >
           <Target className="w-5 h-5" />
@@ -305,7 +305,7 @@ function LeafletMapContent({
               mapInstanceRef.current.zoomIn();
             }
           }}
-          className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 active:scale-95 transition-all duration-200"
+          className="w-12 h-12 bg-surface border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant active:scale-95 transition-all duration-200"
           title="Acercar"
         >
           <Plus className="w-5 h-5" />
@@ -316,7 +316,7 @@ function LeafletMapContent({
               mapInstanceRef.current.zoomOut();
             }
           }}
-          className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 active:scale-95 transition-all duration-200"
+          className="w-12 h-12 bg-surface border border-outline-variant/30 rounded-2xl shadow-xl flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant active:scale-95 transition-all duration-200"
           title="Alejar"
         >
           <Minus className="w-5 h-5" />

@@ -101,26 +101,52 @@
     --color-inverse-on-surface: #f8fafc;
     --color-outline: #64748b;
     --color-outline-variant: #cbd5e1;
+    --color-surface-tint: #005fb0;
     
     --color-primary: #005fb0;
     --color-on-primary: #ffffff;
     --color-primary-container: #d5e3ff;
     --color-on-primary-container: #001c3b;
+    --color-inverse-primary: #a6c8ff;
     
     --color-secondary: #006d3b;
     --color-on-secondary: #ffffff;
     --color-secondary-container: #70fda7;
     --color-on-secondary-container: #00210e;
 
+    --color-tertiary: #ba1a1a;
+    --color-on-tertiary: #ffffff;
+    --color-tertiary-container: #ffdad6;
+    --color-on-tertiary-container: #410002;
+
+    --color-error: #ba1a1a;
+    --color-on-error: #ffffff;
+    --color-error-container: #ffdad6;
+    --color-on-error-container: #410002;
+
+    --color-primary-fixed: #d5e3ff;
+    --color-primary-fixed-dim: #a6c8ff;
+    --color-on-primary-fixed: #001c3b;
+    --color-on-primary-fixed-variant: #004786;
+
+    --color-secondary-fixed: #70fda7;
+    --color-secondary-fixed-dim: #51df8e;
+    --color-on-secondary-fixed: #00210e;
+    --color-on-secondary-fixed-variant: #00522c;
+
     /* Adaptive effects for light mode */
     --glass-border: rgba(15, 23, 42, 0.08);
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --shadow-color: rgba(15, 23, 42, 0.08);
+    --shadow-elevated: 0 8px 32px rgba(15, 23, 42, 0.1);
   }
 
   /* Default (Dark) Adaptive effects */
   :root {
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-bg: rgba(11, 19, 38, 0.6);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.2);
   }
 
   h1, h2, h3, h4, h5, h6 {

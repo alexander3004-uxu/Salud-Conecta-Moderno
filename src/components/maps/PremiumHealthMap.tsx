@@ -101,21 +101,21 @@ export default function PremiumHealthMap() {
   };
 
   const getTypeColor = (type: string) => {
-    if (type.includes('hospital')) return 'bg-red-500/10 text-red-600 border-red-500/20';
-    if (type === 'clinic') return 'bg-violet-500/10 text-violet-600 border-violet-500/20';
+    if (type.includes('hospital')) return 'bg-error/10 text-error border-error/20';
+    if (type === 'clinic') return 'bg-primary/10 text-primary border-primary/20';
     if (type === 'laboratory') return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-    if (type === 'pharmacy') return 'bg-green-500/10 text-green-600 border-green-500/20';
-    return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+    if (type === 'pharmacy') return 'bg-secondary/10 text-secondary border-secondary/20';
+    return 'bg-primary/10 text-primary border-primary/20';
   };
 
   // --- Membership Gate ---
   if (!isPremium) {
     return (
-      <div className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 via-amber-50/30 to-slate-50 dark:from-slate-950 dark:via-amber-950/10 dark:to-slate-950">
+      <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-amber-200/50 dark:border-amber-800/30 overflow-hidden"
+          className="max-w-md w-full bg-surface-container rounded-3xl shadow-2xl border border-amber-500/20 overflow-hidden"
         >
           <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 p-8 text-center">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
@@ -130,10 +130,10 @@ export default function PremiumHealthMap() {
             <div className="space-y-3">
               {['Hospitales y clínicas privadas', 'Laboratorios especializados', 'Navegación en tiempo real', 'Atención prioritaria'].map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
                     <Star className="w-3 h-3 text-amber-600" />
                   </div>
-                  <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{feature}</span>
+                  <span className="text-sm text-on-surface font-medium">{feature}</span>
                 </div>
               ))}
             </div>
@@ -151,7 +151,7 @@ export default function PremiumHealthMap() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex-1 flex flex-col bg-background overflow-hidden">
       {/* Premium Header */}
       <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 px-4 sm:px-6 py-4 shrink-0">
         <div className="flex items-center gap-3">
@@ -168,26 +168,26 @@ export default function PremiumHealthMap() {
       </div>
 
       {/* Search Bar */}
-      <div className="px-4 sm:px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
+      <div className="px-4 sm:px-6 py-3 bg-surface border-b border-outline-variant/30 shrink-0">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar clínica, hospital o laboratorio privado..."
-            className="w-full h-10 pl-10 pr-10 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+            className="w-full h-10 pl-10 pr-10 bg-surface-container border border-outline-variant/30 rounded-xl text-sm text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+              <X className="w-4 h-4 text-on-surface-variant hover:text-on-surface" />
             </button>
           )}
         </div>
       </div>
 
       {/* Filter Chips */}
-      <div className="px-4 sm:px-6 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 overflow-x-auto">
+      <div className="px-4 sm:px-6 py-2.5 bg-surface border-b border-outline-variant/30 shrink-0 overflow-x-auto">
         <div className="flex gap-2">
           {FILTER_OPTIONS.map(opt => (
             <button
@@ -196,7 +196,7 @@ export default function PremiumHealthMap() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                 activeFilter === opt.value
                   ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
               }`}
             >
               <opt.icon className="w-3 h-3" />
@@ -210,11 +210,11 @@ export default function PremiumHealthMap() {
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
         {filteredFacilities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
-              <Search className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+            <div className="w-16 h-16 bg-surface-container-high rounded-2xl flex items-center justify-center mb-4">
+              <Search className="w-7 h-7 text-on-surface-variant/40" />
             </div>
-            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400">No se encontraron centros privados</h3>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Intenta modificar tu búsqueda o filtros</p>
+            <h3 className="text-sm font-bold text-on-surface-variant">No se encontraron centros privados</h3>
+            <p className="text-xs text-on-surface-variant/60 mt-1">Intenta modificar tu búsqueda o filtros</p>
           </div>
         ) : (
           filteredFacilities.map((facility) => (
@@ -222,12 +222,12 @@ export default function PremiumHealthMap() {
               key={facility.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all overflow-hidden group"
+              className="bg-surface rounded-2xl border border-outline-variant/30 shadow-sm hover:shadow-lg transition-all overflow-hidden group"
             >
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   {/* Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200/50 dark:border-amber-800/30 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                     {facility.type.includes('hospital') ? (
                       <Building2 className="w-5 h-5 text-amber-600" />
                     ) : facility.type === 'clinic' || facility.type === 'dental' ? (
@@ -241,7 +241,7 @@ export default function PremiumHealthMap() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white leading-tight truncate">
+                    <h3 className="text-sm font-bold text-on-surface leading-tight truncate">
                       {facility.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
@@ -251,11 +251,11 @@ export default function PremiumHealthMap() {
                       {facility.rating && (
                         <div className="flex items-center gap-0.5">
                           <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                          <span className="text-[10px] font-bold text-slate-500">{facility.rating.toFixed(1)}</span>
+                          <span className="text-[10px] font-bold text-on-surface-variant">{facility.rating.toFixed(1)}</span>
                         </div>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+                    <p className="text-[11px] text-on-surface-variant/60 mt-1 truncate">
                       <MapPin className="w-3 h-3 inline-block mr-0.5 -mt-0.5" />
                       {facility.address}
                     </p>
@@ -264,10 +264,10 @@ export default function PremiumHealthMap() {
                   {/* Distance */}
                   {facility.distanceKm !== Infinity && (
                     <div className="shrink-0 text-right">
-                      <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+                      <span className="text-xs font-black text-amber-600">
                         {facility.distanceKm.toFixed(1)} km
                       </span>
-                      <p className="text-[9px] text-slate-400 font-bold mt-0.5">
+                      <p className="text-[9px] text-on-surface-variant/60 font-bold mt-0.5">
                         ~{estimateTravelTime(facility.distanceKm)}
                       </p>
                     </div>
@@ -278,12 +278,12 @@ export default function PremiumHealthMap() {
                 {facility.services && facility.services.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-3">
                     {facility.services.slice(0, 4).map((s) => (
-                      <span key={s} className="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md">
+                      <span key={s} className="text-[9px] font-bold bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded-md">
                         {s}
                       </span>
                     ))}
                     {facility.services.length > 4 && (
-                      <span className="text-[9px] font-bold text-slate-400">+{facility.services.length - 4} más</span>
+                      <span className="text-[9px] font-bold text-on-surface-variant/60">+{facility.services.length - 4} más</span>
                     )}
                   </div>
                 )}
@@ -302,7 +302,7 @@ export default function PremiumHealthMap() {
                   {facility.phone && (
                     <a
                       href={`tel:${facility.phone}`}
-                      className="h-9 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+                      className="h-9 px-4 bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
                     >
                       <Phone className="w-3.5 h-3.5" />
                       Llamar
