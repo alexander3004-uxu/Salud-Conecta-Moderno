@@ -100,9 +100,9 @@ export default function App() {
     switch (activeTab) {
       case 'home':
         return (
-          <Hero 
-            onStartAssistant={() => setActiveTab('triage')} 
-            onViewMap={() => setActiveTab('map')} 
+          <Hero
+            onStartAssistant={() => setActiveTab('triage')}
+            onViewMap={() => setActiveTab('map')}
             onViewAppointments={() => setActiveTab('appointments')}
             onOpenRegistration={(type) => openRegistration(type)}
           />
@@ -145,9 +145,9 @@ export default function App() {
         return <CenterDashboard />;
       default:
         return (
-          <Hero 
-            onStartAssistant={() => setActiveTab('triage')} 
-            onViewMap={() => setActiveTab('map')} 
+          <Hero
+            onStartAssistant={() => setActiveTab('triage')}
+            onViewMap={() => setActiveTab('map')}
             onViewAppointments={() => setActiveTab('appointments')}
             onOpenRegistration={(type) => openRegistration(type)}
           />

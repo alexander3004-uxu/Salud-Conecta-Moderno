@@ -6,6 +6,7 @@ import { getCurrentLocation, getNearestFacility, getEmergencyFacilities, estimat
 import { NICARAGUA_HOSPITALS } from '../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../data/nicaraguaPublicHealthNetwork';
 import { getSmartTriage } from '../lib/gemini';
+import { obtenerTodosLosCentros, buscarSintoma, buscarMultiplesMedicamentos } from '../data/granadaDatabase';
 
 const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
   const errInfo: FirestoreErrorInfo = {
@@ -97,9 +98,9 @@ export interface TriageWithLocationResult {
  
 export async function getEnhancedTriageWithLocation(symptoms: string, membership: 'free' | 'premium' = 'free'): Promise<TriageWithLocationResult> {
   try {
-    // Coordenadas por defecto (Managua Centro) alineadas con el mapa
-    let userLat = 12.1328;
-    let userLng = -86.2504;
+    // Coordenadas por defecto (Granada Centro) alineadas con la base de datos local
+    let userLat = 11.93749;
+    let userLng = -85.968;
 
     const userLocation = await getCurrentLocation();
     if (userLocation) {
@@ -107,23 +108,102 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
       userLng = userLocation.longitude;
     }
 
-    // 1. Obtener la red completa combinada (Firestore dinámicas + Red pública y de hospitales estáticos de Nicaragua)
+    // 1. Obtener la red completa combinada (Firestore dinámicas + Red pública y centros de Granada + otros hospitales de Nicaragua)
     const dbClinics = await getClinics();
+    
+    const granadaClinicsMapped: Clinic[] = obtenerTodosLosCentros().map((c: any) => {
+      const mappedType = c.categoria === 'hospital' ? 'hospital' : c.categoria === 'clinica' ? 'clinic' : c.categoria === 'farmacia' ? 'pharmacy' : 'laboratory';
+      const mappedSector = c.categoria === 'hospital' || c.seguros?.includes('MINSA') ? 'public' : 'private';
+      return {
+        id: `granada-${c.categoria}-${c.id}`,
+        name: c.nombre,
+        type: mappedType,
+        sector: mappedSector,
+        location: { lat: c.lat, lng: c.lng },
+        address: c.direccion,
+        phone: c.telefono,
+        open24h: c.horario === '24 horas',
+        isOpen: true,
+        rating: 4.8,
+        reviews: 12,
+        description: c.notas || '',
+        services: c.servicios || []
+      } as Clinic;
+    });
+
     const staticClinics: Clinic[] = [
+      ...granadaClinicsMapped,
       ...NICARAGUA_HOSPITALS.map((h, i) => ({ id: `static-h-${i}`, ...h } as Clinic)),
       ...PUBLIC_HEALTH_NETWORK.map((h, i) => ({ id: `static-p-${i}`, ...h } as Clinic))
     ];
     const fullNetwork = [...dbClinics, ...staticClinics];
 
     // 2. Filtrar la red de clínicas de acuerdo a la membresía del usuario
-    // Free: Solo red pública (MINSA)
+    // Free: Solo red pública (MINSA) o farmacias locales
     // Premium: Red pública + clínicas privadas premium registradas
     const allowedFacilities = membership === 'free'
-      ? fullNetwork.filter(c => c.sector === 'public')
+      ? fullNetwork.filter(c => c.sector === 'public' || c.type === 'pharmacy')
       : fullNetwork;
 
-    // 3. Evaluar los síntomas y determinar la urgencia con la IA (Gemini)
-    const aiTriage = await getSmartTriage(symptoms, membership);
+    // 3. Evaluar los síntomas y determinar la urgencia
+    let aiTriage: any;
+    let localFallbackUsed = false;
+
+    try {
+      aiTriage = await getSmartTriage(symptoms, membership);
+      if (aiTriage.error) {
+        throw new Error("Gemini returned error state or is not configured.");
+      }
+    } catch (e) {
+      console.warn("AI Triage failed, falling back to local database:", e);
+      localFallbackUsed = true;
+
+      // Usar búsqueda de síntoma local
+      const matchingSymptom = buscarSintoma(symptoms);
+      
+      if (matchingSymptom) {
+        // Encontrar medicamentos locales sugeridos para este síntoma
+        const matchingMeds = buscarMultiplesMedicamentos(matchingSymptom.nombre);
+        const med = matchingMeds.length > 0 ? matchingMeds[0] : null;
+
+        let localRecommendation = matchingSymptom.consejo;
+        if (med) {
+          localRecommendation += `\n\n🔹 **Medicamento Sugerido**: ${med.nombre_es} (${med.nombres_comerciales.join(', ')}) - ${med.presentacion}.`;
+          localRecommendation += `\n- **Uso**: ${med.uso_principal}`;
+          localRecommendation += `\n- **Dosis recomendada**: ${med.dosis_adultos}`;
+          localRecommendation += `\n- **Precio estimado en Granada**: C$ ${med.precio_cordobas} Córdobas.`;
+          
+          if (med.contraindicaciones && med.contraindicaciones.length > 0) {
+            localRecommendation += `\n- **Contraindicaciones**: ${med.contraindicaciones.join(', ')}`;
+          }
+          if (med.embarazo) {
+            const isCategoryDangerous = med.embarazo.includes('Categoría X') || med.embarazo.includes('Categoría D');
+            localRecommendation += `\n- **Embarazo (${med.embarazo})**: ${isCategoryDangerous ? '⚠️ EVITAR EN EMBARAZADAS. Alto riesgo fetal.' : 'Uso con precaución médica.'}`;
+          }
+        }
+
+        aiTriage = {
+          urgency: matchingSymptom.urgencia_default === 'ALTA' ? 'high' : matchingSymptom.requiere_atencion ? 'emergency' : 'medium',
+          recommendation: localRecommendation,
+          reasoning: `Heurística de consulta local activa (Coincidencia: ${matchingSymptom.nombre}).`,
+          medication: med ? {
+            name: med.nombre_es,
+            dosage: med.dosis_adultos || '',
+            frequency: 'Según indicación',
+            duration: '3-5 días'
+          } : undefined,
+          error: false
+        };
+      } else {
+        // Fallback genérico si no hay coincidencia exacta de síntoma en Granada
+        aiTriage = {
+          urgency: 'medium',
+          recommendation: 'No hemos podido identificar un síntoma específico en nuestra base de datos local de Granada. Por favor, acuda a consulta general en su centro de salud local de la Red Pública (MINSA) o farmacia más cercana para evaluación profesional.',
+          reasoning: 'Heurística de consulta local (Sin coincidencia específica).',
+          error: false
+        };
+      }
+    }
 
     // 4. Calcular el centro de salud y el hospital más cercano matemáticamente usando la fórmula Haversine basada en el GPS real del usuario
     let closestClinic = null;
@@ -161,7 +241,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
       }
     }
 
-    // 5. Mapear niveles de urgencia dinámicos de la IA (unificado: emergency en lugar de critical)
+    // 5. Mapear niveles de urgencia dinámicos (unificado: emergency en lugar de critical)
     let severity: 'low' | 'medium' | 'high' | 'emergency' = 'medium';
     if (aiTriage.urgency === 'emergency') {
       severity = 'emergency';
@@ -183,10 +263,10 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
 
     if (isUrgent && primaryFacility) {
       const sectorTag = primaryFacility.sector === 'private' ? 'Centro Privado Premium' : 'Red Pública (MINSA)';
-      recommendation = `Estás experimentando un síntoma de urgencia, debes acudir a un hospital de inmediato. De acuerdo a tu ubicación GPS, el hospital más cercano es: "${primaryFacility.name}" (${sectorTag}).`;
+      recommendation = `🚨 **ATENCIÓN URGENTE**: Estás experimentando síntomas de alerta. Acuda a emergencias de inmediato.\n\nPor tu ubicación GPS actual, el hospital más cercano es: **"${primaryFacility.name}"** (${sectorTag}).\n\n${recommendation}`;
     } else if (primaryFacility) {
       const sectorTag = primaryFacility.sector === 'private' ? 'Centro Privado Premium' : 'Red Pública (MINSA)';
-      recommendation = `${recommendation} De acuerdo a tu ubicación, el centro de salud más cercano es: "${primaryFacility.name}" (${sectorTag}).`;
+      recommendation = `${recommendation}\n\n📍 **Centro de salud más cercano**: "${primaryFacility.name}" (${sectorTag}).`;
     }
 
     const finalDistance = minDistance === Infinity ? 0 : minDistance;
@@ -194,8 +274,8 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     return {
       severity,
       recommendation,
-      reasoning: aiTriage.reasoning || `Triaje analizado para suscripción ${membership.toUpperCase()}. Distancia al centro más cercano: ${finalDistance.toFixed(1)} km.`,
-      medication: aiTriage.medication ? {
+      reasoning: aiTriage.reasoning || `Triaje analizado localmente. Distancia al centro más cercano: ${finalDistance.toFixed(1)} km.`,
+      medication: typeof aiTriage.medication === 'object' ? aiTriage.medication : aiTriage.medication ? {
         name: aiTriage.medication,
         dosage: aiTriage.dosage || '',
         frequency: aiTriage.frequency || '',

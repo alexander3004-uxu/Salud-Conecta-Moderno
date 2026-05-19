@@ -180,8 +180,8 @@ export default function TriageChecker() {
     const { userLat, userLng } = triageResult?.locationInfo || {};
     const destLat = targetClinic.location.lat;
     const destLng = targetClinic.location.lng;
-    const originLat = userLat || 12.1328;
-    const originLng = userLng || -86.2504;
+    const originLat = userLat || 11.93749;
+    const originLng = userLng || -85.968;
 
     const universalUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
 

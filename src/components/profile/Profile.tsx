@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Droplet, 
-  ShieldAlert, 
-  Cake, 
-  Save, 
-  Cloud, 
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Droplet,
+  ShieldAlert,
+  Cake,
+  Save,
+  Cloud,
   Info,
   Lock,
-  HardDrive, 
-  QrCode, 
-  ShieldCheck, 
-  LogOut, 
+  HardDrive,
+  QrCode,
+  ShieldCheck,
+  LogOut,
   Camera,
   X,
   Check,
@@ -48,7 +48,7 @@ export function Profile() {
   const [user, setUser] = useState<any>(() => {
     const firebaseUser = auth.currentUser;
     if (firebaseUser) return firebaseUser;
-    
+
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
@@ -226,43 +226,43 @@ export function Profile() {
       {/* Header Section: Profile Overview */}
       <section className="bg-surface-container rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative overflow-hidden group shadow-xl border border-outline-variant/30">
         <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        
+
         <div className="flex flex-col items-center shrink-0">
-          <div 
+          <div
             onClick={handlePhotoClick}
             className="relative z-10 w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-primary-container shrink-0 overflow-hidden shadow-2xl group/avatar cursor-pointer"
           >
-            <img 
-              alt="Profile" 
-              className="w-full h-full object-cover" 
-              src={profile.photoURL} 
+            <img
+              alt="Profile"
+              className="w-full h-full object-cover"
+              src={profile.photoURL}
             />
-            
-            <input 
-              type="file" 
-              accept="image/*" 
-              ref={fileInputRef} 
-              onChange={handlePhotoChange} 
-              className="hidden" 
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handlePhotoChange}
+              className="hidden"
             />
-            
+
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200">
               <Camera className="text-white w-8 h-8" />
             </div>
 
             <AnimatePresence>
               {isPreviewMode && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 bg-surface/60 backdrop-blur-sm flex flex-col items-center justify-center gap-1"
                 >
                   <div className="w-full h-1 bg-surface-container absolute top-0">
-                    <motion.div 
+                    <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: '66%' }}
-                      className="bg-primary h-full" 
+                      className="bg-primary h-full"
                     />
                   </div>
                   <span className="font-mono text-[10px] font-bold text-primary uppercase tracking-widest">{t('profile.preview')}</span>
@@ -272,12 +272,12 @@ export function Profile() {
           </div>
 
           {isPreviewMode && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-6 flex items-center gap-2"
             >
-              <button 
+              <button
                 onClick={handleSave}
                 disabled={isSaving}
                 className="bg-primary-container text-on-primary-container px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg hover:bg-primary transition-all active:scale-95 disabled:opacity-50"
@@ -285,7 +285,7 @@ export function Profile() {
                 <Check className="w-4 h-4" />
                 {t('profile.confirm')}
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setIsPreviewMode(false);
                   setProfile({ ...profile, photoURL: user?.photoURL || "https://lh3.googleusercontent.com/aida-public/AB6AXuCNjxM_kx1krlJpGAVOh-nfFDhGn7s-29GpIE4wJWRsqYWpCfOS2KwA0mDjXP283OFfd0LtGx5JPWVrYMEB1cg1irom_1Hm34eluol-cmYe4YG_wnOcjQSvXjDOPm-gtH24rSMm6i0J8uh2fP2_ixZm9Bq0yqMp4aTljcnyLHm8NYc7BeN6mABRDrlnCT35AHv-EBa3m15B2F8AG3IKN-eRA6aH-P_gNEBQ7te36sc60HjVj0KVBPIT4WPJljYhbiXnLMmBo9Tw9A" });
@@ -298,7 +298,7 @@ export function Profile() {
             </motion.div>
           )}
 
-          <button 
+          <button
             onClick={handlePhotoClick}
             className="mt-4 text-outline-variant hover:text-primary text-[10px] uppercase font-bold tracking-[0.2em] flex items-center gap-2 transition-all transition-colors"
           >
@@ -314,7 +314,7 @@ export function Profile() {
           <div className="flex items-center gap-2 mb-6">
             <p className="text-body-md text-on-surface-variant font-medium">{t('profile.status.frequent')}</p>
             <div className="h-4 w-px bg-outline-variant/30 mx-1" />
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="flex items-center gap-1 text-secondary text-[11px] font-bold uppercase tracking-wider"
@@ -323,7 +323,7 @@ export function Profile() {
               {t('profile.status.verified')}
             </motion.div>
           </div>
-          
+
           <div className="flex flex-wrap justify-center md:justify-start gap-4 w-full">
             <div className="bg-surface-container-high border border-outline-variant/30 rounded-2xl px-5 py-3 flex items-center gap-3 shadow-inner">
               <Droplet className="text-tertiary w-5 h-5 fill-tertiary/20" />
@@ -360,7 +360,7 @@ export function Profile() {
             {t('profile.personal_info')}
           </h2>
           {!isValidated && (
-            <button 
+            <button
               onClick={handleValidateIdentity}
               disabled={isSaving}
               className="bg-primary-container text-on-primary-container px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-primary transition-all shadow-md active:scale-95 disabled:opacity-50"
@@ -372,7 +372,7 @@ export function Profile() {
         </div>
 
         {!isValidated && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-3 shadow-inner"
@@ -381,16 +381,16 @@ export function Profile() {
             <p className="text-xs font-medium text-on-surface-variant italic">{t('profile.validate_desc')}</p>
           </motion.div>
         )}
-        
+
         <div className="bg-surface-container rounded-3xl p-6 md:p-8 border border-outline-variant/30 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-sm">
           {/* Nombre Completo */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.name_label')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
-              <input 
+              <input
                 value={profile.name}
-                onChange={(e) => setProfile({...profile, name: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner ${!isValidated ? 'cursor-not-allowed' : ''}`}
               />
@@ -407,9 +407,9 @@ export function Profile() {
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.birth')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <Cake className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
-              <input 
+              <input
                 value={profile.dob}
-                onChange={(e) => setProfile({...profile, dob: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner ${!isValidated ? 'cursor-not-allowed' : ''}`}
               />
@@ -426,9 +426,9 @@ export function Profile() {
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.phone')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
-              <input 
+              <input
                 value={profile.phone}
-                onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner ${!isValidated ? 'cursor-not-allowed' : ''}`}
               />
@@ -445,9 +445,9 @@ export function Profile() {
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.email')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
-              <input 
+              <input
                 value={profile.email}
-                onChange={(e) => setProfile({...profile, email: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner ${!isValidated ? 'cursor-not-allowed' : ''}`}
               />
@@ -464,9 +464,9 @@ export function Profile() {
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.blood')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <Droplet className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors fill-outline-variant/10" />
-              <select 
+              <select
                 value={profile.bloodType}
-                onChange={(e) => setProfile({...profile, bloodType: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, bloodType: e.target.value })}
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner appearance-none ${!isValidated ? 'cursor-not-allowed' : ''}`}
               >
@@ -494,9 +494,9 @@ export function Profile() {
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.allergies')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <ShieldAlert className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
-              <input 
+              <input
                 value={profile.allergies}
-                onChange={(e) => setProfile({...profile, allergies: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, allergies: e.target.value })}
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner ${!isValidated ? 'cursor-not-allowed' : ''}`}
               />
@@ -513,9 +513,9 @@ export function Profile() {
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.address')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
               <MapPin className="absolute left-4 top-5 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
-              <textarea 
+              <textarea
                 value={profile.address}
-                onChange={(e) => setProfile({...profile, address: e.target.value})}
+                onChange={(e) => setProfile({ ...profile, address: e.target.value })}
                 rows={2}
                 disabled={!isValidated}
                 className={`w-full p-4 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner resize-none ${!isValidated ? 'cursor-not-allowed' : ''}`}
@@ -529,7 +529,7 @@ export function Profile() {
           </div>
 
           <div className="md:col-span-2 flex justify-end">
-            <button 
+            <button
               onClick={handleSave}
               disabled={!isValidated || isSaving}
               className="bg-primary-container hover:brightness-95 text-on-primary-container px-8 py-4 rounded-2xl font-display font-bold text-sm shadow-xl transition-all flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -550,7 +550,7 @@ export function Profile() {
             </div>
             {t('profile.docs')}
           </h2>
-          <button 
+          <button
             onClick={() => setIsScannerOpen(true)}
             className="bg-secondary-container text-on-secondary-container px-5 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-secondary transition-all shadow-md active:scale-95 shadow-lg shadow-secondary/15"
           >
@@ -558,12 +558,12 @@ export function Profile() {
             {t('profile.scan')}
           </button>
         </div>
-        
+
         <div className="bg-surface-container rounded-3xl p-6 md:p-8 border border-outline-variant/30 flex flex-col gap-8 shadow-sm">
           {/* Status Banners */}
           <AnimatePresence>
             {uploadStatus === 'error' && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -576,7 +576,7 @@ export function Profile() {
                   <p className="text-sm font-bold text-error">{t('profile.sync_error')}</p>
                   <p className="text-xs text-error/80 mt-1 leading-relaxed">{uploadError}</p>
                 </div>
-                <button 
+                <button
                   onClick={handleFileUpload}
                   className="w-full sm:w-auto px-6 py-2.5 bg-error text-on-error rounded-xl font-display font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-md active:scale-95"
                 >
@@ -587,7 +587,7 @@ export function Profile() {
             )}
 
             {uploadStatus === 'success' && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -602,17 +602,16 @@ export function Profile() {
           </AnimatePresence>
 
           {/* Upload Zone */}
-          <div 
+          <div
             onClick={() => uploadStatus !== 'uploading' && handleFileUpload()}
-            className={`relative border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center gap-4 transition-all cursor-pointer bg-surface-container-high/50 group/upload overflow-hidden ${
-              uploadStatus === 'uploading' ? 'cursor-not-allowed border-primary/40' : 
-              uploadStatus === 'error' ? 'border-error/40 hover:border-error' :
-              'border-outline-variant/40 hover:border-primary'
-            }`}
+            className={`relative border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center gap-4 transition-all cursor-pointer bg-surface-container-high/50 group/upload overflow-hidden ${uploadStatus === 'uploading' ? 'cursor-not-allowed border-primary/40' :
+                uploadStatus === 'error' ? 'border-error/40 hover:border-error' :
+                  'border-outline-variant/40 hover:border-primary'
+              }`}
           >
             {/* Pulsing background during upload */}
             {uploadStatus === 'uploading' && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0.05, 0.15, 0.05] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -620,11 +619,10 @@ export function Profile() {
               />
             )}
 
-            <div className={`relative w-20 h-20 rounded-full bg-surface-container flex items-center justify-center transition-all border border-outline-variant/20 shadow-xl ${
-              uploadStatus === 'uploading' ? 'shadow-primary/10' : 
-              uploadStatus === 'error' ? 'bg-error/5 group-hover/upload:bg-error/10' :
-              'group-hover/upload:bg-primary/10'
-            }`}>
+            <div className={`relative w-20 h-20 rounded-full bg-surface-container flex items-center justify-center transition-all border border-outline-variant/20 shadow-xl ${uploadStatus === 'uploading' ? 'shadow-primary/10' :
+                uploadStatus === 'error' ? 'bg-error/5 group-hover/upload:bg-error/10' :
+                  'group-hover/upload:bg-primary/10'
+              }`}>
               {/* Progress Ring */}
               {uploadStatus === 'uploading' && (
                 <svg className="absolute inset-0 w-full h-full -rotate-90">
@@ -658,7 +656,7 @@ export function Profile() {
             <div className="text-center relative z-10 h-10 flex items-center justify-center">
               <AnimatePresence mode="wait">
                 {uploadStatus === 'uploading' ? (
-                  <motion.div 
+                  <motion.div
                     key="uploading-text"
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -666,7 +664,7 @@ export function Profile() {
                     className="flex flex-col items-center gap-1"
                   >
                     <span className="text-sm font-bold text-primary flex items-center gap-2">
-                       {t('profile.saving')}
+                      {t('profile.saving')}
                     </span>
                     <div className="flex gap-1">
                       <motion.div animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} className="w-1 h-1 bg-primary rounded-full" />
@@ -675,18 +673,18 @@ export function Profile() {
                     </div>
                   </motion.div>
                 ) : uploadStatus === 'error' ? (
-                  <motion.p 
+                  <motion.p
                     key="error-text"
-                    initial={{ opacity: 0 }} 
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-sm font-bold text-error"
                   >
                     Error
                   </motion.p>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     key="idle-text"
-                    initial={{ opacity: 0 }} 
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex flex-col items-center"
                   >
@@ -697,7 +695,7 @@ export function Profile() {
               </AnimatePresence>
             </div>
 
-            <button 
+            <button
               disabled={uploadStatus === 'uploading'}
               className="relative z-10 px-8 py-3 bg-surface-container-high border border-outline-variant/30 text-xs font-bold text-on-surface rounded-xl hover:border-primary/50 transition-all disabled:opacity-50 shadow-lg active:scale-95 min-w-[200px]"
             >
@@ -750,7 +748,7 @@ export function Profile() {
             {t('profile.emergency_contacts')}
           </h2>
           {!isValidated && (
-            <button 
+            <button
               onClick={handleValidateIdentity}
               disabled={isSaving}
               className="bg-primary-container text-on-primary-container px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-primary transition-all shadow-md active:scale-95 disabled:opacity-50"
@@ -762,7 +760,7 @@ export function Profile() {
         </div>
 
         {!isValidated && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-3 shadow-inner"
@@ -771,13 +769,13 @@ export function Profile() {
             <p className="text-xs font-medium text-on-surface-variant italic">{t('profile.validate_desc')}</p>
           </motion.div>
         )}
-        
+
         <div className="bg-surface-container rounded-3xl p-6 md:p-8 border border-outline-variant/30 flex flex-col gap-10 shadow-sm">
           {/* New Contact Form from Mockup */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2 relative">
               <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.name_label')}</label>
-              <input 
+              <input
                 disabled={!isValidated}
                 className="w-full h-12 px-4 rounded-xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Ej: Maria Garcia"
@@ -786,7 +784,7 @@ export function Profile() {
             </div>
             <div className="flex flex-col gap-2 relative">
               <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.rel_label')}</label>
-              <input 
+              <input
                 disabled={!isValidated}
                 className="w-full h-12 px-4 rounded-xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Ej: Esposa"
@@ -795,7 +793,7 @@ export function Profile() {
             </div>
             <div className="flex flex-col gap-2 relative">
               <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.phone')}</label>
-              <input 
+              <input
                 disabled={!isValidated}
                 className="w-full h-12 px-4 rounded-xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="+54 9 11 ..."
@@ -805,7 +803,7 @@ export function Profile() {
           </div>
 
           <div className="flex justify-end">
-            <button 
+            <button
               onClick={handleAddContact}
               disabled={!isValidated}
               className="bg-secondary-container hover:bg-secondary text-on-secondary-container font-label-md text-label-md rounded-xl px-8 py-3 transition-all flex items-center gap-2 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -830,35 +828,35 @@ export function Profile() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                   <button 
-                     disabled={!isValidated}
-                     className="flex-1 sm:flex-none p-2 hover:bg-primary/10 text-on-surface-variant hover:text-primary rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                   >
-                     {isValidated ? <Edit className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                     <span className="sm:hidden">{t('profile.edit')}</span>
-                   </button>
-                   <button 
-                     onClick={() => setEmergencyContacts(emergencyContacts.filter(c => c.id !== contact.id))}
-                     disabled={!isValidated}
-                     className="flex-1 sm:flex-none p-2 hover:bg-error/10 text-on-surface-variant hover:text-error rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-error/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                   >
-                     {isValidated ? <Trash2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                     <span className="sm:hidden">{t('profile.delete')}</span>
-                   </button>
+                  <button
+                    disabled={!isValidated}
+                    className="flex-1 sm:flex-none p-2 hover:bg-primary/10 text-on-surface-variant hover:text-primary rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isValidated ? <Edit className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                    <span className="sm:hidden">{t('profile.edit')}</span>
+                  </button>
+                  <button
+                    onClick={() => setEmergencyContacts(emergencyContacts.filter(c => c.id !== contact.id))}
+                    disabled={!isValidated}
+                    className="flex-1 sm:flex-none p-2 hover:bg-error/10 text-on-surface-variant hover:text-error rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-error/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isValidated ? <Trash2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                    <span className="sm:hidden">{t('profile.delete')}</span>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
 
-          <button 
+          <button
             disabled={!isValidated}
             className="w-full py-5 border-2 border-dashed border-outline-variant/30 rounded-[28px] text-on-surface-variant hover:text-primary hover:border-primary/50 transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isValidated ? (
-               <>
-                 <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                 {t('profile.add_trusted')}
-               </>
+              <>
+                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                {t('profile.add_trusted')}
+              </>
             ) : (
               <>
                 <Lock className="w-5 h-5" />
@@ -879,7 +877,7 @@ export function Profile() {
           </h2>
           <div className="flex items-center gap-3 ml-auto">
             {!isValidated && (
-              <button 
+              <button
                 onClick={handleValidateIdentity}
                 disabled={isSaving}
                 className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-md active:scale-95 disabled:opacity-50"
@@ -888,7 +886,7 @@ export function Profile() {
                 {t('profile.validate')}
               </button>
             )}
-            <button 
+            <button
               onClick={navigateToSettings}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-high border border-outline-variant/30 text-[10px] font-bold text-primary uppercase tracking-widest hover:border-primary/50 transition-all shadow-sm"
             >
@@ -904,7 +902,7 @@ export function Profile() {
             {isValidated ? t('profile.validated_true') : t('profile.validate_desc')}
           </p>
         </div>
-        
+
         <div className="bg-surface-container rounded-3xl border border-outline-variant/30 overflow-hidden divide-y divide-on-surface/10 shadow-sm">
           <div className="p-6 flex items-center justify-between hover:bg-surface-container-high transition-all">
             <div className="flex flex-col">
@@ -930,7 +928,7 @@ export function Profile() {
       {/* Security Section */}
       <AnimatePresence>
         {isScannerOpen && (
-          <DocumentScanner 
+          <DocumentScanner
             onClose={() => setIsScannerOpen(false)}
             onCapture={handleDocumentCapture}
           />
@@ -943,7 +941,7 @@ export function Profile() {
           <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
             <QrCode className="w-48 h-48" />
           </div>
-          
+
           <div className="flex items-center gap-4 w-full">
             <div className="w-12 h-12 rounded-2xl bg-primary-container/20 border border-primary-container flex items-center justify-center shrink-0 shadow-inner">
               <QrCode className="w-6 h-6 text-primary" />
@@ -956,10 +954,10 @@ export function Profile() {
 
           <div className="w-full flex-grow flex flex-col items-center justify-center py-6 bg-surface-container-high/30 rounded-3xl border border-outline-variant/10 shadow-inner group/qr">
             <div className={`transition-all duration-500 scale-125 mb-4 group-hover/qr:scale-[1.3] ${tempQrActive ? 'opacity-100 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'opacity-20 blur-[2px]'}`}>
-               <QrCode className="w-24 h-24 text-on-surface" />
+              <QrCode className="w-24 h-24 text-on-surface" />
             </div>
             {tempQrActive && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center gap-1"
@@ -973,7 +971,7 @@ export function Profile() {
           </div>
 
           <div className="flex flex-col w-full gap-3 mt-auto">
-            <button 
+            <button
               onClick={generateTempAccess}
               className="w-full bg-primary text-on-primary font-display font-bold py-4 rounded-2xl shadow-xl hover:bg-primary-container transition-all active:scale-95 disabled:opacity-50"
               disabled={tempQrActive}
@@ -1013,7 +1011,7 @@ export function Profile() {
 
       {/* Sign Out */}
       <div className="pt-8 mb-20">
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full py-5 bg-error/10 text-error rounded-[32px] border border-error/20 font-display font-bold shadow-xl flex items-center justify-center gap-3 hover:bg-error hover:text-on-error transition-all active:scale-[0.98]"
         >
@@ -1031,34 +1029,31 @@ export function Profile() {
             exit={{ opacity: 0, y: 20, x: '-50%', transition: { duration: 0.2 } }}
             className="fixed bottom-10 left-1/2 z-[100] min-w-[300px]"
           >
-            <div className={`backdrop-blur-md border rounded-2xl p-4 shadow-2xl flex items-center gap-3 ${
-              toastType === 'success' 
-                ? 'bg-surface-bright/95 border-secondary/30' 
+            <div className={`backdrop-blur-md border rounded-2xl p-4 shadow-2xl flex items-center gap-3 ${toastType === 'success'
+                ? 'bg-surface-bright/95 border-secondary/30'
                 : 'bg-error-container/20 border-error/30'
-            }`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${
-                toastType === 'success' 
-                  ? 'bg-secondary/10 border-secondary/30' 
-                  : 'bg-error/10 border-error/30'
               }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${toastType === 'success'
+                  ? 'bg-secondary/10 border-secondary/30'
+                  : 'bg-error/10 border-error/30'
+                }`}>
                 {toastType === 'success' ? (
                   <CheckCircle2 className="w-5 h-5 text-secondary" />
                 ) : (
                   <AlertTriangle className="w-5 h-5 text-error" />
                 )}
               </div>
-              <p className={`text-xs font-bold ${
-                toastType === 'success' ? 'text-on-surface' : 'text-error'
-              }`}>{toastMessage}</p>
+              <p className={`text-xs font-bold ${toastType === 'success' ? 'text-on-surface' : 'text-error'
+                }`}>{toastMessage}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <BiometricModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={handleValidationSuccess} 
+      <BiometricModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleValidationSuccess}
       />
     </div>
   );

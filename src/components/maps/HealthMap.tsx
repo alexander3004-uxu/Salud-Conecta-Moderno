@@ -15,11 +15,12 @@ import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
 import { getClinicTypeDetails, FILTER_OPTIONS, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
 import { getReportSummaries, getConfidenceBadge, ReportSummary } from '../../services/facilityReportService';
 import { ReportModal } from './ReportModal';
+import { obtenerTodosLosCentros } from '../../data/granadaDatabase';
 
 const API_KEY = GOOGLE_MAPS_KEY;
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
-const NICARAGUA_CENTER = { lat: 12.1328, lng: -86.2504 };
+const NICARAGUA_CENTER = { lat: 11.93749, lng: -85.968 }; // Granada, Nicaragua center
 
 const normalizeString = (str: string) => 
   str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -310,6 +311,306 @@ function MapControls({ onCenter, onZoomIn, onZoomOut }: { onCenter: () => void; 
 
 
 
+function LeafletMapContent({
+  clinics,
+  userLocation,
+  onClinicSelect,
+  reportSummaries,
+  selectedClinic
+}: {
+  clinics: (Clinic & { isOpen?: boolean })[];
+  userLocation: { lat: number; lng: number };
+  onClinicSelect: (c: Clinic & { isOpen?: boolean }) => void;
+  reportSummaries: Map<string, ReportSummary>;
+  selectedClinic: (Clinic & { isOpen?: boolean }) | null;
+}) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<Map<string, any>>(new Map());
+  const routePolylineRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
+
+  // 1. Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const L = (window as any).L;
+    if (!L) {
+      console.error("Leaflet not loaded on window.");
+      return;
+    }
+
+    const initialLat = selectedClinic?.location.lat ?? userLocation?.lat ?? 11.93749;
+    const initialLng = selectedClinic?.location.lng ?? userLocation?.lng ?? -85.968;
+
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([initialLat, initialLng], 14);
+
+    // Apply dark tile layer or light tile layer
+    const isDark = document.documentElement.classList.contains('dark');
+    const tileUrl = isDark 
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    L.tileLayer(tileUrl, {
+      maxZoom: 19
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // 2. React to HTML dark mode changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Remove existing tile layers and add new one
+    map.eachLayer((layer: any) => {
+      if (layer instanceof L.TileLayer) {
+        map.removeLayer(layer);
+      }
+    });
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const tileUrl = isDark 
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    L.tileLayer(tileUrl, {
+      maxZoom: 19
+    }).addTo(map);
+  }, []);
+
+  // 3. Sync User Location Marker
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !userLocation) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
+    }
+
+    const userHtml = `
+      <div class="relative flex items-center justify-center">
+        <div class="absolute w-14 h-14 bg-primary/10 rounded-full animate-ping opacity-40"></div>
+        <div class="absolute w-8 h-8 bg-primary/20 rounded-full animate-ping opacity-60"></div>
+        <div class="relative w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-lg border-[2.5px] border-primary">
+          <div class="w-2 h-2 bg-primary rounded-full"></div>
+        </div>
+      </div>
+    `;
+
+    const userIcon = L.divIcon({
+      html: userHtml,
+      className: 'user-location-marker-leaflet',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+
+    userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 1000 })
+      .addTo(map);
+  }, [userLocation]);
+
+  // 4. Draw Clinic Markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Clear old markers
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current.clear();
+
+    clinics.forEach(clinic => {
+      const details = getClinicTypeDetails(clinic.type);
+      const color = details.markerColors;
+      const isOpen = clinic.open24h || clinic.isOpen;
+      
+      const summary = reportSummaries.get(clinic.id);
+      const confidence = getConfidenceBadge(summary);
+      
+      const badgeStyle = {
+        verified: { border: '#10B981', bg: '#10B981' },
+        unconfirmed: { border: 'transparent', bg: 'transparent' },
+        warned: { border: '#F59E0B', bg: '#F59E0B' },
+        flagged: { border: '#EF4444', bg: '#EF4444' }
+      }[confidence];
+
+      const isFlagged = confidence === 'flagged';
+
+      // SVG path depending on type
+      const svgPath = {
+        hospital: '<path d="M19 14h-1.5v-1.5c0-.83-.67-1.5-1.5-1.5H8c-.83 0-1.5.67-1.5 1.5V14H5c-1.1 0-2 .9-2 2v4h18v-4c0-1.1-.9-2-2-2zM8 6h8c1.1 0 2-.9 2-2V2H6v2c0 1.1.9 2 2 2z" />',
+        clinic: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />',
+        pharmacy: '<path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15z M10.5 4.5C10.5 3.67 11.17 3 12 3s1.5.67 1.5 1.5v15c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-15z" />',
+        laboratory: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />'
+      }[clinic.type as 'hospital' | 'clinic' | 'pharmacy' | 'laboratory'] || '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" />';
+
+      const html = `
+        <div class="relative flex flex-col items-center cursor-pointer group">
+          <div style="
+            width: 38px; height: 38px;
+            background: ${isOpen && !isFlagged ? color.bg : '#6B7280'};
+            border: 2.5px solid ${badgeStyle.border || color.border};
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: ${confidence === 'warned' ? '0 0 0 2px rgba(245,158,11,0.3)' : '0 4px 10px rgba(0,0,0,0.3)'};
+            opacity: ${isFlagged ? 0.5 : !isOpen ? 0.65 : 1};
+          ">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              ${svgPath}
+            </svg>
+          </div>
+          <div style="width: 0; height: 0; border-left: 4.5px solid transparent; border-right: 4.5px solid transparent; border-top: 7px solid ${isOpen && !isFlagged ? color.bg : '#6B7280'}; margin-top: -1px;"></div>
+          ${badgeStyle.bg && confidence !== 'unconfirmed' ? `
+            <div style="width: 8px; height: 8px; background: ${badgeStyle.bg}; border-radius: 50%; position: absolute; bottom: 12px; right: -2px; border: 1.5px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.3)"></div>
+          ` : ''}
+          ${isFlagged ? `
+            <div style="position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #EF4444; border-radius: 50%; border: 1px solid white; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 7px; color: white; font-weight: bold;">!</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: html,
+        className: 'leaflet-clinic-marker',
+        iconSize: [36, 44],
+        iconAnchor: [18, 44]
+      });
+
+      const marker = L.marker([clinic.location.lat, clinic.location.lng], { icon: customIcon })
+        .addTo(map)
+        .on('click', () => {
+          onClinicSelect(clinic);
+        });
+
+      markersRef.current.set(clinic.id, marker);
+    });
+  }, [clinics, reportSummaries]);
+
+  // 5. Pan & zoom to Selected Clinic
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !selectedClinic) return;
+
+    map.setView([selectedClinic.location.lat, selectedClinic.location.lng], 16, {
+      animate: true,
+      duration: 1.0
+    });
+  }, [selectedClinic]);
+
+  // 6. Fetch route from OSRM & draw polyline
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (routePolylineRef.current) {
+      routePolylineRef.current.remove();
+      routePolylineRef.current = null;
+    }
+
+    if (!selectedClinic || !userLocation) {
+      return;
+    }
+
+    const fetchRoute = async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${selectedClinic.location.lng},${selectedClinic.location.lat}?geometries=geojson&overview=full`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.routes && data.routes.length > 0) {
+          const coords = data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]); // Leaflet wants [lat, lng]
+          
+          if (routePolylineRef.current) {
+            routePolylineRef.current.remove();
+          }
+
+          routePolylineRef.current = L.polyline(coords, {
+            color: '#3B82F6',
+            weight: 5,
+            opacity: 0.8,
+            dashArray: '5, 10'
+          }).addTo(map);
+
+          // Fit bounds to show entire route
+          map.fitBounds(routePolylineRef.current.getBounds(), { padding: [50, 50] });
+        }
+      } catch (err) {
+        console.error("OSRM direction route fetch failed:", err);
+      }
+    };
+
+    fetchRoute();
+
+    return () => {
+      if (routePolylineRef.current) {
+        routePolylineRef.current.remove();
+        routePolylineRef.current = null;
+      }
+    };
+  }, [selectedClinic, userLocation]);
+
+  return (
+    <div className="w-full h-full relative">
+      <div ref={mapContainerRef} className="w-full h-full z-0" />
+      
+      {/* Premium Leaflet Controls */}
+      <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-30">
+        <button 
+          onClick={() => {
+            if (mapInstanceRef.current && userLocation) {
+              mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 15, { animate: true });
+            }
+          }}
+          className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 active:scale-95 transition-all duration-200"
+          title="Mi ubicación"
+        >
+          <Target className="w-5 h-5" />
+        </button>
+        <button 
+          onClick={() => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.zoomIn();
+            }
+          }}
+          className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 active:scale-95 transition-all duration-200"
+          title="Acercar"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+        <button 
+          onClick={() => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.zoomOut();
+            }
+          }}
+          className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 active:scale-95 transition-all duration-200"
+          title="Alejar"
+        >
+          <Minus className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+
 export default function HealthMap() {
   const { t } = useLanguage();
   const { isPremium } = useUser();
@@ -378,6 +679,35 @@ export default function HealthMap() {
       }
     };
 
+    // 1. Seed clinics from local Granada database
+    try {
+      const granadaCentros = obtenerTodosLosCentros();
+      granadaCentros.forEach((c: any, i: number) => {
+        const mappedType = c.categoria === 'hospital' ? 'hospital' : c.categoria === 'clinica' ? 'clinic' : c.categoria === 'farmacia' ? 'pharmacy' : 'laboratory';
+        const mappedSector = c.categoria === 'hospital' || c.seguros?.includes('MINSA') ? 'public' : 'private';
+        
+        const clinicItem: Clinic = {
+          id: `granada-${c.categoria}-${c.id}`,
+          name: c.nombre,
+          type: mappedType,
+          sector: mappedSector,
+          location: { lat: c.lat, lng: c.lng },
+          address: c.direccion,
+          phone: c.telefono,
+          open24h: c.horario === '24 horas',
+          isOpen: true,
+          rating: 4.8,
+          reviews: 15,
+          description: c.notas || '',
+          services: c.servicios || [],
+        };
+        addUnique(clinicItem, 'g', i);
+      });
+    } catch (e) {
+      console.error("Error seeding Granada clinics:", e);
+    }
+
+    // 2. Seed other Nicaragua hospitals
     NICARAGUA_HOSPITALS.forEach((h, i) => addUnique(h, 'h', i));
     PUBLIC_HEALTH_NETWORK.forEach((h, i) => addUnique(h, 'p', i));
 
@@ -776,46 +1106,39 @@ export default function HealthMap() {
     }
   };
 
-  if (!hasValidKey) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-background p-6">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="w-20 h-20 mx-auto bg-error/10 rounded-full flex items-center justify-center">
-            <MapPin className="w-10 h-10 text-error" />
-          </div>
-          <h2 className="text-xl font-black text-on-surface">{t('maps.key_required.title') || 'API Key requerida'}</h2>
-          <p className="text-sm text-on-surface-variant">{t('maps.key_required.description') || 'Configure su API key de Google Maps para usar el mapa.'}</p>
-          <div className="text-xs text-on-surface-variant bg-surface-container p-3 rounded-lg">
-            <p>ðŸ“ {clinics.length} centros de salud cargados de la base de datos</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <APIProvider apiKey={API_KEY}>
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
-        <section className="absolute inset-0 z-0">
-          <GoogleMap 
-            defaultCenter={center} 
-            defaultZoom={12} 
-            mapId="DARK_MODE_MAP" 
-            className="w-full h-full" 
-            gestureHandling="greedy" 
-            disableDefaultUI
-            onIdle={handleMapIdle}
-          >
-            <MapContent 
-              clinics={filteredClinics} 
-              userLocation={userLocation}
-              onClinicSelect={handleClinicSelect}
-              onMapReady={setMapInstance}
-              reportSummaries={reportSummaries}
-            />
-
-          </GoogleMap>
-        </section>
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
+      <section className="absolute inset-0 z-0">
+        {hasValidKey ? (
+          <APIProvider apiKey={API_KEY}>
+            <GoogleMap 
+              defaultCenter={center} 
+              defaultZoom={12} 
+              mapId="DARK_MODE_MAP" 
+              className="w-full h-full" 
+              gestureHandling="greedy" 
+              disableDefaultUI
+              onIdle={handleMapIdle}
+            >
+              <MapContent 
+                clinics={filteredClinics} 
+                userLocation={userLocation}
+                onClinicSelect={handleClinicSelect}
+                onMapReady={setMapInstance}
+                reportSummaries={reportSummaries}
+              />
+            </GoogleMap>
+          </APIProvider>
+        ) : (
+          <LeafletMapContent
+            clinics={filteredClinics}
+            userLocation={userLocation}
+            onClinicSelect={handleClinicSelect}
+            reportSummaries={reportSummaries}
+            selectedClinic={selectedClinic}
+          />
+        )}
+      </section>
 
         {loadingPlaces && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-surface/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-2">
@@ -1515,6 +1838,5 @@ export default function HealthMap() {
 
         <MapControls onCenter={handleCenterToUser} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
-    </APIProvider>
   );
 }
