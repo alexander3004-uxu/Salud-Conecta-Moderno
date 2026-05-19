@@ -29,6 +29,15 @@ interface SearchProps {
 export default function Search({ onOpenRegistration }: SearchProps) {
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
+
+  React.useEffect(() => {
+    const handleCategory = (e: any) => {
+      setActiveCategory(e.detail);
+      setCurrentPage(1);
+    };
+    window.addEventListener('setSearchCategory', handleCategory);
+    return () => window.removeEventListener('setSearchCategory', handleCategory);
+  }, []);
   const itemsPerPage = 10;
   const { isPremium } = useUser();
 

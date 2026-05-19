@@ -103,7 +103,10 @@ export default function App() {
         return (
           <Hero
             onStartAssistant={() => setActiveTab('triage')}
-            onViewMap={() => setActiveTab('map')}
+            onViewPublicHealth={() => {
+              setActiveTab('search');
+              setTimeout(() => window.dispatchEvent(new CustomEvent('setSearchCategory', { detail: 'public_health' })), 100);
+            }}
             onViewAppointments={() => setActiveTab('appointments')}
             onOpenRegistration={(type) => openRegistration(type)}
           />
@@ -148,7 +151,10 @@ export default function App() {
         return (
           <Hero
             onStartAssistant={() => setActiveTab('triage')}
-            onViewMap={() => setActiveTab('map')}
+            onViewPublicHealth={() => {
+              setActiveTab('search');
+              setTimeout(() => window.dispatchEvent(new CustomEvent('setSearchCategory', { detail: 'public_health' })), 100);
+            }}
             onViewAppointments={() => setActiveTab('appointments')}
             onOpenRegistration={(type) => openRegistration(type)}
           />

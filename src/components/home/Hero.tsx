@@ -1,17 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { MapPin, Phone, Clock, ArrowRight, ShieldCheck, HeartPulse, Activity, Stethoscope, Calendar } from 'lucide-react';
+import { MapPin, Phone, Clock, ArrowRight, ShieldCheck, HeartPulse, Activity, Stethoscope, Calendar, Building2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AIServiceStatus } from '../common/AIServiceStatus';
 
 interface HeroProps {
   onStartAssistant: () => void;
-  onViewMap: () => void;
+  onViewPublicHealth: () => void;
   onViewAppointments: () => void;
   onOpenRegistration: (type?: 'doctor' | 'clinic' | 'lab_pharmacy') => void;
 }
 
-export default function Hero({ onStartAssistant, onViewMap, onViewAppointments, onOpenRegistration }: HeroProps) {
+export default function Hero({ onStartAssistant, onViewPublicHealth, onViewAppointments, onOpenRegistration }: HeroProps) {
   const { t, language } = useLanguage();
 
   const containerVariants = {
@@ -81,11 +81,11 @@ export default function Hero({ onStartAssistant, onViewMap, onViewAppointments, 
                   <Stethoscope className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={onViewMap}
+                  onClick={onViewPublicHealth}
                   className="bg-primary text-on-primary px-6 py-4 sm:px-10 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-widest hover:scale-105 hover:brightness-110 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3"
                 >
-                  {t('hero.cta.secondary')}
-                  <MapPin className="w-5 h-5" />
+                  Salud Pública
+                  <Building2 className="w-5 h-5" />
                 </button>
                 <button 
                   onClick={onViewAppointments}
