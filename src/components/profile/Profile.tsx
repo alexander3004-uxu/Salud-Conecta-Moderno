@@ -96,6 +96,14 @@ export function Profile() {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const formatDateForDisplay = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
   // Mock data matching the UI mockup
   const [profile, setProfile] = useState({
     name: user?.displayName || 'Carlos Méndez',
@@ -104,7 +112,7 @@ export function Profile() {
     address: 'Av. Libertador 1234, Piso 5A, CABA',
     bloodType: 'O Positivo',
     allergies: 'Penicilina',
-    dob: '14 Mar 1978',
+    dob: '1978-03-14',
     photoURL: user?.photoURL || "https://lh3.googleusercontent.com/aida-public/AB6AXuCNjxM_kx1krlJpGAVOh-nfFDhGn7s-29GpIE4wJWRsqYWpCfOS2KwA0mDjXP283OFfd0LtGx5JPWVrYMEB1cg1irom_1Hm34eluol-cmYe4YG_wnOcjQSvXjDOPm-gtH24rSMm6i0J8uh2fP2_ixZm9Bq0yqMp4aTljcnyLHm8NYc7BeN6mABRDrlnCT35AHv-EBa3m15B2F8AG3IKN-eRA6aH-P_gNEBQ7te36sc60HjVj0KVBPIT4WPJljYhbiXnLMmBo9Tw9A"
   });
 
@@ -343,7 +351,7 @@ export function Profile() {
               <Cake className="text-primary w-5 h-5" />
               <div className="flex flex-col">
                 <span className="text-[9px] font-mono font-bold text-on-surface-variant uppercase tracking-widest">{t('profile.birth')}</span>
-                <span className="text-sm font-bold text-on-surface">{profile.dob}</span>
+                <span className="text-sm font-bold text-on-surface">{formatDateForDisplay(profile.dob)}</span>
               </div>
             </div>
           </div>
@@ -406,8 +414,9 @@ export function Profile() {
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest ml-1">{t('profile.birth')}</label>
             <div className={`relative group ${!isValidated ? 'opacity-60' : ''}`}>
-              <Cake className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors" />
+              <Cake className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant group-focus-within:text-primary transition-colors z-10" />
               <input
+                type="date"
                 value={profile.dob}
                 onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
                 disabled={!isValidated}
