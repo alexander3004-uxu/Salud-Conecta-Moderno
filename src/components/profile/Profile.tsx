@@ -123,7 +123,7 @@ export function Profile() {
       reader.onloadend = () => {
         setProfile({ ...profile, photoURL: reader.result as string });
         setIsPreviewMode(true);
-        setToastMessage('Foto cargada. Recuerda guardar los cambios.');
+        setToastMessage(t('profile.photo_uploaded'));
         setToastType('success');
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
@@ -153,7 +153,7 @@ export function Profile() {
       // 30% chance of failure for demo purposes
       if (Math.random() > 0.7) {
         setUploadStatus('error');
-        setUploadError('Error de conexión: No se pudo establecer contacto con el servidor de archivos Realon™. Por favor, intente de nuevo.');
+        setUploadError(t('profile.upload_error'));
       } else {
         const newFile = {
           id: Date.now().toString(),
@@ -176,7 +176,7 @@ export function Profile() {
       type: 'pdf'
     };
     setFiles([newFile, ...files]);
-    setToastMessage('Orden digitalizada y guardada');
+    setToastMessage(t('profile.doc_scanned'));
     setToastType('success');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
@@ -200,7 +200,7 @@ export function Profile() {
       // Trigger a sync event so that other components in the SPA (like header/sidebar) update dynamically
       window.dispatchEvent(new Event('storage'));
 
-      setToastMessage('Perfil actualizado correctamente');
+      setToastMessage(t('profile.profile_updated'));
       setToastType('success');
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -208,7 +208,7 @@ export function Profile() {
   };
 
   const handleAddContact = () => {
-    setToastMessage('Contacto de emergencia añadido');
+    setToastMessage(t('profile.contact_added'));
     setToastType('success');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
@@ -470,14 +470,14 @@ export function Profile() {
                 disabled={!isValidated}
                 className={`w-full h-14 pl-12 pr-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner appearance-none ${!isValidated ? 'cursor-not-allowed' : ''}`}
               >
-                <option value="O Positivo">O Positivo</option>
-                <option value="O Negativo">O Negativo</option>
-                <option value="A Positivo">A Positivo</option>
-                <option value="A Negativo">A Negativo</option>
-                <option value="B Positivo">B Positivo</option>
-                <option value="B Negativo">B Negativo</option>
-                <option value="AB Positivo">AB Positivo</option>
-                <option value="AB Negativo">AB Negativo</option>
+                <option value={`O ${t('profile.positive')}`}>O {t('profile.positive')}</option>
+                <option value={`O ${t('profile.negative')}`}>O {t('profile.negative')}</option>
+                <option value={`A ${t('profile.positive')}`}>A {t('profile.positive')}</option>
+                <option value={`A ${t('profile.negative')}`}>A {t('profile.negative')}</option>
+                <option value={`B ${t('profile.positive')}`}>B {t('profile.positive')}</option>
+                <option value={`B ${t('profile.negative')}`}>B {t('profile.negative')}</option>
+                <option value={`AB ${t('profile.positive')}`}>AB {t('profile.positive')}</option>
+                <option value={`AB ${t('profile.negative')}`}>AB {t('profile.negative')}</option>
               </select>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none gap-2">
                 {!isValidated ? (
@@ -778,7 +778,7 @@ export function Profile() {
               <input
                 disabled={!isValidated}
                 className="w-full h-12 px-4 rounded-xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Ej: Maria Garcia"
+                placeholder={t('profile.placeholder_name')}
               />
               {!isValidated && <Lock className="absolute right-3 top-[38px] w-4 h-4 text-outline-variant opacity-50" />}
             </div>
@@ -787,7 +787,7 @@ export function Profile() {
               <input
                 disabled={!isValidated}
                 className="w-full h-12 px-4 rounded-xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Ej: Esposa"
+                placeholder={t('profile.placeholder_rel')}
               />
               {!isValidated && <Lock className="absolute right-3 top-[38px] w-4 h-4 text-outline-variant opacity-50" />}
             </div>
@@ -965,7 +965,7 @@ export function Profile() {
                 <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                   {t('profile.code_active')}
                 </span>
-                <span className="text-[10px] text-on-surface-variant font-medium">Expira en {expiryTime} min</span>
+                <span className="text-[10px] text-on-surface-variant font-medium">{t('profile.expire_in').replace('{time}', expiryTime?.toString() || '15')}</span>
               </motion.div>
             )}
           </div>

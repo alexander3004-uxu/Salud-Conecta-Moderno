@@ -29,19 +29,22 @@ import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
 import { Clinic } from '../../types';
 import { calculateDistance, estimateTravelTime } from '../../lib/geolocationService';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 type PrivateFilterType = 'all' | 'hospital' | 'clinic' | 'laboratory' | 'pharmacy';
 
-const FILTER_OPTIONS: { value: PrivateFilterType; label: string; icon: React.ElementType }[] = [
-  { value: 'all', label: 'Todos', icon: Building2 },
-  { value: 'hospital', label: 'Hospitales', icon: Building2 },
-  { value: 'clinic', label: 'Clínicas', icon: Stethoscope },
-  { value: 'laboratory', label: 'Laboratorios', icon: Activity },
-  { value: 'pharmacy', label: 'Farmacias', icon: Pill },
-];
-
 export default function PremiumHealthMap() {
   const { isPremium } = useUser();
+  const { t } = useLanguage();
+  
+  const FILTER_OPTIONS: { value: PrivateFilterType; label: string; icon: React.ElementType }[] = [
+    { value: 'all', label: t('maps.premium.filter_all'), icon: Building2 },
+    { value: 'hospital', label: t('maps.premium.filter_hospitals'), icon: Building2 },
+    { value: 'clinic', label: t('maps.premium.filter_clinics'), icon: Stethoscope },
+    { value: 'laboratory', label: t('maps.premium.filter_labs'), icon: Activity },
+    { value: 'pharmacy', label: t('maps.premium.filter_pharmacies'), icon: Pill },
+  ];
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<PrivateFilterType>('all');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -136,12 +139,12 @@ export default function PremiumHealthMap() {
   };
 
   const getTypeLabel = (type: string) => {
-    if (type.includes('hospital')) return 'Hospital Privado';
-    if (type === 'clinic') return 'Clínica Privada';
-    if (type === 'laboratory') return 'Laboratorio VIP';
-    if (type === 'pharmacy') return 'Farmacia Express';
-    if (type === 'dental') return 'Clínica Dental';
-    return 'Centro Privado';
+    if (type.includes('hospital')) return t('maps.premium.type_hospital');
+    if (type === 'clinic') return t('maps.premium.type_clinic');
+    if (type === 'laboratory') return t('maps.premium.type_lab');
+    if (type === 'pharmacy') return t('maps.premium.type_pharmacy');
+    if (type === 'dental') return t('maps.premium.type_dental');
+    return t('maps.premium.type_private');
   };
 
   const getTypeColor = (type: string) => {
@@ -166,14 +169,19 @@ export default function PremiumHealthMap() {
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm shadow-inner">
               <Crown className="w-8 h-8 text-white drop-shadow-md" />
             </div>
-            <h2 className="text-2xl font-display font-black text-white tracking-tight">Acceso Premium Requerido</h2>
+            <h2 className="text-2xl font-display font-black text-white tracking-tight">{t('maps.premium.req_title')}</h2>
             <p className="text-white/80 text-xs mt-2 font-bold uppercase tracking-wider">
-              Red Premium de Salud Privada
+              {t('maps.premium.req_subtitle')}
             </p>
           </div>
           <div className="p-6 space-y-6">
             <div className="space-y-3">
-              {['Hospitales y clínicas privadas de primer nivel', 'Laboratorios de alta complejidad', 'Navegación directa con Google Maps', 'Atención VIP y citas prioritarias'].map((feature) => (
+              {[
+                t('maps.premium.feat_1'), 
+                t('maps.premium.feat_2'), 
+                t('maps.premium.feat_3'), 
+                t('maps.premium.feat_4')
+              ].map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800/50">
                     <Star className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 fill-amber-600 dark:fill-amber-400" />
@@ -187,7 +195,7 @@ export default function PremiumHealthMap() {
               className="w-full h-14 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 transition-all active:scale-[0.98]"
             >
               <Crown className="w-4 h-4" />
-              Obtener Premium Ahora
+              {t('maps.premium.get_now')}
             </button>
           </div>
         </motion.div>
@@ -207,16 +215,16 @@ export default function PremiumHealthMap() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-display font-black text-white tracking-tight flex items-center gap-2">
-                Red Premium de Salud
+                {t('maps.premium.hero_title')}
               </h1>
               <p className="text-white/80 text-xs font-bold uppercase tracking-widest">
-                Centros Privados y Hospitales VIP de Nicaragua
+                {t('maps.premium.hero_subtitle')}
               </p>
             </div>
           </div>
           <span className="hidden sm:flex items-center gap-1.5 bg-black/25 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 text-white">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            Servicio Exclusivo
+            {t('maps.premium.exclusive_service')}
           </span>
         </div>
       </div>
@@ -227,19 +235,19 @@ export default function PremiumHealthMap() {
           <p className="text-xl font-display font-black text-amber-600 dark:text-amber-400">
             {privateFacilities.length}
           </p>
-          <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Centros VIP</p>
+          <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">{t('maps.premium.stat_vip')}</p>
         </div>
         <div className="border-x border-slate-100 dark:border-slate-800">
           <p className="text-xl font-display font-black text-slate-800 dark:text-white">
             {filteredFacilities.filter(f => f.distanceKm !== Infinity && f.distanceKm <= 5).length}
           </p>
-          <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Cercanos (&lt;5km)</p>
+          <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">{t('maps.premium.stat_near')}</p>
         </div>
         <div>
           <p className="text-xl font-display font-black text-emerald-600 dark:text-emerald-400">
             {filteredFacilities.filter(f => f.rating >= 4.5).length}
           </p>
-          <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Excelente Nota (★4.5+)</p>
+          <p className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">{t('maps.premium.stat_rating')}</p>
         </div>
       </div>
 
@@ -252,7 +260,7 @@ export default function PremiumHealthMap() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar clínica, hospital o laboratorio privado..."
+            placeholder={t('maps.premium.search_placeholder')}
             className="w-full h-12 pl-12 pr-12 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium"
           />
           {searchQuery && (
@@ -288,9 +296,9 @@ export default function PremiumHealthMap() {
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
               <Search className="w-8 h-8 text-slate-300 dark:text-slate-600" />
             </div>
-            <h3 className="text-base font-black text-slate-700 dark:text-slate-300">No se encontraron centros privados</h3>
+            <h3 className="text-base font-black text-slate-700 dark:text-slate-300">{t('maps.premium.no_results')}</h3>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 font-medium max-w-xs leading-relaxed">
-              Intenta modificar tu búsqueda o cambia de filtro de categoría.
+              {t('maps.premium.no_results_desc')}
             </p>
           </div>
         ) : (
@@ -344,7 +352,7 @@ export default function PremiumHealthMap() {
                     )}
                     {facility.open24h && (
                       <span className="text-[9px] font-mono font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                        24 Horas
+                        {t('maps.premium.24h')}
                       </span>
                     )}
                   </div>
@@ -383,7 +391,7 @@ export default function PremiumHealthMap() {
                     onClick={() => setSelectedFacility(facility)}
                     className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                   >
-                    Ver Perfil
+                    {t('maps.premium.view_profile')}
                     <ChevronRight className="w-4 h-4" />
                   </button>
 
@@ -394,7 +402,7 @@ export default function PremiumHealthMap() {
                     className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/15 transition-all active:scale-[0.98]"
                   >
                     <Navigation className="w-4 h-4" />
-                    Cómo Llegar (Maps)
+                    {t('maps.premium.directions')}
                   </a>
                 </div>
               </div>
@@ -412,11 +420,11 @@ export default function PremiumHealthMap() {
             disabled={currentPage === 1}
             className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-slate-700 dark:text-slate-300 flex items-center gap-1 active:scale-95"
           >
-            <ChevronLeft className="w-4 h-4" /> Anterior
+            <ChevronLeft className="w-4 h-4" /> {t('maps.premium.prev')}
           </button>
           
           <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-            Página <strong className="text-amber-500">{currentPage}</strong> de {totalPages}
+            {t('maps.premium.page')} <strong className="text-amber-500">{currentPage}</strong> {t('maps.premium.of')} {totalPages}
           </span>
           
           <button
@@ -424,7 +432,7 @@ export default function PremiumHealthMap() {
             disabled={currentPage === totalPages}
             className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-slate-700 dark:text-slate-300 flex items-center gap-1 active:scale-95"
           >
-            Siguiente <ChevronRight className="w-4 h-4" />
+            {t('maps.premium.next')} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -452,6 +460,7 @@ interface DetailModalProps {
 }
 
 function PremiumDetailModal({ item, likedFacilities, onToggleLike, onClose }: DetailModalProps) {
+  const { t } = useLanguage();
   const hasCoordinates = !!item.location;
 
   const handleDirections = () => {
@@ -515,7 +524,7 @@ function PremiumDetailModal({ item, likedFacilities, onToggleLike, onClose }: De
           <div className="absolute bottom-4 left-6 right-6 flex flex-wrap gap-2 items-center justify-between">
             <span className="px-3 py-1 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
               <Crown className="w-3 h-3 text-white fill-white" />
-              Red Premium
+              {t('maps.premium.red_premium')}
             </span>
             
             <div className="flex gap-2">
@@ -545,20 +554,20 @@ function PremiumDetailModal({ item, likedFacilities, onToggleLike, onClose }: De
             </h2>
             <p className="text-amber-500 dark:text-amber-400 text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 fill-amber-500" />
-              Establecimiento de Salud Privado Autorizado
+              {t('maps.premium.authorized_center')}
             </p>
           </div>
 
           <div className="space-y-4 border-t border-slate-100 dark:border-slate-800/80 pt-6">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Acerca del Centro</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('maps.premium.about_center')}</h3>
             <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed font-semibold opacity-90">
-              {item.description || 'Instalaciones médicas premium diseñadas para ofrecer atención con los más altos estándares de calidad, comodidad y rapidez en Nicaragua.'}
+              {item.description || t('maps.premium.about_desc')}
             </p>
           </div>
 
           {item.services && item.services.length > 0 && (
             <div className="space-y-3 border-t border-slate-100 dark:border-slate-800/80 pt-6">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Servicios y Especialidades VIP</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('maps.premium.services')}</h3>
               <div className="flex flex-wrap gap-2">
                 {item.services.map((service, idx) => (
                   <span key={idx} className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 rounded-xl uppercase tracking-wider shadow-sm">
@@ -572,14 +581,14 @@ function PremiumDetailModal({ item, likedFacilities, onToggleLike, onClose }: De
           {/* Contact Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-t border-slate-100 dark:border-slate-800/80 pt-6">
             <div className="space-y-2">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Línea Telefónica Directa</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('maps.premium.direct_phone')}</h4>
               <p className="text-slate-800 dark:text-white font-bold text-lg flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 text-amber-500 shrink-0" />
                 {item.phone && item.phone !== 'N/D' ? item.phone : '+505 2255-6900'}
               </p>
             </div>
             <div className="space-y-2">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Ubicación y Coordenadas</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('maps.premium.location_coords')}</h4>
               <p className="text-slate-800 dark:text-white font-semibold text-sm flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 {item.address}
@@ -595,7 +604,7 @@ function PremiumDetailModal({ item, likedFacilities, onToggleLike, onClose }: De
             className="flex-1 py-4 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             <ExternalLink className="w-4 h-4" />
-            Abrir en Google Maps
+            {t('maps.premium.open_maps')}
           </button>
           
           <button 
@@ -603,7 +612,7 @@ function PremiumDetailModal({ item, likedFacilities, onToggleLike, onClose }: De
             className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-amber-500/25"
           >
             <Calendar className="w-4 h-4" />
-            Agendar Turno / Cita
+            {t('maps.premium.schedule_turn')}
           </button>
         </div>
       </motion.div>

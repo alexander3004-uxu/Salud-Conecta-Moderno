@@ -23,6 +23,7 @@ import { saveTriageRecord } from '../../services/triageService';
 import { useUser } from '../../contexts/UserContext';
 import { auth } from '../../lib/firebase';
 import { TriageWithLocationResult } from '../../services/triageService';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Clinic } from '../../types';
 
 interface Message { 
@@ -34,11 +35,12 @@ interface Message {
 
 export default function TriageChecker() {
   const { membership } = useUser();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: '1', 
       role: 'assistant', 
-      content: 'Hola. Soy su asistente de triaje inteligente con geolocalización. Analizaré sus síntomas para guiarle al centro de salud público (MINSA) o privado más cercano según su ubicación. ¿Qué síntoma o molestia principal siente hoy?', 
+      content: t('triage.assistant.intro'), 
       timestamp: new Date() 
     }
   ]);
@@ -98,8 +100,8 @@ export default function TriageChecker() {
       
       // Agregar la respuesta de la IA al historial del chat para mantener el flujo conversacional
       const assistantResponse = result.error
-        ? `He calculado su evaluación preliminar usando nuestro sistema de respaldo local debido a contingencia en el servidor:\n\n**Recomendación:** ${result.recommendation}\n\n**Justificación:** ${result.reasoning}`
-        : `He analizado sus síntomas. Aquí está mi evaluación preliminar:\n\n**Recomendación:** ${result.recommendation}\n\n**Justificación clínica:** ${result.reasoning}`;
+        ? t('triage.assistant.fallback').replace('{rec}', result.recommendation || '').replace('{res}', result.reasoning || '')
+        : t('triage.assistant.success').replace('{rec}', result.recommendation || '').replace('{res}', result.reasoning || '');
       
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -109,18 +111,18 @@ export default function TriageChecker() {
       }]);
 
       if (result.error) {
-        triggerToast("Cálculo realizado con contingencia local (GPS y Centros).", "error");
+        triggerToast(t('triage.toast.fallback'), "error");
       } else if (result.severity === 'emergency') {
         window.dispatchEvent(new CustomEvent('emergencyMode', { 
           detail: result 
         }));
-        triggerToast("¡Síntoma de urgencia detectado! Mantenga la calma.", "error");
+        triggerToast(t('triage.toast.emergency'), "error");
       } else {
-        triggerToast("Evaluación de triaje completada con éxito.", "success");
+        triggerToast(t('triage.toast.success'), "success");
       }
     } catch (e) { 
       console.error(e); 
-      triggerToast("Error de conexión. Intente de nuevo.", "error");
+      triggerToast(t('triage.toast.error'), "error");
     } finally {
       setIsTyping(false);
     }
@@ -131,7 +133,7 @@ export default function TriageChecker() {
       { 
         id: '1', 
         role: 'assistant', 
-        content: 'Hola. He reiniciado la consulta de triaje. ¿Qué síntoma o malestar siente hoy?', 
+        content: t('triage.assistant.reset'), 
         timestamp: new Date() 
       }
     ]); 
@@ -141,7 +143,7 @@ export default function TriageChecker() {
 
   const handleSave = async () => {
     if (!auth.currentUser || !triageResult) {
-      triggerToast("Inicia sesión para guardar tu historial médico.", "error");
+      triggerToast(t('triage.toast.login_req'), "error");
       return;
     }
     setIsSaving(true);
@@ -162,10 +164,10 @@ export default function TriageChecker() {
         duration: triageResult.medication?.duration || '', 
         instructions: triageResult.reasoning || '' 
       });
-      triggerToast("Triaje guardado exitosamente en tu historial clínico.", "success");
+      triggerToast(t('triage.toast.save_success'), "success");
     } catch (e) {
       console.error(e);
-      triggerToast("Error al guardar en el servidor Firestore.", "error");
+      triggerToast(t('triage.toast.save_error'), "error");
     } finally {
       setIsSaving(false);
     }
@@ -174,7 +176,7 @@ export default function TriageChecker() {
   const handleViewOnMap = (clinicToNavigate?: Clinic) => {
     const targetClinic = clinicToNavigate || triageResult?.locationInfo?.clinic;
     if (!targetClinic?.location) {
-      triggerToast("No hay información de ubicación disponible.", "error");
+      triggerToast(t('triage.toast.no_location'), "error");
       return;
     }
 
@@ -192,7 +194,7 @@ export default function TriageChecker() {
   const toggleListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      triggerToast("Tu navegador no soporta búsqueda por voz.", "error");
+      triggerToast(t('triage.toast.no_voice'), "error");
       return;
     }
     
@@ -205,7 +207,7 @@ export default function TriageChecker() {
 
     recognition.onstart = () => {
       setIsListening(true);
-      triggerToast("Escuchando... Habla ahora", "success");
+      triggerToast(t('triage.toast.listening'), "success");
     };
 
     recognition.onresult = (event: any) => {
@@ -270,10 +272,10 @@ export default function TriageChecker() {
             </div>
             <div>
               <span className="font-display font-black text-on-surface flex items-center gap-1.5">
-                Triaje Médico con Inteligencia Artificial
+                {t('triage.title')}
               </span>
               <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-                Interoperable • Georeferenciado ({membership.toUpperCase()})
+                {t('triage.subtitle')} ({membership.toUpperCase()})
               </p>
             </div>
           </div>
@@ -281,7 +283,7 @@ export default function TriageChecker() {
             <button 
               onClick={handleReset}
               className="w-8 h-8 rounded-lg hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
-              title="Reiniciar consulta"
+              title={t('triage.reset_btn')}
             >
               <RotateCcw className="w-4 h-4"/>
             </button>
@@ -343,7 +345,7 @@ export default function TriageChecker() {
                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        <span className="text-[9px] font-black text-primary uppercase tracking-widest ml-2 animate-pulse">Analizando...</span>
+                        <span className="text-[9px] font-black text-primary uppercase tracking-widest ml-2 animate-pulse">{t('triage.analyzing')}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -358,7 +360,7 @@ export default function TriageChecker() {
                 <div className="flex-1 relative">
                   <input 
                     className="w-full h-12 pl-4 pr-12 rounded-xl border border-outline-variant/30 bg-surface-container-low text-xs md:text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all disabled:opacity-50" 
-                    placeholder="Escribe tus síntomas aquí (ej: dolor de garganta y fiebre)..." 
+                    placeholder={t('triage.input_placeholder')} 
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
@@ -401,12 +403,12 @@ export default function TriageChecker() {
                     <HeartPulse size={20} />
                   </div>
                   <div>
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">Resultado Clínico</span>
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">{t('triage.clinical_result')}</span>
                     <h4 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                      Severidad: {triageResult.severity}
+                      {t('triage.severity')}: {triageResult.severity}
                       {triageResult.error && (
                         <span className="px-1.5 py-0.5 rounded text-[8px] bg-amber-500 text-white font-black uppercase tracking-wider shrink-0 animate-pulse">
-                          Respaldo
+                          {t('triage.backup')}
                         </span>
                       )}
                     </h4>
@@ -423,7 +425,7 @@ export default function TriageChecker() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-primary">
                       <Bot size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Recomendación IA</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.ai_rec')}</span>
                     </div>
                     <p className="text-xs md:text-sm font-semibold leading-relaxed text-on-surface bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20">
                       {triageResult.recommendation}
@@ -434,7 +436,7 @@ export default function TriageChecker() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-on-surface-variant">
                       <AlertTriangle size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Justificación Médica</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.medical_reasoning')}</span>
                     </div>
                     <p className="text-xs text-on-surface-variant leading-relaxed pl-1 whitespace-pre-wrap">
                       {triageResult.reasoning}
@@ -446,19 +448,19 @@ export default function TriageChecker() {
                     <div className="space-y-2 p-4 bg-secondary/5 rounded-2xl border border-secondary/10">
                       <div className="flex items-center gap-1.5 text-secondary">
                         <Pill size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Sugerencia Farmacéutica (Venta Libre)</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.otc_sug')}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 pt-1.5">
                         <div className="flex flex-col">
-                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Medicamento</span>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">{t('triage.medication')}</span>
                           <span className="text-xs font-bold text-on-surface">{triageResult.medication.name}</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Dosis</span>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">{t('triage.dosage')}</span>
                           <span className="text-xs font-bold text-on-surface">{triageResult.medication.dosage}</span>
                         </div>
                         <div className="flex flex-col col-span-2">
-                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Toma</span>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">{t('triage.frequency')}</span>
                           <span className="text-xs text-on-surface-variant">{triageResult.medication.frequency} • {triageResult.medication.duration}</span>
                         </div>
                       </div>
@@ -469,7 +471,7 @@ export default function TriageChecker() {
                   {triageResult.locationInfo && (
                     <div className="space-y-3">
                       <div className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant mb-1">
-                        Centros Asistenciales Recomendados 📍
+                        {t('triage.rec_centers')}
                       </div>
                       
                       {/* Nearest Hospital Card */}
@@ -478,7 +480,7 @@ export default function TriageChecker() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-error">
                               <MapPin size={16} />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Hospital Más Cercano</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.nearest_hospital')}</span>
                             </div>
                             <span className="text-[9px] font-black bg-error/10 text-error px-2 py-0.5 rounded-lg border border-error/20">
                               {triageResult.locationInfo.closestHospitalDistanceKm?.toFixed(1)} KM
@@ -493,7 +495,7 @@ export default function TriageChecker() {
                                 <Clock size={12} className="text-error" /> {triageResult.locationInfo.closestHospitalTravelTime}
                               </div>
                               <div className="w-1 h-1 rounded-full bg-outline-variant" />
-                              <span className="text-[10px] font-bold text-secondary">Urgencias 24h</span>
+                              <span className="text-[10px] font-bold text-secondary">{t('triage.er_24h')}</span>
                             </div>
                           </div>
                           <button 
@@ -501,7 +503,7 @@ export default function TriageChecker() {
                             className="w-full h-10 bg-error hover:brightness-110 text-on-error rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md shadow-error/10"
                           >
                             <Compass className="w-3.5 h-3.5" />
-                            Ruta al Hospital en Google Maps
+                            {t('triage.route_hospital')}
                           </button>
                         </div>
                       )}
@@ -512,7 +514,7 @@ export default function TriageChecker() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-primary">
                               <MapPin size={16} />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Centro de Salud Más Cercano</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.nearest_center')}</span>
                             </div>
                             <span className="text-[9px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-lg border border-primary/20">
                               {triageResult.locationInfo.closestCenterDistanceKm?.toFixed(1)} KM
@@ -527,7 +529,7 @@ export default function TriageChecker() {
                                 <Clock size={12} className="text-primary" /> {triageResult.locationInfo.closestCenterTravelTime}
                               </div>
                               <div className="w-1 h-1 rounded-full bg-outline-variant" />
-                              <span className="text-[10px] font-bold text-secondary">Disponible</span>
+                              <span className="text-[10px] font-bold text-secondary">{t('triage.available')}</span>
                             </div>
                           </div>
                           <button 
@@ -535,7 +537,7 @@ export default function TriageChecker() {
                             className="w-full h-10 bg-primary hover:brightness-110 text-on-primary rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md shadow-primary/10"
                           >
                             <Compass className="w-3.5 h-3.5" />
-                            Ruta al Centro en Google Maps
+                            {t('triage.route_center')}
                           </button>
                         </div>
                       )}
@@ -552,14 +554,14 @@ export default function TriageChecker() {
                     className="flex-1 h-11 bg-surface hover:bg-surface-container-high border border-outline-variant/30 text-on-surface-variant rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     {isSaving ? <Loader2 size={14} className="animate-spin text-primary" /> : <Save size={14} />}
-                    Guardar
+                    {t('triage.save')}
                   </button>
                   <button 
                     onClick={handleReset}
                     className="flex-1 h-11 bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     <RotateCcw size={14} />
-                    Nuevo
+                    {t('triage.new')}
                   </button>
                 </div>
               </motion.div>
@@ -568,9 +570,9 @@ export default function TriageChecker() {
                 <div className="w-14 h-14 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-center text-on-surface-variant/40 mb-4 shadow-sm">
                   <Bot size={28} />
                 </div>
-                <h4 className="text-xs font-black text-on-surface-variant uppercase tracking-widest">Esperando Síntomas</h4>
+                <h4 className="text-xs font-black text-on-surface-variant uppercase tracking-widest">{t('triage.waiting')}</h4>
                 <p className="text-[11px] text-on-surface-variant/60 mt-2 max-w-[280px] leading-relaxed">
-                  Describa lo que siente en el chat de la izquierda para recibir un análisis de urgencia, recomendaciones de autocuidado y mapas de centros de salud.
+                  {t('triage.waiting_desc')}
                 </p>
               </div>
             )}

@@ -3,12 +3,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, Bot, User, Loader2, Info } from 'lucide-react';
 import { getHealthAssistant } from '../../lib/gemini';
 import { useUser } from '../../contexts/UserContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface Message { role: 'user' | 'assistant'; content: string; }
 
 export default function Assistant() {
+  const { t } = useLanguage();
   const { membership } = useUser();
-  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: 'Hola. Soy tu asistente de Salud Conecta IA. ¿En qu\u00e9 puedo ayudarte hoy?' }]);
+  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: t('chat.assistant.greeting') }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -41,8 +43,8 @@ export default function Assistant() {
           <Bot className="w-7 h-7" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-primary">Asistente de Salur Conecta IA</h2>
-          <p className="text-sm text-on-surface-variant">Empático y Eficiente • Disponible 24/7</p>
+          <h2 className="text-xl font-bold text-primary">{t('chat.assistant.title')}</h2>
+          <p className="text-sm text-on-surface-variant">{t('chat.assistant.subtitle')}</p>
         </div>
       </div>
 
@@ -53,7 +55,7 @@ export default function Assistant() {
               <div className={`max-w-[85%] p-4 rounded-xl shadow-sm border ${message.role === 'assistant' ? 'bg-primary/5 border-primary/10 text-on-surface' : 'bg-surface-container-low border-outline-variant/20 text-on-surface'}`}>
                 <div className="flex items-center gap-2 mb-2">
                   {message.role === 'assistant' ? <Bot className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-on-surface-variant" />}
-                  <span className="text-xs font-bold uppercase">{message.role === 'assistant' ? 'Asistente IA' : 'T\u00fa'}</span>
+                  <span className="text-xs font-bold uppercase">{message.role === 'assistant' ? t('chat.assistant.role_ai') : t('chat.assistant.role_user')}</span>
                 </div>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
               </div>
@@ -64,20 +66,20 @@ export default function Assistant() {
           <div className="flex justify-start">
             <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl flex items-center gap-3">
               <Loader2 className="w-5 h-5 text-primary animate-spin" />
-              <span className="text-sm font-medium text-primary">Pensando...</span>
+              <span className="text-sm font-medium text-primary">{t('chat.assistant.thinking')}</span>
             </div>
           </div>
         )}
       </div>
 
       <div className="flex gap-2 p-2 bg-surface-container-low rounded-xl border border-outline-variant/20">
-        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Escribe tu consulta aqu\u00ed..." className="flex-1 p-3 bg-transparent resize-none focus:outline-none text-sm text-on-surface placeholder:text-on-surface-variant/50" rows={1} />
+        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder={t('chat.assistant.input_placeholder')} className="flex-1 p-3 bg-transparent resize-none focus:outline-none text-sm text-on-surface placeholder:text-on-surface-variant/50" rows={1} />
         <button onClick={handleSend} disabled={isLoading || !input.trim()} className={`p-3 rounded-lg transition-all ${input.trim() && !isLoading ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface-variant/40 cursor-not-allowed'}`}>
           <Send className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="mt-4 text-center text-xs text-on-surface-variant/60">La IA puede cometer errores. Verifica la informaci\u00f3n importante.</div>
+      <div className="mt-4 text-center text-xs text-on-surface-variant/60">{t('chat.assistant.disclaimer')}</div>
     </div>
   );
 }

@@ -23,8 +23,10 @@ interface CheckoutProps {
   onBack: () => void;
   onComplete: () => void;
 }
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
+  const { t } = useLanguage();
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -58,15 +60,15 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
               className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-xs font-black uppercase tracking-widest mb-4 w-fit"
             >
               <ArrowLeft className="w-4 h-4" />
-              Volver a Planes
+              {t('checkout.back')}
             </button>
-            <h1 className="text-4xl font-display font-black text-on-surface tracking-tight">Pago Seguro</h1>
-            <p className="text-on-surface-variant font-medium">Completa tu suscripción premium para desbloquear herramientas clínicas avanzadas.</p>
+            <h1 className="text-4xl font-display font-black text-on-surface tracking-tight">{t('checkout.title')}</h1>
+            <p className="text-on-surface-variant font-medium">{t('checkout.subtitle')}</p>
           </div>
 
           {/* Method Selector */}
           <div className="flex flex-col gap-4">
-            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Método de Pago</span>
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('checkout.method')}</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button 
                 onClick={() => setPaymentMethod('card')}
@@ -88,7 +90,7 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
                   )}
                 </AnimatePresence>
                 <CreditCard className={`w-8 h-8 mb-3 ${paymentMethod === 'card' ? 'text-primary' : 'text-on-surface-variant'}`} />
-                <span className={`text-xs font-black uppercase tracking-widest ${paymentMethod === 'card' ? 'text-on-surface' : 'text-on-surface-variant'}`}>Tarjeta de Crédito</span>
+                <span className={`text-xs font-black uppercase tracking-widest ${paymentMethod === 'card' ? 'text-on-surface' : 'text-on-surface-variant'}`}>{t('checkout.card')}</span>
               </button>
 
               <button 
@@ -111,7 +113,7 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
                   )}
                 </AnimatePresence>
                 <Wallet className={`w-8 h-8 mb-3 ${paymentMethod === 'wallet' ? 'text-primary' : 'text-on-surface-variant'}`} />
-                <span className={`text-xs font-black uppercase tracking-widest ${paymentMethod === 'wallet' ? 'text-on-surface' : 'text-on-surface-variant'}`}>Billetera Digital</span>
+                <span className={`text-xs font-black uppercase tracking-widest ${paymentMethod === 'wallet' ? 'text-on-surface' : 'text-on-surface-variant'}`}>{t('checkout.wallet')}</span>
               </button>
             </div>
           </div>
@@ -124,16 +126,16 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
           >
             <div className="absolute top-0 right-0 bg-secondary/5 border-b border-l border-outline-variant/30 rounded-bl-3xl px-4 py-1.5 flex items-center gap-2">
               <Lock className="w-3.5 h-3.5 text-secondary" />
-              <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Encriptación de 256 bits</span>
+              <span className="text-[10px] font-black text-secondary uppercase tracking-widest">{t('checkout.encryption')}</span>
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
-              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Titular de la Tarjeta</label>
-              <input required className="w-full bg-surface-container/50 border border-outline-variant/50 rounded-2xl p-4 text-on-surface placeholder:text-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-medium" placeholder="Eje: Dr. Julián Rossi" type="text"/>
+              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('checkout.cardholder')}</label>
+              <input required className="w-full bg-surface-container/50 border border-outline-variant/50 rounded-2xl p-4 text-on-surface placeholder:text-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-medium" placeholder={t('checkout.cardholder_placeholder')} type="text"/>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Número de Tarjeta</label>
+              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('checkout.card_number')}</label>
               <div className="relative w-full">
                 <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant" />
                 <input required className="w-full bg-surface-container/50 border border-outline-variant/50 rounded-2xl py-4 pl-12 pr-4 text-on-surface placeholder:text-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-display font-black tracking-[0.2em]" placeholder="0000 0000 0000 0000" type="text"/>
@@ -142,7 +144,7 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Vencimiento</label>
+                <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('checkout.expiry')}</label>
                 <input required className="w-full bg-surface-container/50 border border-outline-variant/50 rounded-2xl p-4 text-on-surface placeholder:text-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-medium" placeholder="MM/YY" type="text"/>
               </div>
               <div className="flex flex-col gap-2">
@@ -157,7 +159,7 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
             <div className="flex items-start gap-3 mt-2 bg-surface/50 p-4 rounded-2xl border border-outline-variant/10">
               <ShieldCheck className="w-5 h-5 text-secondary shrink-0" />
               <p className="text-[10px] font-medium text-on-surface-variant leading-relaxed">
-                Tus datos están protegidos bajo los estándares de seguridad bancaria más estrictos. Salud Conecta IA no almacena tu número completo de tarjeta.
+                {t('checkout.security_msg')}
               </p>
             </div>
           </motion.form>
@@ -170,9 +172,9 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
             
             <div className="border-b border-outline-variant/10 pb-6 flex items-start justify-between">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Plan Seleccionado</span>
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">{t('checkout.plan_selected')}</span>
                 <h2 className="text-3xl font-display font-black text-on-surface uppercase">{plan.name}</h2>
-                <span className="text-xs font-medium text-on-surface-variant">Facturación Mensual</span>
+                <span className="text-xs font-medium text-on-surface-variant">{t('checkout.monthly_billing')}</span>
               </div>
               <div className="text-3xl font-display font-black text-on-surface">
                 {plan.price}<span className="text-sm opacity-40 tracking-normal font-medium">.00</span>
@@ -190,17 +192,17 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
 
             <div className="flex flex-col gap-3 pt-6 border-t border-outline-variant/10">
               <div className="flex justify-between items-center text-sm font-medium text-on-surface-variant">
-                <span>Subtotal</span>
+                <span>{t('checkout.subtotal')}</span>
                 <span>{plan.price}.00</span>
               </div>
               <div className="flex justify-between items-center text-sm font-medium text-on-surface-variant">
-                <span>Impuestos Estimados (8.5%)</span>
+                <span>{t('checkout.taxes')}</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
             </div>
 
             <div className="flex justify-between items-end pt-6 border-t border-outline-variant/10">
-              <span className="text-xl font-display font-black text-on-surface">Total</span>
+              <span className="text-xl font-display font-black text-on-surface">{t('checkout.total')}</span>
               <span className="text-4xl font-display font-black text-primary tracking-tight">
                 ${total.toFixed(2)}
               </span>
@@ -222,18 +224,18 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full"
                   />
-                  Procesando...
+                  {t('checkout.processing')}
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  Confirmar y Suscribirme
+                  {t('checkout.confirm')}
                 </>
               )}
             </button>
 
             <p className="text-[10px] text-on-surface-variant text-center font-medium leading-relaxed opacity-60">
-              Al confirmar, aceptas nuestros <button className="text-primary hover:underline">Términos de Servicio</button> y <button className="text-primary hover:underline">Política de Privacidad</button>.
+              {t('checkout.terms')} <button className="text-primary hover:underline">{t('checkout.terms_link')}</button> {t('checkout.and')} <button className="text-primary hover:underline">{t('checkout.privacy_link')}</button>.
             </p>
           </div>
 
@@ -241,7 +243,7 @@ export default function Checkout({ plan, onBack, onComplete }: CheckoutProps) {
           <div className="flex items-center gap-4 px-8">
             <HeartPulse className="w-5 h-5 text-secondary opacity-40 shrink-0" />
             <p className="text-[10px] font-medium text-on-surface-variant italic leading-normal">
-              Únete a más de 12,000 profesionales médicos que optimizan su práctica diaria con Salud Conecta IA.
+              {t('checkout.social_proof')}
             </p>
           </div>
         </aside>

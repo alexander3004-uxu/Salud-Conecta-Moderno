@@ -32,8 +32,8 @@ export default function Login({ onLogin }: LoginProps) {
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
-        ? 'Correo o contraseña incorrectos' 
-        : 'Error al iniciar sesión. Inténtalo de nuevo.');
+        ? t('login.error_invalid') 
+        : t('login.error_general'));
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +49,7 @@ export default function Login({ onLogin }: LoginProps) {
     } catch (err: any) {
       console.error("Google login error:", err);
       if (err.code !== 'auth/popup-closed-by-user') {
-        setError('Error al conectar con Google.');
+        setError(t('login.error_google'));
       }
     } finally {
       setIsLoading(false);
@@ -103,7 +103,7 @@ export default function Login({ onLogin }: LoginProps) {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">
-                Contraseña
+                {t('login.password')}
               </label>
               <button type="button" className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">
                 {t('login.forgot')}

@@ -18,6 +18,7 @@ import {
 import { TriageRecord } from '../../types';
 import { createAppointment } from '../../services/appointmentService';
 import AppointmentSuccess from './AppointmentSuccess';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ interface NewAppointmentModalProps {
   latestTriage?: TriageRecord;
 }
 
-type ServiceType = 'Consulta Médica' | 'Análisis Lab' | 'Especialidad';
+type ServiceType = string;
 
 export default function NewAppointmentModal({ 
   isOpen, 
@@ -36,8 +37,9 @@ export default function NewAppointmentModal({
   userId,
   latestTriage 
 }: NewAppointmentModalProps) {
+  const { t } = useLanguage();
   const [step, setStep] = useState<'form' | 'success'>('form');
-  const [serviceType, setServiceType] = useState<ServiceType>('Consulta Médica');
+  const [serviceType, setServiceType] = useState<ServiceType>(t('appointment.modal.medical_consultation'));
   const [search, setSearch] = useState('');
   const [selectedDate, setSelectedDate] = useState<number>(new Date().getDate() + 1);
   const [selectedTime, setSelectedTime] = useState('09:30 AM');
@@ -53,7 +55,10 @@ export default function NewAppointmentModal({
 
   const handleImportTriage = () => {
     if (latestTriage) {
-      setNotes(`Importado de Triaje IA:\nSíntomas: ${latestTriage.symptoms}\nRecomendación: ${latestTriage.recommendation}`);
+      const imported = t('appointment.modal.imported_from_ai')
+        .replace('{symptoms}', latestTriage.symptoms || '')
+        .replace('{recommendation}', latestTriage.recommendation || '');
+      setNotes(imported);
     }
   };
 
@@ -69,8 +74,8 @@ export default function NewAppointmentModal({
       if (period === 'AM' && hours === 12) finalHours = 0;
       date.setHours(finalHours, minutes, 0, 0);
 
-      const specialist = search || (serviceType === 'Consulta Médica' ? 'Dra. S. Ramírez' : 'Laboratorio Central');
-      const location = 'Hospital Central, Ala Norte';
+      const specialist = search || (serviceType === t('appointment.modal.medical_consultation') ? t('appointment.modal.doctor_name') : t('appointment.modal.lab_name'));
+      const location = t('appointment.modal.hospital_name');
 
       await createAppointment({
         userId,
@@ -120,8 +125,8 @@ export default function NewAppointmentModal({
               {/* Header */}
               <div className="px-8 py-6 border-b border-[#1E293B] flex justify-between items-center sticky top-0 bg-[#0F172A] z-10">
                 <div>
-                  <h1 className="text-2xl font-display font-bold text-[#D5E3FF]">Nueva Cita</h1>
-                  <p className="text-sm text-[#C0C7D5] mt-1">Complete los detalles para agendar su consulta.</p>
+                  <h1 className="text-2xl font-display font-bold text-[#D5E3FF]">{t('appointment.modal.title')}</h1>
+                  <p className="text-sm text-[#C0C7D5] mt-1">{t('appointment.modal.subtitle')}</p>
                 </div>
                 <button 
                   onClick={handleClose}
@@ -135,12 +140,12 @@ export default function NewAppointmentModal({
           <div className="p-8 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
             {/* Tipo de Servicio */}
             <section className="space-y-4">
-              <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">TIPO DE SERVICIO</h2>
+              <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">{t('appointment.modal.service_type_label')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {[
-                  { id: 'Consulta Médica', icon: Stethoscope, label: 'Consulta Médica' },
-                  { id: 'Análisis Lab', icon: FlaskConical, label: 'Análisis Lab' },
-                  { id: 'Especialidad', icon: Brain, label: 'Especialidad' },
+                  { id: t('appointment.modal.medical_consultation'), icon: Stethoscope, label: t('appointment.modal.medical_consultation') },
+                  { id: t('appointment.modal.lab_analysis'), icon: FlaskConical, label: t('appointment.modal.lab_analysis') },
+                  { id: t('appointment.modal.specialty'), icon: Brain, label: t('appointment.modal.specialty') },
                 ].map((option) => (
                   <button
                     key={option.id}
@@ -165,7 +170,7 @@ export default function NewAppointmentModal({
 
             {/* Centro o Profesional */}
             <section className="space-y-4">
-              <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">UBICACIÓN / PROFESIONAL</h2>
+              <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">{t('appointment.modal.location_professional_label')}</h2>
               <div className="bg-[#0B1326] border border-[#1E293B] rounded-xl overflow-hidden focus-within:border-[#A6C8FF] focus-within:ring-1 focus-within:ring-[#A6C8FF] transition-all">
                 <div className="flex items-center px-4 py-3">
                   <Search className="w-5 h-5 text-[#8A919E] mr-3" />
@@ -173,7 +178,7 @@ export default function NewAppointmentModal({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="bg-transparent border-none w-full text-[#DAE2FD] focus:ring-0 placeholder-[#404753] p-0" 
-                    placeholder="Buscar por nombre, especialidad o centro..." 
+                    placeholder={t('appointment.modal.search_placeholder')} 
                     type="text"
                   />
                 </div>
@@ -182,14 +187,14 @@ export default function NewAppointmentModal({
                   <div className="flex flex-wrap gap-2">
                     <button className="flex items-center bg-[#222A3D] rounded-full px-3 py-1.5 border border-transparent hover:border-[#404753] transition-colors">
                       <MapPin className="text-[#51DF8E] w-3.5 h-3.5 mr-2" />
-                      <span className="text-xs font-bold text-[#DAE2FD]">Más cercano</span>
+                      <span className="text-xs font-bold text-[#DAE2FD]">{t('appointment.modal.nearest')}</span>
                     </button>
                     <button 
-                      onClick={() => setSearch('Dra. S. Ramírez')}
+                      onClick={() => setSearch(t('appointment.modal.doctor_name'))}
                       className="flex items-center bg-[#222A3D] rounded-full px-3 py-1.5 border border-transparent hover:border-[#404753] transition-colors"
                     >
                       <Star className="text-[#A6C8FF] w-3.5 h-3.5 mr-2 fill-current" />
-                      <span className="text-xs font-bold text-[#DAE2FD]">Dra. S. Ramírez</span>
+                      <span className="text-xs font-bold text-[#DAE2FD]">{t('appointment.modal.doctor_name')}</span>
                     </button>
                   </div>
                 </div>
@@ -198,18 +203,26 @@ export default function NewAppointmentModal({
 
             {/* Fecha y Hora */}
             <section className="space-y-4">
-              <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">FECHA Y HORA</h2>
+              <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">{t('appointment.modal.date_time_label')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Simplified Calendar */}
                 <div className="bg-[#0B1326] border border-[#1E293B] rounded-xl p-6">
                   <div className="flex justify-between items-center mb-6">
                     <button className="text-[#C0C7D5] hover:text-[#DAE2FD] transition-colors"><ChevronLeft className="w-5 h-5" /></button>
-                    <span className="text-sm font-bold text-[#DAE2FD]">Noviembre 2024</span>
+                    <span className="text-sm font-bold text-[#DAE2FD]">{t('appointment.modal.november_2024')}</span>
                     <button className="text-[#C0C7D5] hover:text-[#DAE2FD] transition-colors"><ChevronRight className="w-5 h-5" /></button>
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-center mb-4">
-                    {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(day => (
-                      <span key={day} className="text-[10px] font-bold text-[#404753]">{day}</span>
+                    {[
+                      t('appointment.modal.days.mon'), 
+                      t('appointment.modal.days.tue'), 
+                      t('appointment.modal.days.wed'), 
+                      t('appointment.modal.days.thu'), 
+                      t('appointment.modal.days.fri'), 
+                      t('appointment.modal.days.sat'), 
+                      t('appointment.modal.days.sun')
+                    ].map((day, idx) => (
+                      <span key={idx} className="text-[10px] font-bold text-[#404753]">{day}</span>
                     ))}
                   </div>
                   <div className="grid grid-cols-7 gap-2">
@@ -236,7 +249,9 @@ export default function NewAppointmentModal({
 
                 {/* Time Selection */}
                 <div className="bg-[#0B1326] border border-[#1E293B] rounded-xl p-6 flex flex-col">
-                  <span className="text-xs font-bold text-[#8A919E] mb-4 block">Horarios Disponibles - {selectedDate} Nov</span>
+                  <span className="text-xs font-bold text-[#8A919E] mb-4 block">
+                    {t('appointment.modal.available_times_prefix')}{selectedDate}{t('appointment.modal.available_times_suffix')}
+                  </span>
                   <div className="grid grid-cols-2 gap-3 overflow-y-auto max-h-[180px] pr-2 custom-scrollbar">
                     {[
                       '09:00 AM', '09:30 AM', '10:00 AM', '11:00 AM',
@@ -262,13 +277,13 @@ export default function NewAppointmentModal({
             {/* Notas / Síntomas */}
             <section className="space-y-4">
               <div className="flex justify-between items-end">
-                <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">NOTAS O SÍNTOMAS PREVIOS</h2>
+                <h2 className="text-xs font-bold text-[#8A919E] tracking-widest uppercase">{t('appointment.modal.notes_label')}</h2>
                 <button 
                   onClick={handleImportTriage}
                   className="text-xs font-bold text-[#A6C8FF] flex items-center hover:underline transition-all"
                 >
                   <Bot className="w-4 h-4 mr-2" />
-                  Importar de Triaje IA
+                  {t('appointment.modal.import_triage')}
                 </button>
               </div>
               <div className="bg-[#0B1326] border border-[#1E293B] rounded-xl focus-within:border-[#A6C8FF] focus-within:ring-1 focus-within:ring-[#A6C8FF] transition-all">
@@ -276,7 +291,7 @@ export default function NewAppointmentModal({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full bg-transparent border-none text-[#DAE2FD] p-4 focus:ring-0 placeholder-[#404753] resize-none min-h-[100px]" 
-                  placeholder="Describa brevemente el motivo de su consulta o síntomas..." 
+                  placeholder={t('appointment.modal.notes_placeholder')} 
                 />
               </div>
             </section>
@@ -288,14 +303,14 @@ export default function NewAppointmentModal({
               onClick={handleClose}
               className="px-6 py-3 font-display font-bold text-[#A6C8FF] hover:bg-[#3192FC]/10 rounded-xl transition-all"
             >
-              Cancelar
+              {t('appointment.modal.cancel')}
             </button>
             <button 
               disabled={isSubmitting}
               onClick={handleSubmit}
               className="px-8 py-3 bg-[#3192FC] text-white rounded-xl font-display font-bold transition-all shadow-[0_4px_20px_rgba(49,146,252,0.3)] hover:brightness-110 active:scale-95 flex items-center disabled:opacity-50 disabled:scale-100"
             >
-              {isSubmitting ? 'Agendando...' : 'Confirmar Cita'}
+              {isSubmitting ? t('appointment.modal.scheduling') : t('appointment.modal.confirm')}
               <ArrowRight className="ml-2 w-5 h-5" />
             </button>
           </div>

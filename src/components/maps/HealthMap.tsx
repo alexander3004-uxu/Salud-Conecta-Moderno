@@ -10,7 +10,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useUser } from '../../contexts/UserContext';
 import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
-import { getClinicTypeDetails, FILTER_OPTIONS, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
+import { getClinicTypeDetails, getFilterOptions, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
 import { getReportSummaries, getConfidenceBadge, ReportSummary } from '../../services/facilityReportService';
 import { ReportModal } from './ReportModal';
 import { obtenerTodosLosCentros } from '../../data/granadaDatabase';
@@ -537,7 +537,7 @@ export default function HealthMap() {
         {loadingPlaces && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-surface/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-xs font-bold">Buscando mÃ¡s centros...</span>
+            <span className="text-xs font-bold">{t('maps.health.searching_centers')}</span>
           </div>
         )}
 
@@ -550,8 +550,8 @@ export default function HealthMap() {
                   <ShieldAlert className="w-6 h-6 text-error animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-error">Modo Emergencia</h3>
-                  <p className="text-[10px] font-bold opacity-80">Mostrando solo centros de emergencias</p>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-error">{t('maps.health.emergency_mode')}</h3>
+                  <p className="text-[10px] font-bold opacity-80">{t('maps.health.emergency_desc')}</p>
                 </div>
               </div>
             </motion.div>
@@ -562,7 +562,7 @@ export default function HealthMap() {
         <button
           onClick={() => setIsMenuOpen(true)}
           className="absolute top-3 left-3 z-40 w-12 h-12 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl shadow-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all duration-200"
-          title="Abrir menú de búsqueda"
+          title={t('maps.health.open_menu')}
         >
           <Menu className="w-5 h-5 text-gray-700 hover:text-primary transition-colors" />
         </button>
@@ -583,12 +583,12 @@ export default function HealthMap() {
                   <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
                     <MapPin className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm font-display font-black uppercase tracking-wider text-primary">Buscar Centros</span>
+                  <span className="text-sm font-display font-black uppercase tracking-wider text-primary">{t('maps.health.search_centers')}</span>
                 </div>
                 <button
                   onClick={() => setIsMenuOpen(false)}
                   className="p-1.5 hover:bg-gray-200 rounded-full transition-all text-gray-500 hover:text-gray-800"
-                  title="Cerrar panel"
+                  title={t('maps.health.close_panel')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -617,7 +617,7 @@ export default function HealthMap() {
                       onChange={e => setSearchQuery(e.target.value)}
                       onFocus={() => setSearchFocused(true)}
                       onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
-                      placeholder="Buscar hospitales, clínicas..."
+                      placeholder={t('maps.health.search_placeholder')}
                       className="flex-1 bg-transparent text-[14px] text-gray-800 placeholder:text-gray-400 focus:outline-none font-normal"
                     />
 
@@ -639,7 +639,7 @@ export default function HealthMap() {
                         href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedClinic.location.lat},${selectedClinic.location.lng}&travelmode=driving`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title="Cómo llegar"
+                        title={t('maps.health.directions')}
                         className="w-10 h-10 mr-1 rounded-full flex items-center justify-center shrink-0 transition-all"
                         style={{ background: '#1a73e8' }}
                       >
@@ -728,9 +728,9 @@ export default function HealthMap() {
                                           <span className="text-[9px] text-amber-500 font-bold">★ {clinic.rating.toFixed(1)}</span>
                                         )}
                                         {(clinic.isOpen || clinic.open24h) ? (
-                                          <span className="text-[8px] font-bold text-emerald-500">Abierto</span>
+                                          <span className="text-[8px] font-bold text-emerald-500">{t('maps.health.open')}</span>
                                         ) : (
-                                          <span className="text-[8px] font-bold text-red-400">Cerrado</span>
+                                          <span className="text-[8px] font-bold text-red-400">{t('maps.health.closed')}</span>
                                         )}
                                       </div>
                                     </button>
@@ -748,7 +748,7 @@ export default function HealthMap() {
 
                 {/* Category chips (filters) inside Drawer */}
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 shrink-0" style={{ scrollbarWidth: 'none' }}>
-                  {FILTER_OPTIONS.map(({ value, label, labelShort }) => {
+                  {getFilterOptions(t).map(({ value, label, labelShort }) => {
                     const details = value !== 'all' ? getClinicTypeDetails(value) : null;
                     const isActive = filter === value;
                     return (
@@ -778,7 +778,7 @@ export default function HealthMap() {
                 <div className="flex-grow flex flex-col min-h-0 gap-2 mt-1">
                   <div className="flex items-center justify-between px-1 mb-1 shrink-0">
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      Centros Médicos ({filteredClinics.length})
+                      {t('maps.health.medical_centers')} ({filteredClinics.length})
                     </span>
                     {loadingPlaces && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />}
                   </div>
@@ -786,7 +786,7 @@ export default function HealthMap() {
                   <div className="flex-grow overflow-y-auto pr-1 flex flex-col gap-2 min-h-0 no-scrollbar">
                     {filteredClinics.length === 0 ? (
                       <div className="py-12 text-center text-gray-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-gray-100">
-                        No se encontraron centros médicos en esta zona.
+                        {t('maps.health.no_centers')}
                       </div>
                     ) : (
                       filteredClinics.map((clinic) => {
@@ -827,11 +827,11 @@ export default function HealthMap() {
                                   </span>
                                 )}
                                 <span className={`text-[10px] font-bold ${isOpen ? 'text-emerald-600' : 'text-red-500'}`}>
-                                  {isOpen ? 'Abierto' : 'Cerrado'}
+                                  {isOpen ? t('maps.health.open') : t('maps.health.closed')}
                                 </span>
                                 {clinic.sector === 'public' && (
                                   <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md">
-                                    Público
+                                    {t('maps.health.public')}
                                   </span>
                                 )}
                               </div>
@@ -845,7 +845,7 @@ export default function HealthMap() {
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-200"
-                                title="Cómo llegar"
+                                title={t('maps.health.directions')}
                               >
                                 <Navigation className="w-3.5 h-3.5 text-blue-700" />
                               </a>
@@ -953,16 +953,16 @@ export default function HealthMap() {
                   {selectedClinic.sector === 'public' && (
                     <>
                       <span className="text-gray-400">·</span>
-                      <span className="text-blue-600 font-medium">Público</span>
+                      <span className="text-blue-600 font-medium">{t('maps.health.public')}</span>
                     </>
                   )}
                   {/* Confidence badge */}
                   {(() => {
                     const badge = getConfidenceBadge(reportSummaries.get(selectedClinic.id));
                     const map: Record<string, string> = {
-                      verified: '✅ Verificado',
-                      warned: '⚠️ En revisión',
-                      flagged: '🚩 Reportado',
+                      verified: t('maps.health.verified'),
+                      warned: t('maps.health.in_review'),
+                      flagged: t('maps.health.reported'),
                     };
                     return map[badge] ? (
                       <>
@@ -976,7 +976,7 @@ export default function HealthMap() {
 
               {/* --- Tabs: Descripci\u00F3n | Opiniones | Acerca de --- */}
               <div className="flex border-b border-gray-200 px-2 mt-1">
-                {['Descripci\u00F3n general', 'Opiniones', 'Acerca de'].map((tab, i) => (
+                {[t('maps.health.desc_general'), t('maps.health.reviews'), t('maps.health.about')].map((tab, i) => (
                   <button
                     key={tab}
                     className={`flex-1 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
@@ -1003,7 +1003,7 @@ export default function HealthMap() {
                     <Navigation className="w-5 h-5 text-blue-700" />
                   </div>
                   <span className="text-[11px] text-blue-700 font-medium text-center leading-tight" style={{ maxWidth: '56px' }}>
-                    Indicaciones
+                    {t('maps.health.directions_btn')}
                   </span>
                 </a>
 
@@ -1012,7 +1012,7 @@ export default function HealthMap() {
                   <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                     <Flag className="w-5 h-5 text-blue-700" />
                   </div>
-                  <span className="text-[11px] text-blue-700 font-medium">Guardar</span>
+                  <span className="text-[11px] text-blue-700 font-medium">{t('maps.health.save_btn')}</span>
                 </button>
 
                 {/* Cerca */}
@@ -1020,7 +1020,7 @@ export default function HealthMap() {
                   <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                     <Search className="w-5 h-5 text-blue-700" />
                   </div>
-                  <span className="text-[11px] text-blue-700 font-medium">Cerca</span>
+                  <span className="text-[11px] text-blue-700 font-medium">{t('maps.health.near_btn')}</span>
                 </button>
 
                 {/* Llamar */}
@@ -1032,7 +1032,7 @@ export default function HealthMap() {
                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                       <Phone className="w-5 h-5 text-blue-700" />
                     </div>
-                    <span className="text-[11px] text-blue-700 font-medium">Llamar</span>
+                    <span className="text-[11px] text-blue-700 font-medium">{t('maps.health.call_btn')}</span>
                   </a>
                 ) : (
                   <button
@@ -1042,7 +1042,7 @@ export default function HealthMap() {
                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                       <Flag className="w-5 h-5 text-blue-700" />
                     </div>
-                    <span className="text-[11px] text-blue-700 font-medium">Reportar</span>
+                    <span className="text-[11px] text-blue-700 font-medium">{t('maps.health.report_btn')}</span>
                   </button>
                 )}
               </div>
@@ -1063,9 +1063,9 @@ export default function HealthMap() {
                   <Clock className="w-4 h-4 text-gray-500 shrink-0" />
                   <div>
                     <p className="text-[13px] text-gray-700">
-                      <span className="text-green-700 font-medium">Abierto</span>
+                      <span className="text-green-700 font-medium">{t('maps.health.open')}</span>
                       {' \u00B7 '}
-                      <span>Abre las 24 horas</span>
+                      <span>{t('maps.health.open_24h')}</span>
                     </p>
                   </div>
                 </div>
@@ -1077,7 +1077,7 @@ export default function HealthMap() {
                       <span className={`text-[13px] font-medium ${
                         selectedClinic.openingHours.isOpen ? 'text-green-700' : 'text-red-600'
                       }`}>
-                        {selectedClinic.openingHours.isOpen ? 'Abierto ahora' : 'Cerrado ahora'}
+                        {selectedClinic.openingHours.isOpen ? t('maps.health.open_now') : t('maps.health.closed_now')}
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                     </div>
@@ -1104,7 +1104,7 @@ export default function HealthMap() {
                 <div className="flex items-center gap-4 px-5 py-3.5 border-b border-gray-100">
                   <Clock className="w-4 h-4 text-gray-500 shrink-0" />
                   <span className={`text-[13px] font-medium ${selectedClinic.isOpen ? 'text-green-700' : 'text-red-600'}`}>
-                    {selectedClinic.isOpen ? 'Abierto' : 'Cerrado'}
+                    {selectedClinic.isOpen ? t('maps.health.open') : t('maps.health.closed')}
                   </span>
                 </div>
               )}
@@ -1141,7 +1141,7 @@ export default function HealthMap() {
                   className="flex items-center gap-2 text-[13px] text-gray-500 hover:text-red-600 transition-colors"
                 >
                   <Flag className="w-4 h-4" />
-                  <span>Reportar un problema</span>
+                  <span>{t('maps.health.report_problem')}</span>
                 </button>
               </div>
 

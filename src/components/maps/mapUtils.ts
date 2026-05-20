@@ -150,11 +150,19 @@ const TYPE_CONFIG: Record<string, TypeDetails> = {
   },
 };
 
-export const getClinicTypeDetails = (type: string): TypeDetails =>
-  TYPE_CONFIG[type] ?? TYPE_CONFIG.default;
+export const getClinicTypeDetails = (type: string, t?: any): TypeDetails => {
+  const config = TYPE_CONFIG[type] ?? TYPE_CONFIG.default;
+  if (!t) return config;
+  
+  // Try to translate label and labelShort if t is provided
+  const transKey = type.replace('-', '_');
+  const label = t(`maps.utils.${transKey}_label`) !== `maps.utils.${transKey}_label` ? t(`maps.utils.${transKey}_label`) : config.label;
+  const labelShort = t(`maps.utils.${transKey}_short`) !== `maps.utils.${transKey}_short` ? t(`maps.utils.${transKey}_short`) : config.labelShort;
+  
+  return { ...config, label, labelShort };
+};
 
-/** Lista ordenada de todos los filtros con sus etiquetas */
-export const FILTER_OPTIONS: { value: FilterType; label: string; labelShort: string }[] = [
+const FILTER_OPTIONS_BASE: { value: FilterType; label: string; labelShort: string }[] = [
   { value: 'all',               label: 'Todos',             labelShort: 'Todos'      },
   { value: 'hospital-national', label: 'Hospital Nacional',  labelShort: 'H. Nacional'},
   { value: 'emergency',         label: 'Emergencia',         labelShort: 'Emergencia' },
@@ -168,6 +176,18 @@ export const FILTER_OPTIONS: { value: FilterType; label: string; labelShort: str
   { value: 'dental',            label: 'Clínica Dental',     labelShort: 'Dental'    },
   { value: 'mental-health',     label: 'Salud Mental',       labelShort: 'S. Mental' },
 ];
+
+export const getFilterOptions = (t?: any): { value: FilterType; label: string; labelShort: string }[] => {
+  return FILTER_OPTIONS_BASE.map(opt => {
+    if (!t) return opt;
+    const transKey = opt.value.replace('-', '_');
+    const label = t(`maps.utils.${transKey}_label`) !== `maps.utils.${transKey}_label` ? t(`maps.utils.${transKey}_label`) : opt.label;
+    const labelShort = t(`maps.utils.${transKey}_short`) !== `maps.utils.${transKey}_short` ? t(`maps.utils.${transKey}_short`) : opt.labelShort;
+    return { ...opt, label, labelShort };
+  });
+};
+
+export const FILTER_OPTIONS = FILTER_OPTIONS_BASE;
 
 /**
  * Todos los search terms expandidos por tipo, listos para dispararse

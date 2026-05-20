@@ -36,8 +36,10 @@ import NewAppointmentModal from './NewAppointmentModal';
 interface AppointmentsProps {
   initialTab?: 'appointments' | 'history';
 }
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Appointments({ initialTab = 'appointments' }: AppointmentsProps) {
+  const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [triages, setTriages] = useState<TriageRecord[]>([]);
@@ -94,15 +96,15 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShieldCheck className="w-10 h-10 text-primary opacity-40" />
           </div>
-          <h2 className="text-3xl font-display font-bold mb-4 text-on-surface">Acceso Reservado</h2>
+          <h2 className="text-3xl font-display font-bold mb-4 text-on-surface">{t('appointments.access_reserved')}</h2>
           <p className="text-on-surface-variant mb-8 text-body-md leading-relaxed">
-            Para gestionar tus citas y ver tu historial médico, por favor inicia sesión de forma segura.
+            {t('appointments.login_prompt')}
           </p>
           <button 
             onClick={signInWithGoogle}
             className="w-full bg-primary text-on-primary py-4 rounded-2xl font-display font-bold text-lg hover:brightness-110 transition-all flex items-center justify-center gap-3 shadow-lg"
           >
-            Sincronizar Datos
+            {t('appointments.sync_data')}
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
@@ -141,9 +143,9 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
       {/* Header & Primary Action */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-4xl font-display font-bold text-on-surface tracking-tight">Gestión de Citas</h1>
+          <h1 className="text-4xl font-display font-bold text-on-surface tracking-tight">{t('appointments.title')}</h1>
           <p className="text-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            Administre sus próximas consultas y revise su historial médico sincronizado por IA.
+            {t('appointments.desc')}
           </p>
         </div>
         <button 
@@ -151,7 +153,7 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
           className="flex items-center gap-2.5 bg-primary text-on-primary px-8 py-3.5 rounded-full font-display font-bold text-sm hover:brightness-110 transition-all shadow-[0_8px_20px_rgba(49,146,252,0.3)] active:scale-95 group"
         >
           <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          Nueva Cita
+          {t('appointments.new_appointment')}
         </button>
       </div>
 
@@ -167,7 +169,7 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
               </div>
               <input
                 type="text"
-                placeholder="Buscar por médico, especialidad o ubicación..."
+                placeholder={t('appointments.search_ph')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-10 py-4 bg-primary/5 border border-primary/20 rounded-2xl text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm hover:border-primary/40"
@@ -182,10 +184,10 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
             {/* Filters */}
             <div className="flex flex-wrap gap-2.5">
               {[
-                { id: 'all', label: 'Todos', icon: Activity },
-                { id: 'doctors', label: 'Médicos', icon: Stethoscope },
-                { id: 'labs', label: 'Laboratorios', icon: FlaskConical },
-                { id: 'clinics', label: 'Clínicas', icon: Building2 },
+                { id: 'all', label: t('appointments.filter.all'), icon: Activity },
+                { id: 'doctors', label: t('appointments.filter.doctors'), icon: Stethoscope },
+                { id: 'labs', label: t('appointments.filter.labs'), icon: FlaskConical },
+                { id: 'clinics', label: t('appointments.filter.clinics'), icon: Building2 },
               ].map((btn) => (
                 <button
                   key={btn.id}
@@ -206,16 +208,16 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
           {/* Upcoming Appointments */}
           <section>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-display font-bold text-on-surface">Próximas Citas</h2>
+              <h2 className="text-2xl font-display font-bold text-on-surface">{t('appointments.upcoming')}</h2>
               <span className="text-[10px] font-mono font-bold text-primary/60 bg-primary/5 px-3 py-1 rounded-full uppercase tracking-widest border border-primary/10">
-                {filteredAppointments.length} Programadas
+                {filteredAppointments.length} {t('appointments.scheduled')}
               </span>
             </div>
 
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4 bg-primary/5 rounded-3xl border border-dashed border-primary/30">
                 <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                <p className="text-sm font-bold text-on-surface-variant font-mono">Sincronizando Agenda...</p>
+                <p className="text-sm font-bold text-on-surface-variant font-mono">{t('appointments.syncing')}</p>
               </div>
             ) : filteredAppointments.length > 0 ? (
               <div className="flex flex-col gap-4">
@@ -264,15 +266,15 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               appt.status === 'confirmed' ? 'bg-secondary' : 'bg-primary'
                             } animate-pulse`} />
-                            {appt.status === 'confirmed' ? 'Confirmada' : 'Programada'}
+                            {appt.status === 'confirmed' ? t('appointments.completed') : t('appointments.scheduled')}
                           </span>
                         </div>
                         <h3 className="text-xl font-display font-bold text-on-surface group-hover:text-primary transition-colors">
-                      {appt.doctorName || appt.serviceType || 'Cita Médica'}
+                      {appt.doctorName || appt.serviceType || t('appointments.default_medical')}
                         </h3>
                         <p className="text-sm text-on-surface-variant flex items-center gap-1.5 opacity-80">
                           <MapPin className="w-3.5 h-3.5" />
-                          {appt.location || 'Hospital Central, Ala Norte'}
+                          {appt.location || t('appointments.default_location')}
                         </p>
                       </div>
                     </div>
@@ -280,21 +282,21 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
                     <div className="flex flex-col justify-between items-start md:items-end gap-6 md:min-w-[140px]">
                       <div className="text-left md:text-right">
                         <p className="text-2xl font-display font-bold text-primary">
-                      {isValidDate ? apptDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '') : 'Pendiente'}
+                      {isValidDate ? apptDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '') : t('appointments.pending')}
                         </p>
                         <p className="text-sm font-bold text-on-surface-variant font-mono opacity-70">
                       {isValidDate ? apptDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <button className="p-2 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all" title="Añadir al calendario">
+                        <button className="p-2 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all" title={t('appointments.add_calendar')}>
                           <CalendarPlus className="w-5 h-5" />
                         </button>
                         {appt.status !== 'cancelled' && (
                           <button 
                             onClick={() => handleCancel(appt.id)}
                             className="p-2 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:text-error hover:border-error/50 hover:bg-error/5 transition-all" 
-                            title="Cancelar cita"
+                            title={t('appointments.cancel_appt')}
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -308,15 +310,15 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
             ) : (
               <div className="text-center py-24 bg-primary/5 rounded-[32px] border border-dashed border-primary/30">
                 <Calendar className="w-20 h-20 text-outline-variant/20 mx-auto mb-6" />
-                <h3 className="text-2xl font-display font-bold text-on-surface mb-3">Agenda Vacía</h3>
+                <h3 className="text-2xl font-display font-bold text-on-surface mb-3">{t('appointments.empty_title')}</h3>
                 <p className="text-on-surface-variant max-w-sm mx-auto text-sm leading-relaxed mb-8">
-                  No tiene citas programadas en este momento. Inicie una solicitud para agendar su próxima atención.
+                  {t('appointments.empty_desc')}
                 </p>
                 <button 
                   onClick={() => setIsModalOpen(true)}
                   className="bg-primary text-on-primary px-8 py-3.5 rounded-2xl font-display font-bold shadow-xl hover:scale-105 transition-all active:scale-95"
                 >
-                  Programar Nueva Cita
+                  {t('appointments.schedule_new')}
                 </button>
               </div>
             )}
@@ -325,12 +327,12 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
           {/* Past Appointments History - Simplified list on main view */}
           <section className="mt-4">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-display font-bold text-on-surface">Historial Reciente</h2>
+              <h2 className="text-2xl font-display font-bold text-on-surface">{t('appointments.recent_history')}</h2>
               <button 
                 onClick={() => window.dispatchEvent(new CustomEvent('changeTab', { detail: 'history' }))}
                 className="text-xs font-bold text-primary hover:underline"
               >
-                Ver todo el historial
+                {t('appointments.view_all_history')}
               </button>
             </div>
             <div className="bg-surface-container rounded-2xl border border-primary/20 overflow-hidden shadow-sm hover:border-primary/40 transition-colors">
@@ -347,30 +349,30 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
                     </div>
                     <div>
                       <p className="font-bold text-on-surface text-sm">
-                      {(triage.symptoms || '').length > 40 ? triage.symptoms.substring(0, 40) + '...' : (triage.symptoms || 'Sin síntomas')}
+                      {(triage.symptoms || '').length > 40 ? triage.symptoms.substring(0, 40) + '...' : (triage.symptoms || t('appointments.no_symptoms'))}
                       </p>
                       <p className="text-xs font-bold text-on-surface-variant opacity-60 font-mono mt-0.5">
-                      {triage.createdAt ? new Date(triage.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Fecha no disponible'}
+                      {triage.createdAt ? new Date(triage.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : t('appointments.date_unavailable')}
                       </p>
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${
                     triage.urgency === 'emergency' ? 'bg-error/10 text-error border-error/20' : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30'
                   }`}>
-                    {triage.urgency === 'emergency' ? 'EMERGENCIA' : 'COMPLETADA'}
+                    {triage.urgency === 'emergency' ? t('appointments.emergency') : t('appointments.completed')}
                   </span>
                 </div>
               ))}
               {(!triages || triages.length === 0) && (
                 <div className="p-12 text-center text-on-surface-variant text-sm font-medium opacity-60">
-                  No hay registros de historial recientes.
+                  {t('appointments.no_history')}
                 </div>
               )}
               <button 
                 onClick={() => window.dispatchEvent(new CustomEvent('changeTab', { detail: 'history' }))}
                 className="w-full py-4 bg-surface-container-high/30 text-center text-primary font-display font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-all border-t border-outline-variant/10"
               >
-                Ver Pasaporte de Salud Completo
+                {t('appointments.view_passport')}
               </button>
             </div>
           </section>
@@ -421,11 +423,11 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
             <div className="mt-8 pt-6 border-t border-primary/20 flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(81,223,142,0.4)]" />
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">Médico General</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">{t('appointments.general_doctor')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(49,146,252,0.4)]" />
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">Laboratorio</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-mono">{t('appointments.laboratory')}</span>
               </div>
             </div>
           </div>
@@ -440,14 +442,14 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
               <div className="p-2 bg-primary/10 rounded-xl border border-primary/20">
                 <Headphones className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-display font-bold leading-tight">¿Necesitas ayuda?</h3>
+              <h3 className="text-2xl font-display font-bold leading-tight">{t('appointments.need_help')}</h3>
             </div>
             <p className="text-sm text-on-surface-variant leading-relaxed mb-8 opacity-80 font-medium relative z-10">
-              Si tienes problemas para encontrar una cita o requieres asistencia técnica, contacta a nuestro equipo de atención al paciente.
+              {t('appointments.help_desc')}
             </p>
             <button className="w-full flex items-center justify-center gap-3 bg-primary text-on-primary px-6 py-4 rounded-2xl font-display font-bold text-sm hover:brightness-110 transition-all shadow-lg active:scale-95 relative z-10">
               <Phone className="w-5 h-5 text-on-primary" />
-              Contactar Soporte
+              {t('appointments.contact_support')}
             </button>
           </div>
         </div>
@@ -473,14 +475,14 @@ export default function Appointments({ initialTab = 'appointments' }: Appointmen
               <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center mb-4">
                 <AlertCircle className="w-6 h-6 text-error" />
               </div>
-              <h3 className="text-xl font-display font-bold text-on-surface mb-2">Confirmar Cancelación</h3>
-              <p className="text-sm text-on-surface-variant mb-6">¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.</p>
+              <h3 className="text-xl font-display font-bold text-on-surface mb-2">{t('appointments.confirm_cancel')}</h3>
+              <p className="text-sm text-on-surface-variant mb-6">{t('appointments.cancel_warning')}</p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setIsConfirmingCancel(null)} className="px-4 py-2 rounded-xl font-bold text-sm text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                  Mantener Cita
+                  {t('appointments.keep_appt')}
                 </button>
                 <button onClick={confirmCancellation} className="px-4 py-2 rounded-xl font-bold text-sm bg-error text-on-error hover:bg-error/90 transition-colors shadow-sm">
-                  Sí, Cancelar
+                  {t('appointments.yes_cancel')}
                 </button>
               </div>
             </motion.div>

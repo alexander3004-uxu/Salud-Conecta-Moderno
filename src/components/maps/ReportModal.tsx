@@ -5,8 +5,9 @@ import {
   Loader2, AlertTriangle, ChevronDown
 } from 'lucide-react';
 import { submitReport, ReportType } from '../../services/facilityReportService';
-import { FILTER_OPTIONS } from './mapUtils';
+import { FILTER_OPTIONS, getFilterOptions } from './mapUtils';
 import { Clinic } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -19,43 +20,43 @@ interface ReportOption {
   hint?: string;
 }
 
-const REPORT_OPTIONS: ReportOption[] = [
+const getReportOptions = (t: any): ReportOption[] => [
   {
     type: 'confirm_correct',
     icon: CheckCircle2,
     iconColor: 'text-emerald-500',
-    label: 'Este sitio es correcto',
-    description: 'La ubicación, nombre y tipo coinciden con la realidad.',
+    label: t('maps.report.confirm_correct'),
+    description: t('maps.report.confirm_desc'),
   },
   {
     type: 'wrong_location',
     icon: MapPin,
     iconColor: 'text-amber-500',
-    label: 'Ubicación incorrecta',
-    description: 'El establecimiento existe, pero el pin está en el lugar equivocado.',
-    hint: 'Puedes añadir una descripción indicando dónde está realmente.',
+    label: t('maps.report.wrong_loc'),
+    description: t('maps.report.wrong_loc_desc'),
+    hint: t('maps.report.wrong_loc_hint'),
   },
   {
     type: 'does_not_exist',
     icon: XCircle,
     iconColor: 'text-red-500',
-    label: 'Este sitio no existe',
-    description: 'El establecimiento ya cerró o nunca existió en esa dirección.',
+    label: t('maps.report.not_exist'),
+    description: t('maps.report.not_exist_desc'),
   },
   {
     type: 'wrong_type',
     icon: Tag,
     iconColor: 'text-violet-500',
-    label: 'Tipo incorrecto',
-    description: 'El establecimiento existe pero está mal clasificado.',
-    hint: 'Selecciona el tipo correcto abajo.',
+    label: t('maps.report.wrong_type'),
+    description: t('maps.report.wrong_type_desc'),
+    hint: t('maps.report.wrong_type_hint'),
   },
   {
     type: 'missing_facility',
     icon: PlusCircle,
     iconColor: 'text-blue-500',
-    label: 'Falta un sitio aquí',
-    description: 'Hay un centro de salud en esta zona que no aparece en el mapa.',
+    label: t('maps.report.missing'),
+    description: t('maps.report.missing_desc'),
   },
 ];
 
@@ -69,6 +70,8 @@ interface ReportModalProps {
 type ModalState = 'selecting' | 'filling' | 'sending' | 'success' | 'error';
 
 export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) => {
+  const { t } = useLanguage();
+  const REPORT_OPTIONS = getReportOptions(t);
   const [selected, setSelected] = useState<ReportOption | null>(null);
   const [description, setDescription] = useState('');
   const [suggestedType, setSuggestedType] = useState('');
@@ -133,7 +136,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20">
           <div className="flex-1 min-w-0 mr-3">
             <p className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">
-              Reporte de Usuario
+              {t('maps.report.user_report')}
             </p>
             <h3 className="text-sm font-bold text-on-surface truncate">{facility.name}</h3>
           </div>
@@ -157,9 +160,9 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500" />
               </div>
-              <p className="font-bold text-on-surface">¡Reporte enviado!</p>
+              <p className="font-bold text-on-surface">{t('maps.report.sent_title')}</p>
               <p className="text-xs text-on-surface-variant">
-                Gracias por ayudar a mejorar el mapa. Tu reporte será revisado por el equipo.
+                {t('maps.report.sent_desc')}
               </p>
             </motion.div>
           )}
@@ -179,7 +182,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
                 onClick={handleBack}
                 className="text-xs text-primary font-bold hover:underline"
               >
-                Intentar de nuevo
+                {t('maps.report.try_again')}
               </button>
             </motion.div>
           )}
@@ -191,7 +194,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
               animate={{ opacity: 1 }}
               className="flex flex-col gap-2"
             >
-              <p className="text-xs text-on-surface-variant mb-1">¿Cuál es el problema?</p>
+              <p className="text-xs text-on-surface-variant mb-1">{t('maps.report.what_is_problem')}</p>
               {REPORT_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
@@ -239,7 +242,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
               {selected.type === 'wrong_type' && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest">
-                    Tipo correcto
+                    {t('maps.report.correct_type')}
                   </label>
                   <div className="relative">
                     <select
@@ -247,8 +250,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
                       onChange={e => setSuggestedType(e.target.value)}
                       className="w-full h-11 pl-3 pr-10 rounded-xl bg-surface-container-high border border-outline-variant/30 text-sm text-on-surface appearance-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     >
-                      <option value="">Seleccionar tipo...</option>
-                      {FILTER_OPTIONS.filter(f => f.value !== 'all').map(f => (
+                      <option value="">{t('maps.report.select_type')}</option>
+                      {getFilterOptions(t).filter(f => f.value !== 'all').map(f => (
                         <option key={f.value} value={f.value}>{f.label}</option>
                       ))}
                     </select>
@@ -260,12 +263,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
               {/* Description */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest">
-                  Comentario adicional <span className="normal-case font-normal">(opcional)</span>
+                  {t('maps.report.additional_comment')} <span className="normal-case font-normal">({t('maps.report.optional')})</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value.slice(0, 200))}
-                  placeholder="Ej: El centro cerró en 2023, o está ubicado 200 metros al norte..."
+                  placeholder={t('maps.report.comment_placeholder')}
                   rows={3}
                   className="w-full p-3 rounded-xl bg-surface-container-high border border-outline-variant/30 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-none"
                 />
@@ -281,7 +284,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
                   disabled={modalState === 'sending'}
                   className="flex-1 py-3 bg-surface-container text-on-surface-variant text-xs font-bold rounded-xl hover:bg-surface-container-high transition-all disabled:opacity-50"
                 >
-                  Volver
+                  {t('maps.report.back')}
                 </button>
                 <button
                   onClick={handleSubmit}
@@ -294,10 +297,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({ facility, onClose }) =
                   {modalState === 'sending' ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Enviando...
+                      {t('maps.report.sending')}
                     </>
                   ) : (
-                    'Enviar Reporte'
+                    t('maps.report.submit_report')
                   )}
                 </button>
               </div>

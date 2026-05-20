@@ -3,6 +3,7 @@ import { AnimatePresence } from 'motion/react';
 import { useUser } from '../../contexts/UserContext';
 import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
 import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 import { motion } from 'motion/react';
 import { 
@@ -32,6 +33,7 @@ interface SearchProps {
 }
 
 export default function Search({ onOpenRegistration }: SearchProps) {
+  const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -54,11 +56,11 @@ export default function Search({ onOpenRegistration }: SearchProps) {
   const { isPremium } = useUser();
 
   const categories = [
-    { id: 'public_health', icon: Building2, label: 'Salud Pública', isPublic: true },
-    { id: 'doctor', icon: Stethoscope, label: 'Doctores' },
-    { id: 'clinic', icon: Hospital, label: 'Clínicas' },
-    { id: 'pharmacy', icon: Store, label: 'Farmacias' },
-    { id: 'lab', icon: FlaskConical, label: 'Laboratorios' }
+    { id: 'public_health', icon: Building2, label: t('search.cat_public'), isPublic: true },
+    { id: 'doctor', icon: Stethoscope, label: t('search.cat_doctors') },
+    { id: 'clinic', icon: Hospital, label: t('search.cat_clinics') },
+    { id: 'pharmacy', icon: Store, label: t('search.cat_pharmacies') },
+    { id: 'lab', icon: FlaskConical, label: t('search.cat_labs') }
   ];
 
   const publicItems = useMemo(() => {
@@ -228,10 +230,10 @@ export default function Search({ onOpenRegistration }: SearchProps) {
             animate={{ opacity: 1, y: 0 }}
           >
             <h1 className="text-3xl md:text-4xl font-display font-bold text-on-surface mb-2 tracking-tight">
-              Búsqueda Global
+              {t('search.hero_title')}
             </h1>
             <p className="text-on-surface-variant text-base font-medium opacity-70 mb-8">
-              Encuentra especialistas, clínicas y servicios médicos al instante.
+              {t('search.hero_subtitle')}
             </p>
           </motion.div>
 
@@ -240,7 +242,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within/search:text-primary transition-colors w-5 h-5" />
               <input 
                 className="w-full bg-surface-container-low border border-outline-variant/50 text-on-surface placeholder-on-surface-variant/50 rounded-xl pl-12 pr-4 py-4 focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none" 
-                placeholder="Buscar doctor, especialidad, síntomas..." 
+                placeholder={t('search.search_placeholder')} 
                 type="text"
                 value={searchQuery}
                 onChange={(e) => {
@@ -253,7 +255,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within/location:text-primary transition-colors w-5 h-5" />
               <input 
                 className="w-full bg-surface-container-low border border-outline-variant/50 text-on-surface placeholder-on-surface-variant/50 rounded-xl pl-12 pr-4 py-4 focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none" 
-                placeholder="Localidad..." 
+                placeholder={t('search.location_placeholder')} 
                 type="text"
                 value={locationQuery}
                 onChange={(e) => {
@@ -305,8 +307,8 @@ export default function Search({ onOpenRegistration }: SearchProps) {
               <h2 className="text-2xl font-display font-bold text-on-surface flex items-center gap-3">
                 <Star className="w-6 h-6 text-secondary fill-secondary" />
                 {activeCategory 
-                  ? `Resultados para ${categories.find(c => c.id === activeCategory)?.label}`
-                  : 'Resultados Destacados'
+                  ? `${t('search.results_for')} ${categories.find(c => c.id === activeCategory)?.label}`
+                  : t('search.featured_results')
                 }
               </h2>
               {activeCategory && (
@@ -314,7 +316,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                   onClick={() => setActiveCategory(null)}
                   className="text-xs font-bold text-primary hover:underline"
                 >
-                  Ver todos
+                  {t('search.view_all')}
                 </button>
               )}
             </div>
@@ -392,7 +394,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                         onClick={() => setSelectedItem(item)}
                         className="bg-primary text-on-primary hover:brightness-110 px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
                       >
-                        {item.category === 'doctor' ? 'Agendar Cita' : 'Ver Perfil'}
+                        {item.category === 'doctor' ? t('search.book_appointment') : t('search.view_profile')}
                       </button>
                     </div>
                   </div>
@@ -408,11 +410,11 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                   disabled={currentPage === 1}
                   className="px-4 py-2 rounded-xl font-bold text-sm bg-surface-container-high hover:bg-surface-bright disabled:opacity-50 disabled:cursor-not-allowed transition-all text-on-surface flex items-center gap-2"
                 >
-                  <ChevronRight className="w-4 h-4 rotate-180" /> Anterior
+                  <ChevronRight className="w-4 h-4 rotate-180" /> {t('search.prev')}
                 </button>
                 <div className="flex gap-2">
                    <span className="text-sm font-medium text-on-surface-variant">
-                     Página <strong className="text-on-surface">{currentPage}</strong> de {totalPages}
+                     {t('search.page')} <strong className="text-on-surface">{currentPage}</strong> {t('search.of')} {totalPages}
                    </span>
                 </div>
                 <button
@@ -420,14 +422,14 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 rounded-xl font-bold text-sm bg-surface-container-high hover:bg-surface-bright disabled:opacity-50 disabled:cursor-not-allowed transition-all text-on-surface flex items-center gap-2"
                 >
-                  Siguiente <ChevronRight className="w-4 h-4" />
+                  {t('search.next')} <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             )}
 
             {filteredItems.length === 0 && (
               <div className="p-12 text-center bg-surface-container border border-outline-variant/30 rounded-3xl">
-                <p className="text-on-surface-variant font-medium">No se encontraron resultados para esta categoría.</p>
+                <p className="text-on-surface-variant font-medium">{t('search.no_results')}</p>
               </div>
             )}
           </section>
@@ -438,10 +440,10 @@ export default function Search({ onOpenRegistration }: SearchProps) {
             <div className="flex-1 relative z-10 flex flex-col gap-2">
               <h3 className="text-2xl font-display font-bold text-on-surface flex items-center gap-3">
                 <PlusSquare className="w-6 h-6 text-primary" />
-                Únete a la Red
+                {t('search.join_network')}
               </h3>
               <p className="text-on-surface-variant text-base font-medium opacity-70 max-w-md leading-relaxed">
-                Amplía tu alcance. Conecta con pacientes que buscan atención de calidad en tu especialidad o zona.
+                {t('search.join_desc')}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full md:w-auto">
@@ -449,13 +451,13 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                 onClick={() => onOpenRegistration('doctor')}
                 className="px-8 py-4 bg-surface-container-highest text-on-surface font-display font-bold text-sm rounded-2xl hover:bg-surface-bright transition-all border border-outline-variant/50 shadow-lg"
               >
-                ¿Eres Doctor? Regístrate
+                {t('search.join_doctor')}
               </button>
               <button 
                 onClick={() => onOpenRegistration('clinic')}
                 className="px-8 py-4 bg-primary text-on-primary font-display font-bold text-sm rounded-2xl hover:brightness-110 transition-all shadow-xl shadow-primary/20"
               >
-                ¿Tienes una clínica? Únete
+                {t('search.join_clinic')}
               </button>
             </div>
           </section>
@@ -501,7 +503,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
               <div className="flex justify-between items-center w-full">
                 <span className="bg-primary/95 text-on-primary backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg flex items-center gap-1.5">
                   <Star className="w-3.5 h-3.5 fill-on-primary text-on-primary animate-pulse" />
-                  Destacados Red
+                  {t('search.featured_network')}
                 </span>
                 
                 <button 
@@ -511,7 +513,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                       ? 'bg-red-500 border-red-500 text-white scale-110' 
                       : 'bg-black/35 backdrop-blur-md border-white/20 text-white hover:bg-black/55'
                   }`}
-                  title="Guardar en favoritos"
+                  title={t('search.save_favorites')}
                 >
                   <Heart className={`w-5 h-5 ${likedItems[topFeaturedItems[currentSlide].id] ? 'fill-white' : ''}`} />
                 </button>
@@ -537,7 +539,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                         
                         <span className="text-[10px] font-bold text-red-300 flex items-center gap-1">
                           <Heart className="w-3.5 h-3.5 fill-red-400 text-red-400" />
-                          {Math.round((topFeaturedItems[currentSlide].rating * 14) + (likedItems[topFeaturedItems[currentSlide].id] ? 1 : 0))} Recomendaciones
+                          {Math.round((topFeaturedItems[currentSlide].rating * 14) + (likedItems[topFeaturedItems[currentSlide].id] ? 1 : 0))} {t('search.recommendations')}
                         </span>
                       </div>
 
@@ -552,7 +554,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
 
                     <div className="flex items-center gap-2 text-[10px] font-semibold text-white/70">
                       <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span className="truncate">{topFeaturedItems[currentSlide].address || 'Ubicación General'}</span>
+                      <span className="truncate">{topFeaturedItems[currentSlide].address || t('search.general_location')}</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -567,14 +569,14 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                         className="flex-1 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        Mapa
+                        {t('search.map')}
                       </button>
 
                       <button 
                         onClick={() => setSelectedItem(topFeaturedItems[currentSlide])}
                         className="flex-1 py-3 bg-primary text-on-primary hover:brightness-110 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5"
                       >
-                        Detalles
+                        {t('search.details')}
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -592,7 +594,7 @@ export default function Search({ onOpenRegistration }: SearchProps) {
                           ? 'w-6 bg-primary' 
                           : 'w-2 bg-white/40 hover:bg-white/70'
                       }`}
-                      title={`Ver slide ${idx + 1}`}
+                      title={`${t('search.view_slide')} ${idx + 1}`}
                     />
                   ))}
                 </div>
@@ -623,6 +625,7 @@ interface DetailModalProps {
 }
 
 function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: DetailModalProps) {
+  const { t } = useLanguage();
   const isPublic = item.category === 'public_health';
   const hasCoordinates = !!item.location;
 
@@ -694,7 +697,7 @@ function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: D
                 ? 'bg-hospital-green text-white' 
                 : 'bg-amber-500 text-black'
             }`}>
-              {isPublic ? 'Red MINSA' : 'Clínica Premium'}
+              {isPublic ? t('search.minsa_network') : t('search.premium_clinic')}
             </span>
             <div className="flex gap-2">
               <span className="flex items-center text-amber-400 gap-1 text-sm font-black bg-black/40 px-3 py-1 rounded-lg backdrop-blur-sm">
@@ -720,12 +723,12 @@ function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: D
               {item.name}
             </h2>
             <p className="text-primary text-sm font-bold uppercase tracking-wider">
-              {item.category === 'doctor' ? 'Profesional Médico Registrado' : 'Establecimiento Médico'}
+              {item.category === 'doctor' ? t('search.registered_medical_pro') : t('search.medical_establishment')}
             </p>
           </div>
 
           <div className="space-y-4 border-t border-outline-variant/10 pt-6">
-            <h3 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Sobre Nosotros</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">{t('search.about_us')}</h3>
             <p className="text-on-surface-variant text-base leading-relaxed font-medium opacity-90">
               {item.description}
             </p>
@@ -733,7 +736,7 @@ function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: D
 
           {item.services && item.services.length > 0 && (
             <div className="space-y-3 border-t border-outline-variant/10 pt-6">
-              <h3 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Servicios Disponibles</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">{t('search.available_services')}</h3>
               <div className="flex flex-wrap gap-2">
                 {item.services.map((service: string, idx: number) => (
                   <span key={idx} className="text-[10px] font-extrabold text-primary bg-primary/5 border border-primary/20 px-3 py-1.5 rounded-lg uppercase tracking-wider">
@@ -746,14 +749,14 @@ function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: D
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-t border-outline-variant/10 pt-6">
             <div className="space-y-2">
-              <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Contacto Directo</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">{t('search.direct_contact')}</h4>
               <p className="text-on-surface font-semibold text-lg flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 text-primary shrink-0" />
                 {item.phone}
               </p>
             </div>
             <div className="space-y-2">
-              <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Ubicación y Dirección</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">{t('search.location_address')}</h4>
               <p className="text-on-surface font-medium text-sm flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 {item.address}
@@ -769,7 +772,7 @@ function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: D
             className="flex-1 py-4 border border-outline-variant/80 hover:bg-surface-container-highest/50 text-on-surface rounded-2xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <ExternalLink className="w-4 h-4" />
-            Cómo Llegar (Mapa)
+            {t('search.directions')}
           </button>
           
           <button 
@@ -777,7 +780,7 @@ function EstablishmentDetailModal({ item, onClose, likedItems, onToggleLike }: D
             className="flex-1 py-4 bg-primary text-on-primary hover:brightness-110 rounded-2xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20"
           >
             <Calendar className="w-4 h-4" />
-            {item.category === 'doctor' ? 'Agendar Cita' : 'Solicitar Turno'}
+            {item.category === 'doctor' ? t('search.book_appointment') : t('search.request_turn')}
           </button>
         </div>
       </motion.div>

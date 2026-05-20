@@ -10,7 +10,7 @@ interface LocationResultDisplayProps {
 
 const warningEmoji: Record<string, string> = {
   emergency: '🚑🔴',
-  high: '⚠️🟠', 
+  high: '⚠️🟠',
   medium: '⚠️🟡',
   low: '💚🟢'
 };
@@ -22,7 +22,7 @@ const severityLabels: Record<string, string> = {
   low: 'BAJA PRIORIDAD'
 };
 
-export default function LocationResultDisplay({result, memberId, onReset}: LocationResultDisplayProps) {
+export default function LocationResultDisplay({ result, memberId, onReset }: LocationResultDisplayProps) {
   const errorEmoji = result.error ? '🤖' : warningEmoji[result.severity];
 
   return (
@@ -44,12 +44,11 @@ export default function LocationResultDisplay({result, memberId, onReset}: Locat
       <div className="space-y-6">
         {/* Urgency Badge */}
         <div className="flex items-center gap-3">
-          <span className={`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${
-            result.severity === 'emergency' ? 'bg-error text-on-error animate-pulse' :
-            result.severity === 'high' ? 'bg-amber-500 text-white' :
-            result.severity === 'medium' ? 'bg-amber-400 text-white' :
-            'bg-secondary text-on-secondary'
-          }`}>
+          <span className={`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${result.severity === 'emergency' ? 'bg-error text-on-error animate-pulse' :
+              result.severity === 'high' ? 'bg-amber-500 text-white' :
+                result.severity === 'medium' ? 'bg-amber-400 text-white' :
+                  'bg-secondary text-on-secondary'
+            }`}>
             <span>{errorEmoji}</span>
             {severityLabels[result.severity]}
           </span>
