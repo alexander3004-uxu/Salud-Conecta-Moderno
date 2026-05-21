@@ -522,7 +522,7 @@ const translations: Translations = {
     'maps.premium.hero_subtitle': 'Centros privados y especialistas de primer nivel',
     'maps.premium.exclusive_service': 'Servicio Exclusivo',
     'search.hero_title': 'Encuentra atención médica de calidad',
-    'search.hero_subtitle': 'Busca hospitales, clínicas, farmacias y laboratorios cerca de ti'
+    'search.hero_subtitle': 'Busca hospitales, clínicas, farmacias y laboratorios cerca de ti',
     'maps.premium.stat_vip': 'Centros VIP',
     'maps.premium.stat_near': 'Cercanos (<5km)',
     'maps.premium.stat_rating': 'Alta Valoración',
@@ -1059,7 +1059,7 @@ const translations: Translations = {
     'maps.premium.hero_subtitle': 'Private centers and top-tier specialists',
     'maps.premium.exclusive_service': 'Exclusive Service',
     'search.hero_title': 'Find quality medical care',
-    'search.hero_subtitle': 'Search for hospitals, clinics, pharmacies and labs near you'
+    'search.hero_subtitle': 'Search for hospitals, clinics, pharmacies and labs near you',
     'maps.premium.stat_vip': 'VIP Centers',
     'maps.premium.stat_near': 'Nearby (<5km)',
     'maps.premium.stat_rating': 'Top Rated',
