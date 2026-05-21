@@ -136,7 +136,7 @@ export const AIServiceStatus: React.FC = () => {
 
             <div className="flex items-center gap-2 mt-4 text-[10px] font-black uppercase tracking-widest opacity-60">
               <ShieldCheck className="w-4 h-4" />
-              Verificado por Salud Conecta Protocol 3.1
+              Verificado por Salud Conecta IA Protocol 3.1
             </div>
           </div>
         </motion.div>

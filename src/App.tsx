@@ -168,7 +168,7 @@ export default function App() {
         <div className="flex flex-col items-center gap-6">
           <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
           <div>
-            <h2 className="text-xl font-bold text-on-surface">Cargando Salud Conecta...</h2>
+            <h2 className="text-xl font-bold text-on-surface">Cargando Salud Conecta IA...</h2>
             <p className="text-on-surface-variant mt-2">Verificando sesión segura</p>
           </div>
         </div>

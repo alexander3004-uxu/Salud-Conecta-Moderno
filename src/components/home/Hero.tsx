@@ -177,7 +177,7 @@ export default function Hero({ onStartAssistant, onViewPublicHealth, onViewAppoi
                 {t('cta.professional.title')}
               </h2>
               <p className="text-lg text-on-surface-variant font-medium leading-relaxed opacity-80">
-                {t('cta.professional.desc').replace('{brand}', 'Salud Conecta™')}
+                {t('cta.professional.desc').replace('{brand}', 'Salud Conecta IA™')}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">

@@ -1,6 +1,7 @@
 {
-  "name": "Salud Conecta",
+  "name": "Salud Conecta IA",
   "description": "Ecosistema de salud inteligente para servicios asistenciales, red de hospitales y triaje digital.",
+  "version": "1.0.0",
   "requestFramePermissions": [
     "geolocation"
   ],

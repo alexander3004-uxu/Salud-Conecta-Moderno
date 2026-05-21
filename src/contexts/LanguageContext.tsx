@@ -136,7 +136,7 @@ const translations: Translations = {
     'maps.tag.private': 'Red Privada (Suscripción)',
     'maps.filter.public': 'Solo Sector Público',
     'maps.filter.private': 'Añadir Red Privada',
-    'maps.social_mission.title': 'Misión Social de Salud Conecta',
+    'maps.social_mission.title': 'Misión Social de Salud Conecta IA',
     'maps.social_mission.desc': 'Estamos comprometidos con el acceso a la salud para todos. Si eres usuario Free, te conectamos con toda la Red Pública de Salud de Nicaragua sin costo alguno.', //
     'maps.key_required.title': 'Llave de Google Maps Requerida',
     'maps.key_required.desc': 'No se detectó VITE_GOOGLE_MAPS_API_KEY. Verifica tu archivo .env y reinicia el servidor de desarrollo.',
@@ -628,7 +628,7 @@ const translations: Translations = {
     'maps.tag.private': 'Private Network (Subscription)',
     'maps.filter.public': 'Public Sector Only',
     'maps.filter.private': 'Add Private Network',
-    'maps.social_mission.title': 'Salud Conecta Social Mission',
+    'maps.social_mission.title': 'Salud Conecta IA Social Mission',
     'maps.social_mission.desc': 'We are committed to health access for all. As a Free user, we connect you with the entire Public Health Network of Nicaragua at no cost.', //
     'maps.key_required.title': 'Google Maps API Key Required',
     'maps.key_required.desc': 'VITE_GOOGLE_MAPS_API_KEY not detected. Check your .env file and restart the development server.',
