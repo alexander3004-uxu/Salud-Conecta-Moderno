@@ -274,7 +274,7 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
             <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant">
                <div className="flex items-center gap-2 text-alert-red font-black mb-2 animate-pulse">
                   <span className="w-2 h-2 rounded-full bg-alert-red" />
-                  {t('status.emergency')}: 911
+                  {t('status.emergency')}: 128
                </div>
                <p className="text-xs text-on-surface-variant leading-relaxed">
                  {t('footer.emergency.desc')}
