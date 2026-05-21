@@ -57,7 +57,14 @@ export default function Assistant() {
                   {message.role === 'assistant' ? <Bot className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-on-surface-variant" />}
                   <span className="text-xs font-bold uppercase">{message.role === 'assistant' ? t('chat.assistant.role_ai') : t('chat.assistant.role_user')}</span>
                 </div>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                  {message.content.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i < message.content.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
             </motion.div>
           ))}

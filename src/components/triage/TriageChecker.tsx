@@ -427,9 +427,14 @@ export default function TriageChecker() {
                       <Bot size={16} />
                       <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.ai_rec')}</span>
                     </div>
-                    <p className="text-xs md:text-sm font-semibold leading-relaxed text-on-surface bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20">
-                      {triageResult.recommendation}
-                    </p>
+                    <div className="text-xs md:text-sm font-semibold leading-relaxed text-on-surface bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20 font-sans">
+                      {triageResult.recommendation.split('\n').map((line, i) => (
+                        <React.Fragment key={i}>
+                          {line}
+                          {i < triageResult.recommendation.split('\n').length - 1 && <br />}
+                        </React.Fragment>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Clinical Reasoning */}
@@ -448,7 +453,7 @@ export default function TriageChecker() {
                     <div className="space-y-2 p-4 bg-secondary/5 rounded-2xl border border-secondary/10">
                       <div className="flex items-center gap-1.5 text-secondary">
                         <Pill size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.otc_sug')}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.otc_sug') || 'Medicación OTC Sugerida'}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 pt-1.5">
                         <div className="flex flex-col">
@@ -463,6 +468,42 @@ export default function TriageChecker() {
                           <span className="text-[8px] font-bold text-on-surface-variant uppercase">{t('triage.frequency')}</span>
                           <span className="text-xs text-on-surface-variant">{triageResult.medication.frequency} • {triageResult.medication.duration}</span>
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Home Remedies */}
+                  {triageResult.homeRemedies && (
+                    <div className="space-y-2 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                      <div className="flex items-center gap-1.5 text-primary">
+                        <CheckCircle2 size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Cuidados en Casa</span>
+                      </div>
+                      <div className="text-xs text-on-surface-variant leading-relaxed">
+                        {triageResult.homeRemedies.split('\n').map((line, i) => (
+                          <React.Fragment key={i}>
+                            {line}
+                            {i < triageResult.homeRemedies.split('\n').length - 1 && <br />}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Warning Signs */}
+                  {triageResult.warningSignsToWatch && (
+                    <div className="space-y-2 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/20">
+                      <div className="flex items-center gap-1.5 text-amber-500">
+                        <AlertTriangle size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Señales de Alarma</span>
+                      </div>
+                      <div className="text-xs font-medium text-amber-500/90 leading-relaxed">
+                        {triageResult.warningSignsToWatch.split('\n').map((line, i) => (
+                          <React.Fragment key={i}>
+                            {line}
+                            {i < triageResult.warningSignsToWatch.split('\n').length - 1 && <br />}
+                          </React.Fragment>
+                        ))}
                       </div>
                     </div>
                   )}

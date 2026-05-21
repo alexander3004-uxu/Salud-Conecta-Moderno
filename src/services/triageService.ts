@@ -77,6 +77,8 @@ export interface TriageWithLocationResult {
     frequency: string;
     duration: string;
   };
+  homeRemedies?: string;
+  warningSignsToWatch?: string;
   locationInfo?: {
     nearestFacility: string;
     distanceKm: number;
@@ -163,39 +165,32 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
         const matchingMeds = buscarMultiplesMedicamentos(matchingSymptom.nombre);
         const med = matchingMeds.length > 0 ? matchingMeds[0] : null;
 
-        let localRecommendation = matchingSymptom.descripcion + '\n\n**Cuidados en casa:**\n- ' + matchingSymptom.cuidados_casa.join('\n- ');
-        if (med) {
-          localRecommendation += `\n\n🔹 **Medicamento Sugerido**: ${med.nombre_es} (${med.nombres_comerciales.join(', ')}).`;
-          localRecommendation += `\n- **Uso**: ${med.uso_principal}`;
-          localRecommendation += `\n- **Dosis recomendada**: ${med.dosis_adulto}`;
-          
-          if (med.contraindicaciones && med.contraindicaciones.length > 0) {
-            localRecommendation += `\n- **Contraindicaciones**: ${med.contraindicaciones}`;
-          }
-          if (med.embarazo) {
-            const isCategoryDangerous = med.embarazo.includes('Categoría X') || med.embarazo.includes('Categoría D');
-            localRecommendation += `\n- **Embarazo (${med.embarazo})**: ${isCategoryDangerous ? '⚠️ EVITAR EN EMBARAZADAS. Alto riesgo fetal.' : 'Uso con precaución médica.'}`;
-          }
-        }
+        let localRecommendation = matchingSymptom.descripcion;
+        
+        let homeRemediesText = matchingSymptom.cuidados_casa ? matchingSymptom.cuidados_casa.join('\n- ') : '';
 
         aiTriage = {
           urgency: matchingSymptom.urgencia_default === 'ALTA' ? 'high' : matchingSymptom.requiere_atencion ? 'emergency' : 'medium',
           recommendation: localRecommendation,
           reasoning: `Heurística de consulta local activa (Coincidencia: ${matchingSymptom.nombre}).`,
           medication: med ? {
-            name: med.nombre_es,
+            name: `${med.nombre_es} (${med.nombres_comerciales.join(', ')})`,
             dosage: med.dosis_adulto || '',
             frequency: 'Según indicación',
             duration: '3-5 días'
           } : undefined,
+          homeRemedies: homeRemediesText ? `- ${homeRemediesText}` : 'Mantente hidratado y descansa.',
+          warningSignsToWatch: matchingSymptom.urgencia_default === 'ALTA' ? 'Fiebre persistente, dolor incontrolable, dificultad respiratoria severa.' : 'Si los síntomas no mejoran en 48h.',
           error: false
         };
       } else {
-        // Fallback genérico si no hay coincidencia exacta de síntoma en Granada
+        // Fallback genérico si no hay coincidencia exacta de síntoma en Granada pero hay conectividad fallida
         aiTriage = {
           urgency: 'medium',
-          recommendation: 'No hemos podido identificar un síntoma específico en nuestra base de datos local de Granada. Por favor, acuda a consulta general en su centro de salud local de la Red Pública (MINSA) o farmacia más cercana para evaluación profesional.',
-          reasoning: 'Heurística de consulta local (Sin coincidencia específica).',
+          recommendation: 'No pudimos conectar con el motor de IA inteligente, pero le sugerimos mantenerse hidratado, tomar su temperatura y, si sus síntomas empeoran, acudir al centro de salud MINSA o farmacia más cercana para evaluación presencial.',
+          reasoning: 'Evaluación local genérica (Falla de conexión a IA, y síntoma no encontrado en la base de datos desconectada).',
+          homeRemedies: '- Descansar\n- Tomar abundantes líquidos\n- Controlar la temperatura',
+          warningSignsToWatch: 'Fiebre muy alta, dificultad para respirar, dolor persistente en el pecho, sangrado o pérdida de conciencia.',
           error: false
         };
       }
@@ -277,6 +272,8 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
         frequency: aiTriage.frequency || '',
         duration: aiTriage.duration || ''
       } : undefined,
+      homeRemedies: aiTriage.homeRemedies,
+      warningSignsToWatch: aiTriage.warningSignsToWatch,
       locationInfo: closestClinic ? {
         nearestFacility: closestClinic.name,
         distanceKm: finalDistance,
