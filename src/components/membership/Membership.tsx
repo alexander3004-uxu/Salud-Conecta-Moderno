@@ -52,7 +52,7 @@ export default function Membership() {
       price: '$0',
       description: 'Acceso esencial para pacientes y consultas básicas.',
       features: [
-        'Triaje estándar por IA',
+        'Consulta estándar por IA',
         'Historial médico básico',
         'Búsqueda de medicamentos'
       ],
@@ -65,7 +65,7 @@ export default function Membership() {
       price: '$49',
       description: 'Ideal para médicos individuales y especialistas.',
       features: [
-        'Prioridad en triaje algorítmico',
+        'Prioridad en consulta algorítmica',
         'Telemedicina HD (1 a 1)',
         'Almacenamiento ilimitado docs.',
         'Reportes clínicos avanzados'
@@ -92,7 +92,7 @@ export default function Membership() {
 
   const features = [
     {
-      title: 'Triaje Prioritario',
+      title: 'Consulta Prioritaria',
       desc: 'Algoritmos de IA procesan casos críticos con latencia cero, asegurando atención inmediata.',
       icon: Zap
     },
@@ -126,7 +126,7 @@ export default function Membership() {
           transition={{ delay: 0.1 }}
           className="text-lg md:text-xl text-on-surface-variant max-w-2xl font-medium"
         >
-          Herramientas avanzadas de triaje, telemedicina en alta definición y gestión de pacientes diseñadas para profesionales e instituciones médicas de alto rendimiento.
+          Herramientas avanzadas de consulta, telemedicina en alta definición y gestión de pacientes diseñadas para profesionales e instituciones médicas de alto rendimiento.
         </motion.p>
       </section>
 
@@ -212,7 +212,7 @@ export default function Membership() {
         
         <ShieldCheck className="w-12 h-12 text-secondary opacity-60" />
         <p className="text-xl md:text-3xl font-display font-black text-on-surface max-w-3xl leading-relaxed italic">
-          "La eficiencia del triaje IA ha permitido a mi clínica reducir los tiempos de espera críticos en un 40%."
+          "La eficiencia de la consulta IA ha permitido a mi clínica reducir los tiempos de espera críticos en un 40%."
         </p>
         <div className="flex flex-col items-center gap-2">
           <div className="text-sm font-black uppercase tracking-[0.2em] text-primary">Dr. Marcelo Rossi</div>

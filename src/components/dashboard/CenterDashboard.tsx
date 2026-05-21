@@ -21,7 +21,7 @@ export default function CenterDashboard() {
   const stats = [
     { label: 'Camas Libres', value: '12', total: '45', icon: Bed, color: 'text-on-surface-variant' },
     { label: 'Quirófanos', value: '2', total: '5', icon: Hospital, color: 'text-on-surface-variant' },
-    { label: 'En Triaje', value: '24', icon: Users, color: 'text-primary', highlight: true },
+    { label: 'En Consulta', value: '24', icon: Users, color: 'text-primary', highlight: true },
     { label: 'Críticos', value: '3', icon: AlertCircle, color: 'text-error', critical: true },
   ];
 
@@ -117,7 +117,7 @@ export default function CenterDashboard() {
           {/* Triage List */}
           <div className="bg-surface-container-low border border-outline-variant/30 rounded-3xl overflow-hidden shadow-sm flex flex-col">
             <div className="p-6 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container/30">
-              <h2 className="text-xl font-display font-black text-on-surface">Pacientes en Triaje de Emergencia</h2>
+              <h2 className="text-xl font-display font-black text-on-surface">Pacientes en Consulta de Emergencia</h2>
               <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1">
                 Ver todos
                 <ArrowRight className="w-3 h-3" />

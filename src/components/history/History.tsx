@@ -128,7 +128,7 @@ export default function History() {
               </div>
               <h2 className="text-3xl font-display font-bold text-on-surface leading-tight">Acceso Médico Seguro</h2>
               <p className="text-on-surface-variant text-sm leading-relaxed mb-2 opacity-80">
-                Presente este código al personal de salud para compartir su resumen clínico, alergias y triajes recientes de forma inmediata.
+                Presente este código al personal de salud para compartir su resumen clínico, alergias y consultas recientes de forma inmediata.
               </p>
               <div className="flex flex-wrap gap-3">
                 <button 
@@ -471,7 +471,7 @@ export default function History() {
           {/* TRIAGE HISTORY */}
           <div className="space-y-8">
             <div className="flex justify-between items-end border-b border-outline-variant/20 pb-4">
-              <h2 className="text-2xl font-display font-bold text-on-surface">Historial de Triajes</h2>
+              <h2 className="text-2xl font-display font-bold text-on-surface">Historial de Consultas</h2>
               <span className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-widest bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/30">
                 {triages.length} Registros
               </span>
@@ -546,7 +546,7 @@ export default function History() {
                 </div>
                 <h3 className="text-2xl font-display font-bold text-on-surface mb-3 tracking-tight">Expediente Digital Vacío</h3>
                 <p className="text-on-surface-variant max-w-sm mx-auto text-sm leading-relaxed mb-10">
-                  Realiza tu primer triaje inteligente para comenzar a construir tu pasaporte de salud global seguro.
+                  Realiza tu primera consulta inteligente para comenzar a construir tu pasaporte de salud global seguro.
                 </p>
                 <button 
                   onClick={() => window.dispatchEvent(new CustomEvent('changeTab', { detail: 'triage' }))}

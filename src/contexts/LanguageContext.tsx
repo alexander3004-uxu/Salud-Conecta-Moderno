@@ -10,7 +10,7 @@ interface Translations {
 
 const translations: Translations = {
   es: {
-    'nav.triage': 'Triaje',
+    'nav.triage': 'Consulta',
     'nav.pharmacy': 'Farmacias',
     'nav.search': 'Buscar',
     'nav.rewards': 'Premios',
@@ -176,7 +176,7 @@ const translations: Translations = {
     'registration.validation.step3': 'Verificando Registro Sanitario',
     'registration.validation.estimation': 'Estimación: 2-5 minutos',
     'registration.next.title': '¿Qué sigue?',
-    'registration.next.feature1.title': 'Triaje Avanzado',
+    'registration.next.feature1.title': 'Consulta Avanzada',
     'registration.next.feature1.desc': 'Acceso a herramientas de IA para pre-diagnóstico.',
     'registration.next.feature2.title': 'Recetas Digitales',
     'registration.next.feature2.desc': 'Emisión segura de prescripciones electrónicas.',
@@ -291,7 +291,7 @@ const translations: Translations = {
     'appointments.cancel_warning': '¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.',
     'appointments.keep_appt': 'Mantener Cita',
     'appointments.yes_cancel': 'Sí, Cancelar',
-    'appointment.modal.imported_from_ai': 'Importado de Triaje IA:\nSíntomas: {symptoms}\nRecomendación: {recommendation}',
+    'appointment.modal.imported_from_ai': 'Importado de Consulta IA:\nSíntomas: {symptoms}\nRecomendación: {recommendation}',
     'appointment.modal.doctor_name': 'Dra. S. Ramírez',
     'appointment.modal.lab_name': 'Laboratorio Central',
     'appointment.modal.hospital_name': 'Hospital Central, Ala Norte',
@@ -316,7 +316,7 @@ const translations: Translations = {
     'appointment.modal.available_times_prefix': 'Horarios Disponibles - ',
     'appointment.modal.available_times_suffix': ' Nov',
     'appointment.modal.notes_label': 'NOTAS O SÍNTOMAS PREVIOS',
-    'appointment.modal.import_triage': 'Importar de Triaje IA',
+    'appointment.modal.import_triage': 'Importar de Consulta IA',
     'appointment.modal.notes_placeholder': 'Describa brevemente el motivo de su consulta o síntomas...',
     'appointment.modal.cancel': 'Cancelar',
     'appointment.modal.scheduling': 'Agendando...',
@@ -388,8 +388,8 @@ const translations: Translations = {
     'wallet.rewards': 'Recompensas Premium',
     'hero.badge': 'SISTEMA DE SALUD PÚBLICA INTEGRAL',
     'hero.title': 'Eficiencia {empática} al servicio de tu salud.',
-    'hero.subtitle': 'Transformamos la incertidumbre en rutas de acción verificadas. Triaje por IA, mapas de stock y pasaporte digital de salud.',
-    'hero.cta.primary': 'Iniciar Triaje IA',
+    'hero.subtitle': 'Transformamos la incertidumbre en rutas de acción verificadas. Consulta por IA, mapas de stock y pasaporte digital de salud.',
+    'hero.cta.primary': 'Iniciar Consulta IA',
     'hero.cta.secondary': 'Protocolo Realon™',
     'features.title': 'Servicios Integrales',
     'features.1.title': 'Confiabilidad Institucional', //
@@ -411,7 +411,7 @@ const translations: Translations = {
     'cta.professional.business': 'Laboratorio/Farmacia',
     'footer.desc': 'Ecosistema de salud pública inteligente desarrollado para maximizar la eficiencia y empatía en la atención médica nacional.',
     'footer.system': 'Sistema',
-    'footer.system.triage': 'Triaje Avanzado',
+    'footer.system.triage': 'Consulta Avanzada',
     'footer.system.pharmacy': 'Red de Farmacias',
     'footer.system.pwa': 'Pasaporte PWA',
     'footer.legal': 'Legal', //

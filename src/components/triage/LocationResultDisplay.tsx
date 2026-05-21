@@ -29,7 +29,7 @@ export default function LocationResultDisplay({ result, memberId, onReset }: Loc
     <div className="bg-surface-container rounded-2xl shadow-lg border border-outline-variant/30 p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-on-surface">Resultado del Triaje</h3>
+          <h3 className="text-lg font-semibold text-on-surface">Resultado de la Consulta</h3>
           <p className="text-sm text-on-surface-variant">Análisis basado en IA con geolocalización</p>
         </div>
         <button

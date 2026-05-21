@@ -119,7 +119,7 @@ ${membershipContext}`;
     return {
       urgency: 'medium',
       recommendation: msg.toLowerCase().includes('credits') ? 'Verifique créditos en ai.studio.' : 'Busque atención médica profesional.',
-      reasoning: 'Error al procesar triaje.',
+      reasoning: 'Error al procesar la consulta.',
       error: true
     };
   }

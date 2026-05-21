@@ -47,7 +47,7 @@ export async function runTriageOffline(
     result = {
       severity: 'medium',
       recommendation: 'No se pudo completar el análisis. Consulte con un profesional de salud si sus síntomas persisten o empeoran.',
-      reasoning: 'Triaje ejecutado en modo offline sin coincidencia local.',
+      reasoning: 'Consulta ejecutada en modo offline sin coincidencia local.',
       error: true,
     };
   }

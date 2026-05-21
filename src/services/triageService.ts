@@ -270,7 +270,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     return {
       severity,
       recommendation,
-      reasoning: aiTriage.reasoning || `Triaje analizado localmente. Distancia al centro más cercano: ${finalDistance.toFixed(1)} km.`,
+      reasoning: aiTriage.reasoning || `Consulta analizada localmente. Distancia al centro más cercano: ${finalDistance.toFixed(1)} km.`,
       medication: typeof aiTriage.medication === 'object' ? aiTriage.medication : aiTriage.medication ? {
         name: aiTriage.medication,
         dosage: aiTriage.dosage || '',
@@ -299,7 +299,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     return {
       severity: 'medium',
       recommendation: 'Consulte con un médico profesional si sus síntomas persisten.',
-      reasoning: 'Error al ejecutar el triaje.',
+      reasoning: 'Error al ejecutar la consulta.',
       error: true
     };
   }
