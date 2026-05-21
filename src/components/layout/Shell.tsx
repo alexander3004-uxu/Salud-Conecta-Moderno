@@ -27,6 +27,7 @@ import { auth, signInWithGoogle, handleRedirectResult } from '../../lib/firebase
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 import { syncUserProfile } from '../../lib/authUtils';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { SyncStatusIndicator } from '../common/OfflineBanner';
 
 interface ShellProps {
   children: React.ReactNode;
@@ -156,6 +157,8 @@ export default function Shell({ children, activeTab, setActiveTab }: ShellProps)
             <Radio className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           
+          <SyncStatusIndicator />
+
           <div 
             className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full overflow-hidden ml-1 shadow-inner cursor-pointer border transition-all shrink-0 ${
               activeTab === 'profile' ? 'border-primary ring-2 ring-primary/20 scale-110' : 'border-primary/30 hover:border-primary hover:bg-primary/5'

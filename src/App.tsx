@@ -36,6 +36,8 @@ import PointsConfig from './components/membership/PointsConfig';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { UserProvider } from './contexts/UserContext';
+import { NetworkProvider } from './contexts/NetworkContext';
+import { OfflineBanner } from './components/common/OfflineBanner';
 import Login from './components/auth/Login';
 import { auth, handleRedirectResult } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -177,24 +179,27 @@ export default function App() {
   }
 
   return (
-    <UserProvider>
-      {!isAuthenticated ? (
-        <Login onLogin={handleLogin} />
-      ) : (
-        <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
-          <Suspense fallback={
-            <div className="flex h-full w-full items-center justify-center p-8">
-              <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                <p className="text-on-surface-variant font-medium animate-pulse">Cargando módulo...</p>
+    <NetworkProvider>
+      <UserProvider>
+        {!isAuthenticated ? (
+          <Login onLogin={handleLogin} />
+        ) : (
+          <Shell activeTab={activeTab} setActiveTab={setActiveTab}>
+            <OfflineBanner />
+            <Suspense fallback={
+              <div className="flex h-full w-full items-center justify-center p-8">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  <p className="text-on-surface-variant font-medium animate-pulse">Cargando módulo...</p>
+                </div>
               </div>
-            </div>
-          }>
-            {renderContent()}
-          </Suspense>
-          <PWAInstallPrompt />
-        </Shell>
-      )}
-    </UserProvider>
+            }>
+              {renderContent()}
+            </Suspense>
+            <PWAInstallPrompt />
+          </Shell>
+        )}
+      </UserProvider>
+    </NetworkProvider>
   );
 }
