@@ -21,7 +21,7 @@ export default function DoctorDashboard() {
   const stats = [
     { label: 'Pacientes Hoy', value: '42', change: '+12% vs ayer', icon: Users, color: 'text-primary' },
     { label: 'Turnos Pendientes', value: '18', change: 'Próximo en 5 min', icon: Calendar, color: 'text-primary' },
-    { label: 'Alertas Triaje', value: '3', change: 'Atención urgente', icon: AlertCircle, color: 'text-error' },
+    { label: 'Alertas de Consulta', value: '3', change: 'Atención urgente', icon: AlertCircle, color: 'text-error' },
   ];
 
   const patients = [
@@ -86,7 +86,7 @@ export default function DoctorDashboard() {
             <AlertTriangle className="w-6 h-6 text-error" />
           </div>
           <div>
-            <h2 className="text-lg md:text-xl font-display font-black text-error">Alerta Crítica: 3 Pacientes Triaje IA</h2>
+            <h2 className="text-lg md:text-xl font-display font-black text-error">Alerta Crítica: 3 Pacientes de Consulta IA</h2>
             <p className="text-xs md:text-sm font-medium opacity-80">Atención inmediata requerida. Riesgo elevado detectado por algoritmos de IA.</p>
           </div>
         </div>
@@ -112,8 +112,8 @@ export default function DoctorDashboard() {
               <stat.icon className={`w-5 h-5 ${stat.color} opacity-80`} />
             </div>
             <div className="flex flex-col relative z-10">
-              <span className={`text-4xl md:text-5xl font-display font-black ${stat.label === 'Alertas Triaje' ? 'text-error' : 'text-on-surface'}`}>{stat.value}</span>
-              <span className={`text-[10px] font-bold mt-1 ${stat.label === 'Alertas Triaje' ? 'text-error/80' : 'text-secondary'}`}>{stat.change}</span>
+              <span className={`text-4xl md:text-5xl font-display font-black ${stat.label === 'Alertas de Consulta' ? 'text-error' : 'text-on-surface'}`}>{stat.value}</span>
+              <span className={`text-[10px] font-bold mt-1 ${stat.label === 'Alertas de Consulta' ? 'text-error/80' : 'text-secondary'}`}>{stat.change}</span>
             </div>
           </motion.div>
         ))}
@@ -124,7 +124,7 @@ export default function DoctorDashboard() {
         {/* Left: Patient List */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-display font-black text-on-surface">Próximos Turnos & Triaje</h3>
+            <h3 className="text-xl font-display font-black text-on-surface">Próximos Turnos & Consulta</h3>
             <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1">
               Ver Agenda Completa
               <ChevronRight className="w-3 h-3" />

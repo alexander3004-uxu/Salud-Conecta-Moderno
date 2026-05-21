@@ -3,10 +3,9 @@ import { db, auth } from '../lib/firebase';
 import { TriageRecord, OperationType, FirestoreErrorInfo, Clinic } from '../types';
 import { getClinics } from './clinicService'; // Importar getClinics para obtener los centros verificados
 import { getCurrentLocation, getNearestFacility, getEmergencyFacilities, estimateTravelTime, calculateDistance } from '../lib/geolocationService';
-import { NICARAGUA_HOSPITALS } from '../data/nicaraguaHospitals';
-import { PUBLIC_HEALTH_NETWORK } from '../data/nicaraguaPublicHealthNetwork';
+import centrosSaludData from '../data/centros_salud.json';
 import { getSmartTriage } from '../lib/gemini';
-import { obtenerTodosLosCentros, buscarSintoma, buscarMultiplesMedicamentos } from '../data/granadaDatabase';
+import { buscarSintoma, buscarMultiplesMedicamentos } from '../data/granadaDatabase';
 
 const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
   const errInfo: FirestoreErrorInfo = {
@@ -111,31 +110,29 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     // 1. Obtener la red completa combinada (Firestore dinámicas + Red pública y centros de Granada + otros hospitales de Nicaragua)
     const dbClinics = await getClinics();
     
-    const granadaClinicsMapped: Clinic[] = obtenerTodosLosCentros().map((c: any) => {
-      const mappedType = c.categoria === 'hospital' ? 'hospital' : c.categoria === 'clinica' ? 'clinic' : c.categoria === 'farmacia' ? 'pharmacy' : 'laboratory';
-      const mappedSector = c.categoria === 'hospital' || c.seguros?.includes('MINSA') ? 'public' : 'private';
-      return {
-        id: `granada-${c.categoria}-${c.id}`,
-        name: c.nombre,
-        type: mappedType,
-        sector: mappedSector,
-        location: { lat: c.lat, lng: c.lng },
-        address: c.direccion,
-        phone: c.telefono,
-        open24h: c.horario === '24 horas',
-        isOpen: true,
-        rating: 4.8,
-        reviews: 12,
-        description: c.notas || '',
-        services: c.servicios || []
-      } as Clinic;
-    });
+    const staticClinics: Clinic[] = centrosSaludData.map((c: any, i: number) => {
+        let mappedType = 'clinic';
+        const rawType = (c.type || '').toLowerCase();
+        if (rawType.includes('hospital')) mappedType = 'hospital';
+        else if (rawType.includes('farmacia')) mappedType = 'pharmacy';
+        else if (rawType.includes('laboratorio')) mappedType = 'laboratory';
 
-    const staticClinics: Clinic[] = [
-      ...granadaClinicsMapped,
-      ...NICARAGUA_HOSPITALS.map((h, i) => ({ id: `static-h-${i}`, ...h } as Clinic)),
-      ...PUBLIC_HEALTH_NETWORK.map((h, i) => ({ id: `static-p-${i}`, ...h } as Clinic))
-    ];
+        return {
+          id: `nat-${i}`,
+          name: c.name,
+          type: mappedType as 'hospital' | 'clinic' | 'pharmacy' | 'laboratory',
+          sector: 'public',
+          location: { lat: c.location.lat, lng: c.location.lng },
+          address: c.address,
+          phone: c.phone || '',
+          open24h: rawType.includes('hospital'),
+          isOpen: true,
+          rating: 4.5,
+          reviews: 0,
+          description: c.sector || '',
+          services: c.services || [],
+        } as Clinic;
+    });
     const fullNetwork = [...dbClinics, ...staticClinics];
 
     // 2. Filtrar la red de clínicas de acuerdo a la membresía del usuario
@@ -273,7 +270,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     return {
       severity,
       recommendation,
-      reasoning: aiTriage.reasoning || `Triaje analizado localmente. Distancia al centro más cercano: ${finalDistance.toFixed(1)} km.`,
+      reasoning: aiTriage.reasoning || `Consulta analizada localmente. Distancia al centro más cercano: ${finalDistance.toFixed(1)} km.`,
       medication: typeof aiTriage.medication === 'object' ? aiTriage.medication : aiTriage.medication ? {
         name: aiTriage.medication,
         dosage: aiTriage.dosage || '',
@@ -302,7 +299,7 @@ export async function getEnhancedTriageWithLocation(symptoms: string, membership
     return {
       severity: 'medium',
       recommendation: 'Consulte con un médico profesional si sus síntomas persisten.',
-      reasoning: 'Error al ejecutar el triaje.',
+      reasoning: 'Error al ejecutar la consulta.',
       error: true
     };
   }

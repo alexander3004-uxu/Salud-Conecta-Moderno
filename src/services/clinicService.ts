@@ -2,8 +2,7 @@ import { collection, getDocs, doc, query, writeBatch, setDoc, addDoc } from 'fir
 import { db } from '../lib/firebase';
 import { Clinic, OperationType, FirestoreErrorInfo } from '../types';
 import { auth } from '../lib/firebase';
-import { NICARAGUA_HOSPITALS } from '../data/nicaraguaHospitals';
-import { PUBLIC_HEALTH_NETWORK } from '../data/nicaraguaPublicHealthNetwork';
+import centrosSaludData from '../data/centros_salud.json';
 
 const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
   const errInfo: FirestoreErrorInfo = {
@@ -34,8 +33,7 @@ let _minsaNameCache: Set<string> | null = null;
 export const getMinsaReferenceNames = (): Set<string> => {
   if (_minsaNameCache) return _minsaNameCache;
   _minsaNameCache = new Set([
-    ...NICARAGUA_HOSPITALS.map(h => normalizeStr(h.name)),
-    ...PUBLIC_HEALTH_NETWORK.map(h => normalizeStr(h.name)),
+    ...centrosSaludData.map((h: any) => normalizeStr(h.name)),
   ]);
   return _minsaNameCache;
 };
@@ -47,8 +45,8 @@ export const getMinsaReferenceNames = (): Set<string> => {
 export const getMinsaMetadata = (name: string) => {
   const normalized = normalizeStr(name);
   return (
-    [...NICARAGUA_HOSPITALS, ...PUBLIC_HEALTH_NETWORK].find(
-      h => normalizeStr(h.name) === normalized
+    centrosSaludData.find(
+      (h: any) => normalizeStr(h.name) === normalized
     ) ?? null
   );
 };
@@ -107,8 +105,9 @@ export const seedPublicClinics = async () => {
   const batch = writeBatch(db);
   const clinicsRef = collection(db, 'clinics');
 
-  for (const clinicData of PUBLIC_HEALTH_NETWORK) {
-    const id = clinicData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  for (const clinicData of centrosSaludData) {
+    const name = clinicData.name || 'Unnamed';
+    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
     const docRef = doc(clinicsRef, id);
     batch.set(docRef, clinicData, { merge: true });
   }

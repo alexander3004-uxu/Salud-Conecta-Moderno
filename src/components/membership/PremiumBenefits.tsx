@@ -47,7 +47,7 @@ export default function PremiumBenefits({ onDowngrade }: PremiumBenefitsProps = 
     {
       id: 'diagnosis',
       title: 'IA de Diagnóstico Avanzado',
-      desc: 'Acceso prioritario a nuestros modelos de lenguaje médico más recientes para análisis de síntomas complejos y recomendaciones de triaje precisas.',
+      desc: 'Acceso prioritario a nuestros modelos de lenguaje médico más recientes para análisis de síntomas complejos y recomendaciones de consulta precisas.',
       icon: Brain,
       color: 'border-l-primary',
       iconColor: 'text-primary',

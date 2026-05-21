@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useUser } from '../../contexts/UserContext';
-import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
-import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
+import centrosSaludData from '../../data/centros_salud.json';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 import { motion } from 'motion/react';
@@ -64,24 +63,24 @@ export default function Search({ onOpenRegistration }: SearchProps) {
   ];
 
   const publicItems = useMemo(() => {
-    const combined = [...NICARAGUA_HOSPITALS, ...PUBLIC_HEALTH_NETWORK];
-    return combined
-      .filter(item => item.sector === 'public')
-      .map((item, index) => ({
-        id: `public-${index}`,
-        category: 'public_health',
-        name: item.name,
-        description: item.description || item.address || 'Institución Pública de Salud',
-        image: item.imageUrl || '',
-        rating: item.rating || 4.0,
-        distance: 'Centro MINSA',
-        status: item.open24h ? 'Abierto 24h' : 'Horario Regular',
-        statusType: 'available',
-        services: item.services || ['Atención General', 'Emergencias'],
-        phone: item.phone || '+505 2222-2222',
-        address: item.address || 'Nicaragua',
-        location: item.location
-      }));
+    return centrosSaludData.map((item: any, index: number) => {
+        const rawType = (item.type || '').toLowerCase();
+        return {
+          id: `public-${index}`,
+          category: 'public_health',
+          name: item.name,
+          description: item.sector || item.address || 'Institución Pública de Salud',
+          image: '',
+          rating: 4.5,
+          distance: 'Centro MINSA',
+          status: rawType.includes('hospital') ? 'Abierto 24h' : 'Horario Regular',
+          statusType: 'available',
+          services: item.services || ['Atención General'],
+          phone: item.phone || '+505 2222-2222',
+          address: item.address || 'Nicaragua',
+          location: { lat: item.location.lat, lng: item.location.lng }
+        };
+    });
   }, []);
 
   const allItems = [

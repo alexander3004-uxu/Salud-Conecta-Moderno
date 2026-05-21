@@ -34,8 +34,12 @@ export const getDailyHealthTip = async (language: string = 'es', membership: 'fr
     });
 
     return (result.text ?? "").substring(0, 30);
-  } catch (error) {
-    console.error("Daily health tip error:", error);
+  } catch (error: any) {
+    if (error?.status === 429 || String(error).includes('429')) {
+      console.warn("Gemini Quota Exceeded (Daily Tip) - Usando fallback.");
+    } else {
+      console.error("Daily health tip error:", error);
+    }
     return "¡Bebe agua y mantente activo! 💪";
   }
 };
@@ -54,8 +58,12 @@ export const getHealthAssistant = async (message: string, membership: 'free' | '
 
     const result = await ai.models.generateContent({ model: MODEL, contents: [{ role: 'user', parts: [{ text: prompt }] }] });
     return (result.text ?? "").substring(0, 200);
-  } catch (error) {
-    console.error("Health assistant error:", error);
+  } catch (error: any) {
+    if (error?.status === 429 || String(error).includes('429')) {
+      console.warn("Gemini Quota Exceeded (Assistant) - Usando fallback.");
+    } else {
+      console.error("Health assistant error:", error);
+    }
     return membership === 'free' ? 'Acude a tu centro de salud local MINSA para atención inmediata.' : 'Escríbelo en el chat de citas para cuadrar tu próxima visita.';
   }
 };
@@ -102,12 +110,16 @@ ${membershipContext}`;
 
     return parsed;
   } catch (error: any) {
-    console.error("Gemini Triage Error:", error);
+    if (error?.status === 429 || String(error).includes('429')) {
+      console.warn("Gemini Quota Exceeded (Triage) - Usando fallback local offline.");
+    } else {
+      console.error("Gemini Triage Error:", error);
+    }
     const msg = typeof error === 'string' ? error : (error?.message || 'Error');
     return {
       urgency: 'medium',
       recommendation: msg.toLowerCase().includes('credits') ? 'Verifique créditos en ai.studio.' : 'Busque atención médica profesional.',
-      reasoning: 'Error al procesar triaje.',
+      reasoning: 'Error al procesar la consulta.',
       error: true
     };
   }

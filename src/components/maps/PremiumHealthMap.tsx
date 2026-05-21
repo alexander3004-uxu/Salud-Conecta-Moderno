@@ -25,8 +25,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
-import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
-import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
+import centrosSaludData from '../../data/centros_salud.json';
 import { Clinic } from '../../types';
 import { calculateDistance, estimateTravelTime } from '../../lib/geolocationService';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -92,12 +91,31 @@ export default function PremiumHealthMap() {
     setCurrentPage(1);
   }, [searchQuery, activeFilter]);
 
-  // Load private facilities from both datasets
+  // Load private facilities
   useEffect(() => {
-    const allClinics: Clinic[] = [
-      ...NICARAGUA_HOSPITALS.map((h, i) => ({ id: `priv-h-${i}`, ...h } as Clinic)),
-      ...PUBLIC_HEALTH_NETWORK.map((h, i) => ({ id: `priv-p-${i}`, ...h } as Clinic)),
-    ];
+    const allClinics: Clinic[] = centrosSaludData.map((c: any, i: number) => {
+        let mappedType = 'clinic';
+        const rawType = (c.type || '').toLowerCase();
+        if (rawType.includes('hospital')) mappedType = 'hospital';
+        else if (rawType.includes('farmacia')) mappedType = 'pharmacy';
+        else if (rawType.includes('laboratorio')) mappedType = 'laboratory';
+
+        return {
+          id: `priv-${i}`,
+          name: c.name,
+          type: mappedType as 'hospital' | 'clinic' | 'pharmacy' | 'laboratory',
+          sector: 'private',
+          location: { lat: c.location.lat, lng: c.location.lng },
+          address: c.address,
+          phone: c.phone || '',
+          open24h: rawType.includes('hospital'),
+          isOpen: true,
+          rating: 4.5,
+          reviews: 0,
+          description: c.sector || '',
+          services: c.services || [],
+        } as Clinic;
+    });
     
     // Filter to private sector only
     const privateOnly = allClinics.filter(c => c.sector === 'private');
