@@ -8,12 +8,10 @@ import {
 import { Clinic } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUser } from '../../contexts/UserContext';
-import { NICARAGUA_HOSPITALS } from '../../data/nicaraguaHospitals';
-import { PUBLIC_HEALTH_NETWORK } from '../../data/nicaraguaPublicHealthNetwork';
+import centrosSaludData from '../../data/centros_salud.json';
 import { getClinicTypeDetails, getFilterOptions, ALL_SEARCH_TERMS, FilterType } from './mapUtils';
 import { getReportSummaries, getConfidenceBadge, ReportSummary } from '../../services/facilityReportService';
 import { ReportModal } from './ReportModal';
-import { obtenerTodosLosCentros } from '../../data/granadaDatabase';
 
 
 const NICARAGUA_CENTER = { lat: 11.93749, lng: -85.968 }; // Granada, Nicaragua center
@@ -387,37 +385,35 @@ export default function HealthMap() {
       }
     };
 
-    // 1. Seed clinics from local Granada database
+    // 1. Seed clinics from national database
     try {
-      const granadaCentros = obtenerTodosLosCentros();
-      granadaCentros.forEach((c: any, i: number) => {
-        const mappedType = c.categoria === 'hospital' ? 'hospital' : c.categoria === 'clinica' ? 'clinic' : c.categoria === 'farmacia' ? 'pharmacy' : 'laboratory';
-        const mappedSector = c.categoria === 'hospital' || c.seguros?.includes('MINSA') ? 'public' : 'private';
-        
+      centrosSaludData.forEach((c: any, i: number) => {
+        let mappedType = 'clinic';
+        const rawType = (c.type || '').toLowerCase();
+        if (rawType.includes('hospital')) mappedType = 'hospital';
+        else if (rawType.includes('farmacia')) mappedType = 'pharmacy';
+        else if (rawType.includes('laboratorio')) mappedType = 'laboratory';
+
         const clinicItem: Clinic = {
-          id: `granada-${c.categoria}-${c.id}`,
-          name: c.nombre,
-          type: mappedType,
-          sector: mappedSector,
-          location: { lat: c.lat, lng: c.lng },
-          address: c.direccion,
-          phone: c.telefono,
-          open24h: c.horario === '24 horas',
+          id: `nat-${i}`,
+          name: c.name,
+          type: mappedType as 'hospital' | 'clinic' | 'pharmacy' | 'laboratory',
+          sector: 'public',
+          location: { lat: c.location.lat, lng: c.location.lng },
+          address: c.address,
+          phone: c.phone || '',
+          open24h: rawType.includes('hospital'),
           isOpen: true,
-          rating: 4.8,
-          reviews: 15,
-          description: c.notas || '',
-          services: c.servicios || [],
+          rating: 4.5,
+          reviews: 0,
+          description: c.sector || '',
+          services: c.services || [],
         };
-        addUnique(clinicItem, 'g', i);
+        addUnique(clinicItem, 'n', i);
       });
     } catch (e) {
-      console.error("Error seeding Granada clinics:", e);
+      console.error("Error seeding national clinics:", e);
     }
-
-    // 2. Seed other Nicaragua hospitals
-    NICARAGUA_HOSPITALS.forEach((h, i) => addUnique(h, 'h', i));
-    PUBLIC_HEALTH_NETWORK.forEach((h, i) => addUnique(h, 'p', i));
 
     setClinics(seedClinics);
   }, []);
