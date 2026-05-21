@@ -99,9 +99,11 @@ export default function TriageChecker() {
       setTriageResult(result);
       
       // Agregar la respuesta de la IA al historial del chat para mantener el flujo conversacional
+      const safeRecommendation = String(result.recommendation || '');
+      const safeReasoning = String(result.reasoning || '');
       const assistantResponse = result.error
-        ? t('triage.assistant.fallback').replace('{rec}', result.recommendation || '').replace('{res}', result.reasoning || '')
-        : t('triage.assistant.success').replace('{rec}', result.recommendation || '').replace('{res}', result.reasoning || '');
+        ? t('triage.assistant.fallback').replace('{rec}', safeRecommendation).replace('{res}', safeReasoning)
+        : t('triage.assistant.success').replace('{rec}', safeRecommendation).replace('{res}', safeReasoning);
       
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -428,10 +430,10 @@ export default function TriageChecker() {
                       <span className="text-[10px] font-black uppercase tracking-widest">{t('triage.ai_rec')}</span>
                     </div>
                     <div className="text-xs md:text-sm font-semibold leading-relaxed text-on-surface bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20 font-sans">
-                      {triageResult.recommendation.split('\n').map((line, i) => (
+                      {String(triageResult.recommendation || '').split('\n').map((line, i) => (
                         <React.Fragment key={i}>
                           {line}
-                          {i < triageResult.recommendation.split('\n').length - 1 && <br />}
+                          {i < String(triageResult.recommendation || '').split('\n').length - 1 && <br />}
                         </React.Fragment>
                       ))}
                     </div>
@@ -480,10 +482,10 @@ export default function TriageChecker() {
                         <span className="text-[10px] font-black uppercase tracking-widest">Cuidados en Casa</span>
                       </div>
                       <div className="text-xs text-on-surface-variant leading-relaxed">
-                        {triageResult.homeRemedies.split('\n').map((line, i) => (
+                        {String(triageResult.homeRemedies || '').split('\n').map((line, i) => (
                           <React.Fragment key={i}>
                             {line}
-                            {i < triageResult.homeRemedies.split('\n').length - 1 && <br />}
+                            {i < String(triageResult.homeRemedies || '').split('\n').length - 1 && <br />}
                           </React.Fragment>
                         ))}
                       </div>
@@ -498,10 +500,10 @@ export default function TriageChecker() {
                         <span className="text-[10px] font-black uppercase tracking-widest">Señales de Alarma</span>
                       </div>
                       <div className="text-xs font-medium text-amber-500/90 leading-relaxed">
-                        {triageResult.warningSignsToWatch.split('\n').map((line, i) => (
+                        {String(triageResult.warningSignsToWatch || '').split('\n').map((line, i) => (
                           <React.Fragment key={i}>
                             {line}
-                            {i < triageResult.warningSignsToWatch.split('\n').length - 1 && <br />}
+                            {i < String(triageResult.warningSignsToWatch || '').split('\n').length - 1 && <br />}
                           </React.Fragment>
                         ))}
                       </div>
