@@ -1,6 +1,6 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { storage, db } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { storage, db, auth } from '../lib/firebase';
 
 // ── Profile Photo Upload ──────────────────────────────────────────────
 
@@ -21,7 +21,9 @@ export async function uploadProfilePhoto(userId: string, file: File): Promise<st
     throw new Error('Formato no soportado. Usa JPG, PNG, WebP o GIF.');
   }
 
-  const storageRef = ref(storage, `profile-photos/${userId}`);
+  // Use a unique filename with extension to avoid caching issues
+  const ext = file.name.split('.').pop() || 'jpg';
+  const storageRef = ref(storage, `profile-photos/${userId}/avatar.${ext}`);
   
   const metadata = {
     contentType: file.type,
@@ -50,15 +52,29 @@ export interface ProfileData {
 }
 
 /**
- * Saves profile data to Firestore under /users/{userId}.
- * Uses merge to avoid overwriting fields managed by other parts of the app (role, createdAt, etc.)
+ * Saves the photoURL and profile fields to the user's Firestore document.
+ * Maps local field names to what Firestore/rules expect.
+ * Uses merge to avoid overwriting auth-managed fields (role, createdAt, etc.)
  */
-export async function saveProfileToFirestore(userId: string, profileData: Partial<ProfileData>): Promise<void> {
+export async function saveProfileToFirestore(userId: string, profileData: ProfileData): Promise<void> {
   const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, {
-    ...profileData,
+  
+  // Only send fields that Firestore rules allow to be updated
+  // The rules check affectedKeys().hasOnly(['displayName', 'photoURL', 'phone', 'address', 'bloodType', 'allergies', 'dob', 'updatedAt'])
+  const updatePayload: Record<string, any> = {
     updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  };
+
+  // Map 'name' to 'displayName' which is what Firestore expects
+  if (profileData.name) updatePayload.displayName = profileData.name;
+  if (profileData.photoURL) updatePayload.photoURL = profileData.photoURL;
+  if (profileData.phone) updatePayload.phone = profileData.phone;
+  if (profileData.address) updatePayload.address = profileData.address;
+  if (profileData.bloodType) updatePayload.bloodType = profileData.bloodType;
+  if (profileData.allergies) updatePayload.allergies = profileData.allergies;
+  if (profileData.dob) updatePayload.dob = profileData.dob;
+
+  await setDoc(userRef, updatePayload, { merge: true });
 }
 
 /**
@@ -66,20 +82,25 @@ export async function saveProfileToFirestore(userId: string, profileData: Partia
  * Returns null if the document doesn't exist.
  */
 export async function loadProfileFromFirestore(userId: string): Promise<ProfileData | null> {
-  const userRef = doc(db, 'users', userId);
-  const snap = await getDoc(userRef);
-  
-  if (!snap.exists()) return null;
-  
-  const data = snap.data();
-  return {
-    name: data.displayName || data.name || '',
-    phone: data.phone || '',
-    email: data.email || '',
-    address: data.address || '',
-    bloodType: data.bloodType || '',
-    allergies: data.allergies || '',
-    dob: data.dob || '',
-    photoURL: data.photoURL || '',
-  };
+  try {
+    const userRef = doc(db, 'users', userId);
+    const snap = await getDoc(userRef);
+    
+    if (!snap.exists()) return null;
+    
+    const data = snap.data();
+    return {
+      name: data.displayName || data.name || '',
+      phone: data.phone || '',
+      email: data.email || '',
+      address: data.address || '',
+      bloodType: data.bloodType || '',
+      allergies: data.allergies || '',
+      dob: data.dob || '',
+      photoURL: data.photoURL || '',
+    };
+  } catch (err) {
+    console.warn('loadProfileFromFirestore failed:', err);
+    return null;
+  }
 }

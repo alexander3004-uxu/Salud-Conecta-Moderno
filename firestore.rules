@@ -33,7 +33,7 @@ service cloud.firestore {
 
     // User Profile Rules
     match /users/{userId} {
-      function isValidUser(data) {
+      function isValidUserCreate(data) {
         return data.userId == userId &&
                data.email is string && data.email.size() <= 100 &&
                data.displayName is string && data.displayName.size() <= 100 &&
@@ -41,16 +41,18 @@ service cloud.firestore {
                data.createdAt is string;
       }
 
+      // Allowed fields that users can update on their own profile
+      function isAllowedProfileUpdate() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+          ['displayName', 'photoURL', 'phone', 'address', 'bloodType', 'allergies', 'dob', 'updatedAt', 'name']
+        );
+      }
+
       allow get: if isSignedIn();
-      allow create: if isVerified() && isValidUser(request.resource.data) && 
+      allow create: if isVerified() && isValidUserCreate(request.resource.data) && 
                       request.resource.data.userId == request.auth.uid;
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
-                      (
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(
-                          ['displayName', 'photoURL', 'phone', 'address', 'bloodType', 'allergies', 'dob', 'updatedAt']
-                        ) ||
-                        request.auth.token.email == 'mcalebr04@gmail.com'
-                      );
+      allow update: if (isOwner(userId) && isAllowedProfileUpdate()) ||
+                      request.auth.token.email == 'mcalebr04@gmail.com';
     }
 
     // Clinic Rules (Read-only for users, Admin write)
