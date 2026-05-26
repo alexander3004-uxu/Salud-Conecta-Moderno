@@ -35,13 +35,15 @@ import {
   CheckCircle2,
   AlertTriangle,
   Scan,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { BiometricModal } from './BiometricModal';
 import DocumentScanner from '../history/DocumentScanner';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { uploadProfilePhoto, saveProfileToFirestore, loadProfileFromFirestore } from '../../services/profileService';
 
 const DEFAULT_PHOTO = "https://lh3.googleusercontent.com/aida-public/AB6AXuCNjxM_kx1krlJpGAVOh-nfFDhGn7s-29GpIE4wJWRsqYWpCfOS2KwA0mDjXP283OFfd0LtGx5JPWVrYMEB1cg1irom_1Hm34eluol-cmYe4YG_wnOcjQSvXjDOPm-gtH24rSMm6i0J8uh2fP2_ixZm9Bq0yqMp4aTljcnyLHm8NYc7BeN6mABRDrlnCT35AHv-EBa3m15B2F8AG3IKN-eRA6aH-P_gNEBQ7te36sc60HjVj0KVBPIT4WPJljYhbiXnLMmBo9Tw9A";
 
@@ -75,6 +77,8 @@ export function Profile() {
   }, []);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [isValidated, setIsValidated] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -142,6 +146,32 @@ export function Profile() {
 
   const [profile, setProfile] = useState(loadProfileData);
 
+  // Load profile from Firestore on mount (overrides localStorage if available)
+  React.useEffect(() => {
+    const uid = auth.currentUser?.uid || user?.uid;
+    if (!uid) return;
+
+    loadProfileFromFirestore(uid)
+      .then((firestoreProfile) => {
+        if (firestoreProfile && firestoreProfile.photoURL) {
+          setProfile(prev => ({
+            ...prev,
+            ...Object.fromEntries(
+              Object.entries(firestoreProfile).filter(([_, v]) => v !== '' && v != null)
+            ),
+          }));
+          // Cache in localStorage for faster future loads
+          localStorage.setItem('userProfile', JSON.stringify({
+            ...profile,
+            ...firestoreProfile,
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load profile from Firestore, using local data:', err);
+      });
+  }, [user?.uid]);
+
   const handlePhotoClick = () => {
     if (isValidated) {
       fileInputRef.current?.click();
@@ -153,6 +183,17 @@ export function Profile() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setToastMessage('La imagen es demasiado grande. Máximo 5MB.');
+        setToastType('error');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
+        return;
+      }
+      // Store the file for later upload
+      setPendingPhotoFile(file);
+      // Show local preview immediately
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfile({ ...profile, photoURL: reader.result as string });
@@ -216,11 +257,31 @@ export function Profile() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setIsPreviewMode(false);
+    const uid = auth.currentUser?.uid || user?.uid;
+
+    try {
+      let finalPhotoURL = profile.photoURL;
+
+      // Upload photo to Firebase Storage if there's a pending file
+      if (pendingPhotoFile && uid) {
+        setIsUploadingPhoto(true);
+        try {
+          finalPhotoURL = await uploadProfilePhoto(uid, pendingPhotoFile);
+          setPendingPhotoFile(null);
+        } catch (uploadError: any) {
+          console.error('Photo upload failed:', uploadError);
+          setToastMessage(uploadError.message || 'Error al subir la foto');
+          setToastType('error');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 4000);
+          setIsSaving(false);
+          setIsUploadingPhoto(false);
+          return;
+        }
+        setIsUploadingPhoto(false);
+      }
 
       const profileData = {
         name: profile.name,
@@ -230,15 +291,32 @@ export function Profile() {
         bloodType: profile.bloodType,
         allergies: profile.allergies,
         dob: profile.dob,
-        photoURL: profile.photoURL
+        photoURL: finalPhotoURL
       };
 
+      // Save to Firestore (linked to account)
+      if (uid) {
+        try {
+          await saveProfileToFirestore(uid, {
+            ...profileData,
+            name: profileData.name, // maps to displayName in Firestore
+          });
+        } catch (firestoreError: any) {
+          console.error('Firestore save failed:', firestoreError);
+          // Still save locally as fallback
+        }
+      }
+
+      // Also cache locally for faster loads
       localStorage.setItem('userProfile', JSON.stringify(profileData));
+
+      setProfile({ ...profile, photoURL: finalPhotoURL });
+      setIsPreviewMode(false);
 
       const updatedUser = {
         ...user,
         displayName: profile.name,
-        photoURL: profile.photoURL
+        photoURL: finalPhotoURL
       };
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -249,7 +327,15 @@ export function Profile() {
       setToastType('success');
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
-    }, 1000);
+    } catch (error: any) {
+      console.error('Save failed:', error);
+      setToastMessage('Error al guardar el perfil');
+      setToastType('error');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddContact = () => {
@@ -296,7 +382,18 @@ export function Profile() {
             </div>
 
             <AnimatePresence>
-              {isPreviewMode && (
+              {isUploadingPhoto && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-surface/80 backdrop-blur-md flex flex-col items-center justify-center gap-2 z-20"
+                >
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  <span className="font-mono text-[9px] font-bold text-primary uppercase tracking-widest">Subiendo...</span>
+                </motion.div>
+              )}
+              {isPreviewMode && !isUploadingPhoto && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -333,6 +430,7 @@ export function Profile() {
               <button
                 onClick={() => {
                   setIsPreviewMode(false);
+                  setPendingPhotoFile(null);
                   setProfile({ ...profile, photoURL: user?.photoURL || DEFAULT_PHOTO });
                 }}
                 className="bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-error-container hover:text-on-error-container transition-all"

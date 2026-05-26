@@ -46,7 +46,9 @@ service cloud.firestore {
                       request.resource.data.userId == request.auth.uid;
       allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
                       (
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']) ||
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+                          ['displayName', 'photoURL', 'phone', 'address', 'bloodType', 'allergies', 'dob', 'updatedAt']
+                        ) ||
                         request.auth.token.email == 'mcalebr04@gmail.com'
                       );
     }

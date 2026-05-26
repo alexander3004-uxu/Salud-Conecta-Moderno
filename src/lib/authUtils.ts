@@ -11,6 +11,7 @@ export const syncUserProfile = async (user: User) => {
       userId: user.uid,
       email: user.email,
       displayName: user.displayName,
+      photoURL: user.photoURL || '',
       role: user.email === 'mcalebr04@gmail.com' ? 'admin' : 'patient',
       createdAt: new Date().toISOString(),
       updatedAt: serverTimestamp(),
